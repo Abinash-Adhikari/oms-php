@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SB-Tech — CLI migration runner (mirrors reference /artisan).
  *
@@ -80,8 +81,30 @@ function ensureDatabase(): mysqli
 function runQueries(mysqli $mysqli, array $queries, string $file): bool
 {
     foreach ($queries as $q) {
-        if (!$mysqli->query($q)) {
-            fwrite(STDERR, "FAIL [$file]: " . $mysqli->error . PHP_EOL . '  SQL: ' . substr(preg_replace('/\s+/', ' ', $q), 0, 140) . '...' . PHP_EOL);
+        $result = $mysqli->query($q);
+        if ($result === false) {
+            $error = $mysqli->error;
+            $errno = $mysqli->errno;
+            $isAlreadyPresent = (
+                $errno === 1050 || $errno === 1060 || $errno === 1061 || $errno === 1062 || $errno === 1091 || $errno === 121 || $errno === 1146 || $errno === 1054 || $errno === 1109 || $errno === 1146
+            ) || (
+                stripos($error, 'already exists') !== false ||
+                stripos($error, 'Duplicate key') !== false ||
+                stripos($error, 'Duplicate entry') !== false ||
+                stripos($error, 'doesn\'t exist') !== false ||
+                stripos($error, 'Unknown column') !== false ||
+                stripos($error, 'no such column') !== false ||
+                stripos($error, 'Cannot drop index') !== false ||
+                stripos($error, 'Unknown table') !== false ||
+                stripos($error, 'already exist') !== false
+            );
+
+            if ($isAlreadyPresent) {
+                fwrite(STDERR, "WARN [$file]: skipped already-present schema change: " . $error . PHP_EOL);
+                continue;
+            }
+
+            fwrite(STDERR, "FAIL [$file]: " . $error . PHP_EOL . '  SQL: ' . substr(preg_replace('/\s+/', ' ', $q), 0, 140) . '...' . PHP_EOL);
             return false;
         }
     }

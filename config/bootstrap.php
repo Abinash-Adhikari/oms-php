@@ -67,7 +67,16 @@ if (!headers_sent()) {
 define('PLAN', strtoupper((string) config('plan', 'PRO')));
 
 // --- Composer autoloader (Dompdf, PhpOffice, etc.) ---
-require_once $appRoot . '/vendor/autoload.php';
+$autoloadPath = $appRoot . '/vendor/autoload.php';
+if (!file_exists($autoloadPath)) {
+    $installHint = 'Composer dependencies are missing in this project root. Run: cd ' . $appRoot . ' && composer install';
+    if (PHP_SAPI === 'cli') {
+        fwrite(STDERR, $installHint . PHP_EOL);
+        exit(1);
+    }
+    die($installHint);
+}
+require_once $autoloadPath;
 
 // --- Classes (single thin DB layer; no dual APIs — anti-pattern fix) ---
 require_once $appRoot . '/classes/Database.php';

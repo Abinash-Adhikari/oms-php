@@ -1,4 +1,5 @@
 <?php
+
 /** @var string $sitePage set by site.php */
 $setup = siteSetup();
 $siteTitle = $setup['site_title'] ?? config('organization_name', 'Office');
@@ -17,22 +18,25 @@ $nav = [
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <!-- Theme boot (inline, blocking): honors prefs saved via the theme switcher
          (same localStorage keys as the admin panel) and prevents a flash of light mode. -->
     <script>
-    (function () {
-        try {
-            var mode = localStorage.getItem('app_color_mode') || 'light';
-            var accent = localStorage.getItem('app_accent') || 'blue';
-            if (mode !== 'light' && mode !== 'dark') { mode = 'light'; }
-            document.documentElement.setAttribute('data-mode', mode);
-            document.documentElement.setAttribute('data-accent', accent);
-        } catch (e) {
-            document.documentElement.setAttribute('data-mode', 'light');
-            document.documentElement.setAttribute('data-accent', 'blue');
-        }
-    })();
+        (function() {
+            try {
+                var mode = localStorage.getItem('app_color_mode') || 'light';
+                var accent = localStorage.getItem('app_accent') || 'blue';
+                if (mode !== 'light' && mode !== 'dark') {
+                    mode = 'light';
+                }
+                document.documentElement.setAttribute('data-mode', mode);
+                document.documentElement.setAttribute('data-accent', accent);
+            } catch (e) {
+                document.documentElement.setAttribute('data-mode', 'light');
+                document.documentElement.setAttribute('data-accent', 'blue');
+            }
+        })();
     </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -70,60 +74,62 @@ $nav = [
         <link rel="icon" type="image/x-icon" href="<?= e(siteUrl('user_uploads/' . $setup['favicon'])) ?>">
     <?php endif; ?>
 </head>
+
 <body>
-<nav class="navbar navbar-expand-lg site-navbar" id="siteNavbar">
-    <div class="container">
-        <a class="navbar-brand" href="<?= siteUrl() ?>">
-            <?php if (!empty($setup['logo'])): ?>
-                <img src="<?= e(siteUrl('user_uploads/' . $setup['logo'])) ?>" alt="<?= e($siteTitle) ?>" height="36" style="margin-right: 0.5rem;">
-            <?php endif; ?>
-            <?= e($siteTitle) ?>
-        </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="siteNav">
-            <ul class="navbar-nav ml-auto">
-                <?php foreach ($nav as $key => $url): ?>
-                    <li class="nav-item<?= $sitePage === $key ? ' active' : '' ?>">
-                        <a class="nav-link" href="<?= e($url) ?>"><?= e(ucfirst($key)) ?></a>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-            <?php if (!empty($setup['contact_phone'])): ?>
-                <a href="tel:<?= e($setup['contact_phone']) ?>" class="btn btn-primary btn-sm ml-3 d-none d-lg-inline-flex">
-                    <i class="fas fa-phone-alt mr-2"></i><?= e($setup['contact_phone']) ?>
-                </a>
-            <?php endif; ?>
-            <button type="button" id="siteModeToggle" class="site-mode-toggle ml-lg-3"
-                    aria-label="Switch between light and dark mode">
-                <i class="fas fa-moon" data-mode-icon="dark" hidden></i>
-                <i class="fas fa-sun" data-mode-icon="light" hidden></i>
+    <nav class="navbar navbar-expand-lg site-navbar" id="siteNavbar">
+        <div class="container">
+            <a class="navbar-brand" href="<?= siteUrl() ?>" data-admin-url="<?= e(siteUrl('admin/login.php')) ?>">
+                <?php if (!empty($setup['logo'])): ?>
+                    <img src="<?= e(siteUrl('user_uploads/' . $setup['logo'])) ?>" alt="<?= e($siteTitle) ?>" height="36" style="margin-right: 0.5rem;">
+                <?php endif; ?>
+                <?= e($siteTitle) ?>
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
             </button>
+            <div class="collapse navbar-collapse" id="siteNav">
+                <ul class="navbar-nav ml-auto">
+                    <?php foreach ($nav as $key => $url): ?>
+                        <li class="nav-item<?= $sitePage === $key ? ' active' : '' ?>">
+                            <a class="nav-link" href="<?= e($url) ?>"><?= e(ucfirst($key)) ?></a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+                <?php if (!empty($setup['contact_phone'])): ?>
+                    <a href="tel:<?= e($setup['contact_phone']) ?>" class="site-phone-link ml-3 d-none d-lg-inline-flex align-items-center">
+                        <span class="site-phone-icon"><i class="fas fa-phone-alt"></i></span>
+                        <span class="site-phone-number"><?= e($setup['contact_phone']) ?></span>
+                    </a>
+                <?php endif; ?>
+                <button type="button" id="siteModeToggle" class="site-mode-toggle ml-lg-3"
+                    aria-label="Switch between light and dark mode">
+                    <i class="fas fa-moon" data-mode-icon="dark" hidden></i>
+                    <i class="fas fa-sun" data-mode-icon="light" hidden></i>
+                </button>
+            </div>
         </div>
-    </div>
-</nav>
-<main>
-<div class="container mt-3">
-    <?= renderFlash() ?>
-</div>
+    </nav>
+    <main>
+        <div class="container mt-3">
+            <?= renderFlash() ?>
+        </div>
 
-<!-- Premium Navbar Scroll Effect -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const navbar = document.getElementById('siteNavbar');
-    let lastScroll = 0;
+        <!-- Premium Navbar Scroll Effect -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const navbar = document.getElementById('siteNavbar');
+                let lastScroll = 0;
 
-    window.addEventListener('scroll', function() {
-        const currentScroll = window.pageYOffset;
+                window.addEventListener('scroll', function() {
+                    const currentScroll = window.pageYOffset;
 
-        if (currentScroll > 50) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
+                    if (currentScroll > 50) {
+                        navbar.classList.add('scrolled');
+                    } else {
+                        navbar.classList.remove('scrolled');
+                    }
 
-        lastScroll = currentScroll;
-    });
-});
-</script>
+                    lastScroll = currentScroll;
+                });
+            });
+        </script>

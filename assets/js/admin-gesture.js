@@ -4,7 +4,7 @@
  * Security: Only shows admin link when gesture is performed.
  */
 
-(function() {
+(function () {
     'use strict';
 
     // Configuration
@@ -13,7 +13,6 @@
         adminUrl: 'admin/login.php',
         showDuration: 5000, // ms to show admin link before hiding
         targets: [
-            { selector: '.navbar-brand', type: 'logo' },
             { selector: '.site-hero img', type: 'hero-image' },
             { selector: '.site-footer .navbar-brand, .site-footer h5', type: 'footer-brand' }
         ]
@@ -57,12 +56,12 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         `;
 
-        link.addEventListener('mouseenter', function() {
+        link.addEventListener('mouseenter', function () {
             this.style.transform = 'translateY(-2px)';
             this.style.boxShadow = '0 6px 25px rgba(37, 99, 235, 0.4)';
         });
 
-        link.addEventListener('mouseleave', function() {
+        link.addEventListener('mouseleave', function () {
             this.style.transform = 'translateY(0)';
             this.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3)';
         });
@@ -143,10 +142,56 @@
         }
     }
 
+    function redirectToAdmin(element) {
+        const adminUrl = element.dataset.adminUrl || CONFIG.adminUrl;
+        if (adminUrl) {
+            window.location.href = adminUrl;
+        }
+    }
+
+    function bindLogoRedirect() {
+        const logo = document.querySelector('.navbar-brand[data-admin-url]');
+        if (!logo) return;
+
+        logo.addEventListener('dblclick', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            redirectToAdmin(this);
+        });
+
+        logo.addEventListener('touchstart', function (e) {
+            const self = this;
+            longPressTimer = setTimeout(() => {
+                e.preventDefault();
+                redirectToAdmin(self);
+                longPressTimer = null;
+            }, CONFIG.longPressDuration);
+        }, { passive: true });
+
+        logo.addEventListener('touchend', handleLongPressEnd, { passive: true });
+        logo.addEventListener('touchmove', handleLongPressEnd, { passive: true });
+        logo.addEventListener('mousedown', function () {
+            const self = this;
+            longPressTimer = setTimeout(() => {
+                redirectToAdmin(self);
+                longPressTimer = null;
+            }, CONFIG.longPressDuration);
+        });
+        logo.addEventListener('mouseup', handleLongPressEnd);
+        logo.addEventListener('mouseleave', handleLongPressEnd);
+        logo.addEventListener('contextmenu', (e) => {
+            if (longPressTimer) {
+                e.preventDefault();
+            }
+        });
+    }
+
     /**
      * Initialize gesture listeners
      */
     function init() {
+        bindLogoRedirect();
+
         CONFIG.targets.forEach(target => {
             const elements = document.querySelectorAll(target.selector);
 

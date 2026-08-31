@@ -32,7 +32,12 @@ body {
 }
 
 /* ── Typography Hierarchy ── */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: var(--font-display);
     font-weight: 600;
     line-height: 1.2;
@@ -111,6 +116,48 @@ h1, h2, h3, h4, h5, h6 {
     height: 2px;
     background: var(--accent);
     border-radius: var(--radius-full);
+}
+
+.site-phone-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.9rem;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff !important;
+    border-radius: 1.4rem;
+    padding: 0.55rem 1.15rem 0.55rem 0.7rem;
+    text-decoration: none !important;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.site-phone-link:hover,
+.site-phone-link:focus {
+    color: #fff !important;
+    text-decoration: none !important;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.34);
+}
+
+.site-phone-icon {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.site-phone-number {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-family: var(--font-display), sans-serif;
 }
 
 /* Dark mode navbar */
@@ -326,6 +373,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Touch-target guard: compact buttons stay ≥44px tall on coarse pointers */
 @media (pointer: coarse) {
+
     .btn-sm,
     .btn:not(.btn-lg) {
         min-height: 44px;
@@ -721,6 +769,7 @@ a.feed-title:hover {
     0% {
         background-position: -200% 0;
     }
+
     100% {
         background-position: 200% 0;
     }
@@ -739,6 +788,7 @@ a.feed-title:hover {
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -749,6 +799,7 @@ a.feed-title:hover {
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -901,6 +952,7 @@ a.feed-title:hover {
 
 /* ── Print Styles ── */
 @media print {
+
     .site-navbar,
     .site-footer,
     .site-cta {
