@@ -6,13 +6,24 @@
 $db = Database::instance();
 $canManage = Auth::isSuperAdmin() || Auth::hasSpecial('manage_leads');
 
+$stageBadges = ['New' => 'primary', 'Contacted' => 'info', 'Qualified' => 'warning', 'Proposal' => 'secondary', 'Won' => 'success', 'Lost' => 'danger'];
+$priorityColors = ['Hot' => 'danger', 'Warm' => 'warning', 'Cold' => 'secondary'];
+
 $edit = null;
 $projects = [];
+$clientLeads = [];
 if (isset($_GET['id'])) {
     $edit = $db->selectOne('SELECT * FROM `tbl_clients` WHERE `id` = ?', [(int) $_GET['id']]);
     if ($edit) {
         $projects = $db->select(
             'SELECT * FROM `tbl_client_projects` WHERE `client_id` = ? ORDER BY start_date DESC',
+            [(int) $edit['id']]
+        );
+        $clientLeads = $db->select(
+            'SELECT l.*, o.fullname AS owner_name
+             FROM `tbl_leads` l
+             LEFT JOIN `tbl_users_login` o ON o.id = l.assigned_to
+             WHERE l.client_id = ? ORDER BY l.added_on DESC',
             [(int) $edit['id']]
         );
     }
@@ -28,9 +39,10 @@ if ($keyword !== '') {
 }
 $clients = $db->select(
     'SELECT c.*, l.company AS lead_company,
-            (SELECT COUNT(*) FROM `tbl_client_projects` p WHERE p.client_id = c.id) AS project_count
+            (SELECT COUNT(*) FROM `tbl_client_projects` p WHERE p.client_id = c.id) AS project_count,
+            (SELECT COUNT(*) FROM `tbl_leads` lc WHERE lc.client_id = c.id) AS lead_count
      FROM `tbl_clients` c
-     LEFT JOIN `tbl_leads` l ON l.won_client_id = c.id
+     LEFT JOIN `tbl_leads` l ON l.client_id = c.id
      WHERE ' . $where . '
      ORDER BY c.name',
     $params
@@ -59,7 +71,7 @@ $clientDrawerOpen = ($edit !== null);
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-sm table-striped table-hover mb-0">
-                <thead><tr><th>#</th><th>Name</th><th>Contact</th><th>Email / Phone</th><th>PAN</th><th class="text-center">Projects</th><th class="text-right">Actions</th></tr></thead>
+                <thead><tr><th>#</th><th>Name</th><th>Contact</th><th>Email / Phone</th><th>PAN</th><th class="text-center">Leads</th><th class="text-center">Projects</th><th class="text-right">Actions</th></tr></thead>
                 <tbody>
                 <?php foreach ($clients as $i => $c): ?>
                     <tr>
@@ -68,6 +80,7 @@ $clientDrawerOpen = ($edit !== null);
                         <td><?= e($c['contact_person'] ?: '—') ?></td>
                         <td><?= e($c['email'] ?: '—') ?><br><small><?= e($c['phone'] ?: '—') ?></small></td>
                         <td><?= e($c['pan_num'] ?: '—') ?></td>
+                        <td class="text-center"><span class="badge badge-<?= (int) $c['lead_count'] > 0 ? 'info' : 'light' ?> border"><?= (int) $c['lead_count'] ?></span></td>
                         <td class="text-center"><span class="badge badge-light border"><?= (int) $c['project_count'] ?></span></td>
                         <td class="text-right">
                             <button type="button" class="btn btn-xs btn-outline-primary" onclick="openClientDrawer(<?= (int) $c['id'] ?>)"><i class="fas fa-eye"></i></button>
@@ -82,7 +95,7 @@ $clientDrawerOpen = ($edit !== null);
                         </td>
                     </tr>
                 <?php endforeach; ?>
-                <?php if (!$clients): ?><tr><td colspan="7" class="text-center text-muted">No clients yet.</td></tr><?php endif; ?>
+                <?php if (!$clients): ?><tr><td colspan="8" class="text-center text-muted">No clients yet.</td></tr><?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -127,6 +140,40 @@ $clientDrawerOpen = ($edit !== null);
                         </tr>
                     <?php endforeach; ?>
                     <?php if (!$projects): ?><tr><td colspan="6" class="text-center text-muted">No projects yet.</td></tr><?php endif; ?>
+                    </tbody>
+            </table>
+        </div>
+    </div>
+<?php endif; ?>
+
+<!-- Linked Leads (shown below projects when a client is selected) -->
+<?php if ($edit): ?>
+    <div class="card card-outline">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-link mr-1"></i>Linked Leads — <?= e($edit['name']) ?></h3>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-striped mb-0">
+                    <thead><tr><th>#</th><th>Company / Contact</th><th>Service</th><th>Stage</th><th>Priority</th><th>Owner</th><th>Added</th><th class="text-right">Actions</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($clientLeads as $i => $l): ?>
+                        <tr>
+                            <td><?= $i + 1 ?></td>
+                            <td><?= e($l['company'] ?: $l['contact_name']) ?><br><small class="text-muted"><?= e($l['contact_name'] ?: '—') ?> · <?= e($l['email'] ?: '—') ?></small></td>
+                            <td><?= e($l['service_interest'] ?: '—') ?></td>
+                            <td>
+                                <span class="badge badge-<?= $stageBadges[$l['stage']] ?? 'secondary' ?>"><?= e($l['stage']) ?></span>
+                            </td>
+                            <td><span class="badge badge-<?= $priorityColors[$l['priority']] ?? 'secondary' ?>"><?= e($l['priority']) ?></span></td>
+                            <td><?= e($l['owner_name'] ?: '—') ?></td>
+                            <td><?= e(date('M j, Y', strtotime($l['added_on']))) ?></td>
+                            <td class="text-right">
+                                <a href="<?= pageUrl('leads', 'leads') ?>&id=<?= (int) $l['id'] ?>" class="btn btn-xs btn-outline-primary"><i class="fas fa-eye"></i></a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    <?php if (!$clientLeads): ?><tr><td colspan="8" class="text-center text-muted">No leads linked to this client yet.</td></tr><?php endif; ?>
                     </tbody>
                 </table>
             </div>

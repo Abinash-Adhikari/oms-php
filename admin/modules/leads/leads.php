@@ -55,11 +55,15 @@ function leadFormatValue($val) {
 
 // ================================================================== detail
 if (isset($_GET['id'])) {
+    // All clients for manual linking in detail view
+    $allClients = $db->select(
+        'SELECT * FROM `tbl_clients` ORDER BY `name` ASC'
+    );
     $lead = $db->selectOne(
         'SELECT l.*, o.fullname AS owner_name, c.name AS client_name
          FROM `tbl_leads` l
          LEFT JOIN `tbl_users_login` o ON o.id = l.assigned_to
-         LEFT JOIN `tbl_clients` c ON c.id = l.won_client_id
+         LEFT JOIN `tbl_clients` c ON c.id = l.client_id
          WHERE l.id = ?',
         [(int) $_GET['id']]
     );
@@ -176,7 +180,7 @@ if (isset($_GET['id'])) {
                                     <tr><th class="text-muted">Lost Reason</th><td class="text-danger"><?= e($lead['lost_reason']) ?></td></tr>
                                 <?php endif; ?>
                                 <?php if ($lead['client_name']): ?>
-                                    <tr><th class="text-muted">Client</th><td><a href="<?= pageUrl('leads', 'clients') ?>&id=<?= (int) $lead['won_client_id'] ?>"><i class="fas fa-link mr-1"></i><?= e($lead['client_name']) ?></a></td></tr>
+                                    <tr><th class="text-muted">Client</th><td><a href="<?= pageUrl('leads', 'clients') ?>&id=<?= (int) $lead['client_id'] ?>"><i class="fas fa-link mr-1"></i><?= e($lead['client_name']) ?></a></td></tr>
                                 <?php endif; ?>
                             </table>
                         </div>
@@ -313,6 +317,41 @@ if (isset($_GET['id'])) {
                                     <div class="form-group mb-2"><input type="text" name="address" class="form-control form-control-sm" placeholder="Address"></div>
                                     <div class="form-group mb-2"><input type="text" name="pan_num" class="form-control form-control-sm" placeholder="PAN (optional)"></div>
                                     <button type="submit" class="btn btn-sm btn-success btn-block"><i class="fas fa-check mr-1"></i>Create Client</button>
+                                </form>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($lead['client_id']): ?>
+                            <div class="border rounded p-3 mt-2 bg-light">
+                                <h6 class="mb-2"><i class="fas fa-link text-primary mr-1"></i>Linked Client</h6>
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <a href="<?= pageUrl('leads', 'clients') ?>&id=<?= (int) $lead['client_id'] ?>" class="font-weight-bold">
+                                        <i class="fas fa-building mr-1"></i><?= e($lead['client_name']) ?>
+                                    </a>
+                                    <form action="operation.php?module=leads&page=leads" method="post" class="d-inline">
+                                        <?= csrfField() ?>
+                                        <input type="hidden" name="action" value="unlink_lead_from_client">
+                                        <input type="hidden" name="id" value="<?= (int) $lead['id'] ?>">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger confirm-submit" data-confirm="Unlink this lead from the client?"><i class="fas fa-unlink"></i></button>
+                                    </form>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="border rounded p-3 mt-2 bg-light">
+                                <h6 class="mb-2"><i class="fas fa-link text-primary mr-1"></i>Link to Existing Client</h6>
+                                <form action="operation.php?module=leads&page=leads" method="post">
+                                    <?= csrfField() ?>
+                                    <input type="hidden" name="action" value="link_lead_to_client">
+                                    <input type="hidden" name="id" value="<?= (int) $lead['id'] ?>">
+                                    <div class="form-group mb-2">
+                                        <select name="client_id" class="form-control form-control-sm" required>
+                                            <option value="">— Select client —</option>
+                                            <?php foreach ($allClients as $cl): ?>
+                                                <option value="<?= (int) $cl['id'] ?>"><?= e($cl['name']) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary btn-block"><i class="fas fa-link mr-1"></i>Link Client</button>
                                 </form>
                             </div>
                         <?php endif; ?>
@@ -458,9 +497,10 @@ if (!empty($_GET['aging'])) {
 }
 
 $leads = $db->select(
-    'SELECT l.*, o.fullname AS owner_name
+    'SELECT l.*, o.fullname AS owner_name, c.name AS client_name
      FROM `tbl_leads` l
      LEFT JOIN `tbl_users_login` o ON o.id = l.assigned_to
+     LEFT JOIN `tbl_clients` c ON c.id = l.client_id
      WHERE ' . implode(' AND ', $where) . '
      ORDER BY FIELD(l.stage, "New", "Contacted", "Qualified", "Proposal", "Won", "Lost"), l.added_on DESC',
     $params

@@ -233,19 +233,55 @@ try {
             setFlash('error', 'Client name is required.');
             redirect($back . '&id=' . $id);
         }
-        $clientId = $db->insert('tbl_clients', [
-            'name'           => $name,
-            'contact_person' => trim((string) ($_POST['contact_person'] ?? '')) ?: $lead['contact_name'],
-            'email'          => $lead['email'],
-            'phone'          => $lead['phone'],
-            'address'        => trim((string) ($_POST['address'] ?? '')) ?: null,
-            'pan_num'        => trim((string) ($_POST['pan_num'] ?? '')) ?: null,
-            'lead_id'        => $id,
-            'added_by'       => $me,
-        ]);
-        $db->update('tbl_leads', ['won_client_id' => $clientId, 'updated_by' => $me], '`id` = ?', [$id]);
-        logLeadActivity($db, $id, 'Status Change', 'Lead converted to client: ' . $name, $me);
-        setFlash('success', 'Client created from lead.');
+
+        // Duplicate detection: check if client with same email or company name exists
+        $existingClient = null;
+        $email = trim((string) ($_POST['email'] ?? '')) ?: $lead['email'];
+        $company = trim((string) ($_POST['company'] ?? '')) ?: $lead['company'];
+
+        if ($email) {
+            $existingClient = $db->selectOne(
+                'SELECT * FROM `tbl_clients` WHERE `email` = ? LIMIT 1',
+                [$email]
+            );
+        }
+        if (!$existingClient && $company) {
+            $existingClient = $db->selectOne(
+                'SELECT * FROM `tbl_clients` WHERE `name` = ? OR `contact_person` = ? LIMIT 1',
+                [$company, $company]
+            );
+        }
+
+        if ($existingClient) {
+            // Link to existing client instead of creating duplicate
+            $clientId = $existingClient['id'];
+            $db->update('tbl_leads', [
+                'won_client_id' => $clientId,
+                'client_id' => $clientId,
+                'updated_by' => $me,
+            ], '`id` = ?', [$id]);
+            logLeadActivity($db, $id, 'Status Change', 'Lead linked to existing client: ' . $existingClient['name'] . ' (ID: ' . $clientId . ')', $me);
+            setFlash('success', 'Lead linked to existing client: ' . $existingClient['name']);
+        } else {
+            // Create new client
+            $clientId = $db->insert('tbl_clients', [
+                'name'           => $name,
+                'contact_person' => trim((string) ($_POST['contact_person'] ?? '')) ?: $lead['contact_name'],
+                'email'          => $lead['email'],
+                'phone'          => $lead['phone'],
+                'address'        => trim((string) ($_POST['address'] ?? '')) ?: null,
+                'pan_num'        => trim((string) ($_POST['pan_num'] ?? '')) ?: null,
+                'lead_id'        => $id,
+                'added_by'       => $me,
+            ]);
+            $db->update('tbl_leads', [
+                'won_client_id' => $clientId,
+                'client_id' => $clientId,
+                'updated_by' => $me,
+            ], '`id` = ?', [$id]);
+            logLeadActivity($db, $id, 'Status Change', 'Lead converted to new client: ' . $name, $me);
+            setFlash('success', 'Client created from lead.');
+        }
         redirect($back . '&id=' . $id);
     }
 
@@ -259,6 +295,64 @@ try {
             logLeadActivity($db, $id, 'Status Change', 'Lead reopened (Lost → Contacted)', $me);
             setFlash('success', 'Lead reopened.');
         }
+        redirect($back . '&id=' . $id);
+    }
+
+    if ($action === 'link_lead_to_client') {
+        $id = (int) ($_POST['id'] ?? 0);
+        $clientId = (int) ($_POST['client_id'] ?? 0);
+        $lead = $db->selectOne('SELECT * FROM `tbl_leads` WHERE `id` = ?', [$id]);
+        if (!$lead) {
+            setFlash('error', 'Lead not found.');
+            redirect($back);
+        }
+        if (!$clientId) {
+            setFlash('error', 'Please select a client.');
+            redirect($back . '&id=' . $id);
+        }
+        $client = $db->selectOne('SELECT * FROM `tbl_clients` WHERE `id` = ?', [$clientId]);
+        if (!$client) {
+            setFlash('error', 'Client not found.');
+            redirect($back . '&id=' . $id);
+        }
+
+        // Update lead with client reference
+        $updateData = [
+            'client_id' => $clientId,
+            'updated_by' => $me,
+        ];
+        // If lead is Won and doesn't have won_client_id, set it
+        if ($lead['stage'] === 'Won' && !$lead['won_client_id']) {
+            $updateData['won_client_id'] = $clientId;
+        }
+
+        $db->update('tbl_leads', $updateData, '`id` = ?', [$id]);
+        logLeadActivity($db, $id, 'Note', 'Lead linked to client: ' . $client['name'] . ' (ID: ' . $clientId . ')', $me);
+        setFlash('success', 'Lead linked to client: ' . $client['name']);
+        redirect($back . '&id=' . $id);
+    }
+
+    if ($action === 'unlink_lead_from_client') {
+        $id = (int) ($_POST['id'] ?? 0);
+        $lead = $db->selectOne('SELECT * FROM `tbl_leads` WHERE `id` = ?', [$id]);
+        if (!$lead) {
+            setFlash('error', 'Lead not found.');
+            redirect($back);
+        }
+        if (!$lead['client_id']) {
+            setFlash('error', 'This lead is not linked to any client.');
+            redirect($back . '&id=' . $id);
+        }
+
+        $client = $db->selectOne('SELECT * FROM `tbl_clients` WHERE `id` = ?', [$lead['client_id']]);
+        $dbName = $client ? $client['name'] : 'Unknown';
+
+        $db->update('tbl_leads', [
+            'client_id' => null,
+            'updated_by' => $me,
+        ], '`id` = ?', [$id]);
+        logLeadActivity($db, $id, 'Note', 'Lead unlinked from client: ' . $dbName, $me);
+        setFlash('success', 'Lead unlinked from client.');
         redirect($back . '&id=' . $id);
     }
 
@@ -278,6 +372,13 @@ try {
         $db->update('tbl_lead_activities', ['lead_id' => $keepId], '`lead_id` = ?', [$mergeId]);
         $db->update('tbl_lead_files', ['lead_id' => $keepId], '`lead_id` = ?', [$mergeId]);
         $db->update('tbl_cms_contacts_us', ['lead_id' => $keepId], '`lead_id` = ?', [$mergeId]);
+        // Consolidate client link: keep the client reference if the kept lead has none
+        if (!$keep['client_id'] && $merge['client_id']) {
+            $db->update('tbl_leads', ['client_id' => $merge['client_id']], '`id` = ?', [$keepId]);
+        }
+        if (!$keep['won_client_id'] && $merge['won_client_id']) {
+            $db->update('tbl_leads', ['won_client_id' => $merge['won_client_id']], '`id` = ?', [$keepId]);
+        }
         logLeadActivity($db, $keepId, 'Note', 'Merged duplicate lead #' . $mergeId, $me);
         $db->delete('tbl_leads', '`id` = ?', [$mergeId]);
         setFlash('success', 'Duplicate merged into this lead.');

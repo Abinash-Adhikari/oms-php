@@ -82,6 +82,7 @@ $files = array(
     'create-table-lead_activities',
     'create-table-lead_files',
     'create-table-cms_contacts_us',
+    'alter-table-leads-add-client_id',
 
     // --- Communication ---
     'create-table-communication_templates',
