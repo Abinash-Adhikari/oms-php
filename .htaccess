@@ -1,0 +1,50 @@
+# SB-Tech — Apache rewrite rules
+# Clean URLs + custom 404 + security hardening
+
+RewriteEngine On
+
+# --- Custom 404 page ---
+ErrorDocument 404 /404.php
+
+# --- Security: prevent directory listing ---
+Options -Indexes
+
+# --- Security: block access to sensitive files ---
+<FilesMatch "^(composer\.(json|lock)|phpunit\.xml\.dist|\.gitignore|\.htaccess)$">
+    Require all denied
+</FilesMatch>
+
+# --- Block access to hidden files (.env, .git, etc.) ---
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# --- Block access to config, scripts, classes, tests, docs directories ---
+RewriteRule ^(config|scripts|classes|tests|docs|database)/ - [F,L]
+
+# --- Block access to clear_opcache.php (admin-only, no public access) ---
+RewriteRule ^clear_opcache\.php$ - [F,L]
+
+# --- Clean URLs for public pages ---
+# /about  →  /about.php
+# /services  →  /services.php
+# /services/3  →  /services.php?id=3
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([a-z0-9-]+)/?$ $1.php [L,QSA]
+
+# /services/web-development  →  /services.php?slug=web-development
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([a-z0-9-]+)/([a-z0-9-]+)/?$ $1.php?slug=$2 [L,QSA]
+
+# --- Admin panel: clean URLs (optional, backward compatible) ---
+# /admin/leads  →  /admin/show_page.php?module=leads
+# /admin/leads/leads  →  /admin/show_page.php?module=leads&page=leads
+RewriteCond %{REQUEST_URI} ^/admin/([a-z0-9_-]+)/?$
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^admin/([a-z0-9_-]+)/?$ /admin/show_page.php?module=$1 [L,QSA]
+
+RewriteCond %{REQUEST_URI} ^/admin/([a-z0-9_-]+)/([a-z0-9_-]+)/?$
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^admin/([a-z0-9_-]+)/([a-z0-9_-]+)/?$ /admin/show_page.php?module=$1&page=$2 [L,QSA]

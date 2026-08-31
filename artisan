@@ -1,0 +1,182 @@
+<?php
+/**
+ * SB-Tech — CLI migration runner (mirrors reference /artisan).
+ *
+ * Usage (from the project root):
+ *   php artisan migrate            Apply all pending migrations (creates the DB if missing)
+ *   php artisan status             Show applied vs pending migrations
+ *   php artisan rollback [N]       Roll back the last N applied migrations (default 1)
+ *   php artisan help               Show usage
+ *
+ * Migrations are the ordered PHP files listed in database/migration/migrations.php.
+ * Each file defines `$query` (up) and `$rollbackQuery` (down). Applied files are
+ * tracked in `tbl_migrations`.
+ */
+
+if (PHP_SAPI !== 'cli') {
+    die('artisan must be run from the command line.');
+}
+
+// --- CLI bootstrap without connecting to the DB yet ---
+define('APP_BOOTSTRAP_SKIP_DB', true);
+require __DIR__ . '/config/setup.php';
+
+$dbName = (string) config('db_name', 'sb_tech');
+$host   = (string) config('db_host', 'localhost');
+$user   = (string) config('db_username', '');
+$pass   = (string) config('db_password', '');
+$socket = config('db_socket') ? (string) config('db_socket') : null;
+
+require __DIR__ . '/database/migration/migrations.php';
+$migrationDir = __DIR__ . '/database/migration/';
+
+$command = $argv[1] ?? 'help';
+
+// ------------------------------------------------------------------ helpers
+
+function artisanDb(): mysqli
+{
+    global $host, $user, $pass, $dbName, $socket;
+    $mysqli = new mysqli($host, $user, $pass, $dbName, $socket && ($host === 'localhost' || $host === '127.0.0.1') ? null : 0, $socket && ($host === 'localhost' || $host === '127.0.0.1') ? $socket : null);
+    if ($mysqli->connect_errno) {
+        fwrite(STDERR, 'DB connect failed: ' . $mysqli->connect_error . PHP_EOL);
+        exit(1);
+    }
+    $mysqli->set_charset('utf8mb4');
+    return $mysqli;
+}
+
+function appliedMigrations(mysqli $mysqli): array
+{
+    // Table may not exist yet on a fresh install — treat as none applied.
+    $tables = $mysqli->query("SHOW TABLES LIKE 'tbl_migrations'");
+    if (!$tables || $tables->num_rows === 0) {
+        return [];
+    }
+    $res = $mysqli->query("SELECT `filename`, `executed_on` FROM `tbl_migrations` ORDER BY `id`");
+    $applied = [];
+    if ($res) {
+        while ($row = $res->fetch_assoc()) {
+            $applied[$row['filename']] = $row['executed_on'];
+        }
+    }
+    return $applied;
+}
+
+function ensureDatabase(): mysqli
+{
+    global $host, $user, $pass, $dbName, $socket;
+    $useSocket = $socket && ($host === 'localhost' || $host === '127.0.0.1');
+    $conn = new mysqli($host, $user, $pass, null, $useSocket ? null : 0, $useSocket ? $socket : null);
+    if ($conn->connect_errno) {
+        fwrite(STDERR, 'DB server connect failed: ' . $conn->connect_error . PHP_EOL);
+        exit(1);
+    }
+    $conn->query("CREATE DATABASE IF NOT EXISTS `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $conn->close();
+    return artisanDb();
+}
+
+function runQueries(mysqli $mysqli, array $queries, string $file): bool
+{
+    foreach ($queries as $q) {
+        if (!$mysqli->query($q)) {
+            fwrite(STDERR, "FAIL [$file]: " . $mysqli->error . PHP_EOL . '  SQL: ' . substr(preg_replace('/\s+/', ' ', $q), 0, 140) . '...' . PHP_EOL);
+            return false;
+        }
+    }
+    return true;
+}
+
+// ------------------------------------------------------------------ commands
+
+if ($command === 'migrate') {
+    // Do NOT pre-create tbl_migrations here: the first migration file
+    // (create-table-migrations) owns that table. appliedMigrations()
+    // tolerates a missing table on fresh installs.
+    $mysqli = ensureDatabase();
+
+    $applied = appliedMigrations($mysqli);
+    $ran = 0;
+    foreach ($files as $file) {
+        if (isset($applied[$file])) {
+            continue;
+        }
+        require $migrationDir . $file . '.php';
+        if (!isset($query) || !is_array($query)) {
+            fwrite(STDERR, "SKIP [$file]: no \$query defined" . PHP_EOL);
+            unset($query, $rollbackQuery);
+            continue;
+        }
+        if (!runQueries($mysqli, $query, $file)) {
+            exit(1);
+        }
+        $stmt = $mysqli->prepare('INSERT INTO `tbl_migrations` (`filename`, `executed_on`) VALUES (?, NOW())');
+        $stmt->bind_param('s', $file);
+        $stmt->execute();
+        $stmt->close();
+        echo "  ✔ $file" . PHP_EOL;
+        $ran++;
+        unset($query, $rollbackQuery);
+    }
+
+    $total = count($files);
+    echo "Migrated $ran of $total migrations (DB: $dbName)." . PHP_EOL;
+    if ($ran === 0) {
+        echo 'Database is up to date.' . PHP_EOL;
+    }
+    exit(0);
+}
+
+if ($command === 'status') {
+    $mysqli = ensureDatabase();
+    $applied = appliedMigrations($mysqli);
+    echo 'Migrations for `' . $dbName . '`:' . PHP_EOL;
+    foreach ($files as $file) {
+        $state = isset($applied[$file]) ? 'applied (' . $applied[$file] . ')' : 'pending';
+        echo '  [' . str_pad($state, 30) . '] ' . $file . PHP_EOL;
+    }
+    exit(0);
+}
+
+if ($command === 'rollback') {
+    $mysqli = ensureDatabase();
+    $n = isset($argv[2]) ? max(1, (int) $argv[2]) : 1;
+    $applied = appliedMigrations($mysqli);
+    $toRollback = array_slice(array_reverse(array_keys($applied)), 0, $n);
+    if (!$toRollback) {
+        echo 'Nothing to roll back.' . PHP_EOL;
+        exit(0);
+    }
+    foreach ($toRollback as $file) {
+        require $migrationDir . $file . '.php';
+        $down = $rollbackQuery ?? [];
+        // Run down queries in reverse order.
+        foreach (array_reverse($down) as $q) {
+            if (!$mysqli->query($q)) {
+                fwrite(STDERR, "ROLLBACK FAIL [$file]: " . $mysqli->error . PHP_EOL);
+                exit(1);
+            }
+        }
+        $stmt = $mysqli->prepare('DELETE FROM `tbl_migrations` WHERE `filename` = ?');
+        $stmt->bind_param('s', $file);
+        $stmt->execute();
+        $stmt->close();
+        echo "  ↺ $file" . PHP_EOL;
+        unset($query, $rollbackQuery);
+    }
+    exit(0);
+}
+
+// ------------------------------------------------------------------ help
+echo <<<TXT
+SB-Tech migration runner
+
+Usage:
+  php artisan migrate            Apply all pending migrations (creates the DB if missing)
+  php artisan status             Show applied vs pending migrations
+  php artisan rollback [N]       Roll back the last N applied migrations (default 1)
+  php artisan help               Show this help
+
+TXT;
+exit(0);

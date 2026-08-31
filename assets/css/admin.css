@@ -1,0 +1,137 @@
+/* SB-Tech admin custom styles (extends AdminLTE 3). */
+
+/* Compact table scrolling for wide tables (mirrors reference cms-scroll-tables). */
+.table-responsive-scroll {
+    max-height: 480px;
+    overflow-y: auto;
+}
+
+.table-responsive-scroll thead th {
+    position: sticky;
+    top: 0;
+    background: var(--bg-body);
+    z-index: 1;
+}
+
+/* KPI value overflow guard (e.g. a fiscal-year title that runs long) */
+.tms-kpi-value {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Flash alerts stack nicely */
+.content-wrapper .alert {
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-md);
+}
+
+/* Overdue badges */
+.badge-past-due {
+    background: #dc3545;
+    color: #fff;
+}
+
+/* "New" indicators — soft breathing pulse instead of a harsh step blink. */
+.badge-new-today {
+    background: var(--accent);
+    color: #fff;
+    animation: badgePulse 2s ease-in-out infinite;
+}
+
+.badge-new {
+    background: #17a2b8;
+    color: #fff;
+    animation: badgePulse 2.6s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: .55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .badge-new-today,
+    .badge-new {
+        animation: none;
+    }
+}
+
+/* Calendar today cell highlight — tinted with the active accent color. */
+.bg-primary-light {
+    background-color: rgba(var(--accent-rgb, 37, 99, 235), .08);
+}
+
+/* ── Dashboard activity feed ── */
+.tms-activity-feed {
+    display: flex;
+    flex-direction: column;
+}
+
+.tms-activity-item {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .65rem .25rem;
+}
+
+.tms-activity-item + .tms-activity-item {
+    border-top: 1px solid var(--border-light);
+}
+
+.tms-activity-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--text-muted);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 37, 99, 235), .10);
+}
+
+.tms-activity-dot--pending      { background: #F59E0B; box-shadow: 0 0 0 3px rgba(245, 158, 11, .15); }
+.tms-activity-dot--in-progress  { background: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 37, 99, 235), .18); }
+.tms-activity-dot--done         { background: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129, .15); }
+.tms-activity-dot--rejected     { background: #EF4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, .15); }
+.tms-activity-dot--cancelled    { background: var(--text-muted); box-shadow: none; }
+
+.tms-activity-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.tms-activity-title {
+    margin: 0;
+    font-weight: 600;
+    font-size: .875rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tms-activity-meta {
+    color: var(--text-secondary);
+}
+
+/* ── Empty state ── */
+.tms-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.tms-empty-state i {
+    font-size: 2rem;
+    opacity: .5;
+}
+
+.tms-empty-state p {
+    margin: 0;
+    font-size: .875rem;
+    color: var(--text-secondary);
+}

@@ -1,0 +1,32 @@
+# Local environment config (contains credentials)
+config/setup.php
+
+# Uploaded files
+user_uploads/*
+!user_uploads/.gitkeep
+
+# Logs / caches
+*.log
+.cache/
+storage/
+.phpunit.result.cache
+
+# Composer dependencies (regenerate via `composer install`)
+/vendor/
+
+# Local agent/tool tooling — not project source
+/.agents/
+/.claude/
+/.freebuff/
+skills-lock.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# PHP
+*.tmp
+composer.phar
+.gstack/

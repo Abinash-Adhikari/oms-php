@@ -1,0 +1,247 @@
+/* ============================================================
+   SB-Tech — Premium Theme Variables
+   Two dimensions: Light/Dark mode + Accent color.
+   data-mode="light|dark" on <html> controls the base.
+   data-accent="blue|emerald|purple|rose|amber|indigo" controls accent.
+   ============================================================ */
+
+/* ── Premium Light Mode (default) ── */
+:root,
+[data-mode="light"] {
+    /* Core palette - Premium Trust Blue
+       (--text-muted is WCAG AA-checked: #64748B ≥ 4.5:1 on both card and body bg.
+       The old #94A3B8 failed at ~2.7:1.) */
+    --bg-body:             #F8FAFC;
+    --bg-card:             #FFFFFF;
+    --text-primary:        #0F172A;
+    --text-secondary:      #475569;
+    --text-muted:          #64748B;
+    --border-color:        #E2E8F0;
+    --border-light:        #F1F5F9;
+
+    /* Sidebar */
+    --sidebar-bg:          #0F172A;
+    --sidebar-text:        #CBD5E1;
+    --sidebar-hover-bg:    #1E293B;
+    --sidebar-hover-text:  #F1F5F9;
+    --sidebar-active-bg:   var(--accent, #2563EB);
+    --sidebar-active-text: #FFFFFF;
+
+    /* Navbar */
+    --navbar-bg:           rgba(255, 255, 255, 0.85);
+    --navbar-text:         #0F172A;
+    --navbar-border:       rgba(226, 232, 240, 0.5);
+
+    /* Inputs */
+    --input-bg:            #FFFFFF;
+    --input-border:        #CBD5E1;
+    --input-focus-border:  var(--accent, #2563EB);
+    --input-focus-ring:    rgba(37, 99, 235, 0.15);
+
+    /* Tables */
+    --table-bg:            #FFFFFF;
+    --table-stripe:        #F8FAFC;
+    --table-hover:         #F1F5F9;
+    --table-border:        #E2E8F0;
+
+    /* Modal */
+    --modal-bg:            #FFFFFF;
+    --modal-backdrop:      rgba(15, 23, 42, 0.5);
+
+    /* Dropdown */
+    --dropdown-bg:         #FFFFFF;
+    --dropdown-hover:      #F1F5F9;
+    --dropdown-border:     #E2E8F0;
+
+    /* Badge */
+    --badge-text:          #FFFFFF;
+
+    /* Shadows - Premium depth */
+    --shadow-sm:           0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-md:           0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+    --shadow-lg:           0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+    --shadow-xl:           0 20px 40px -10px rgba(15, 23, 42, 0.12);
+    --shadow-glow:         0 0 30px rgba(37, 99, 235, 0.15);
+
+    /* Glassmorphism */
+    --glass-bg:            rgba(255, 255, 255, 0.7);
+    --glass-border:        rgba(255, 255, 255, 0.3);
+    --glass-blur:          12px;
+
+    /* Gradients */
+    --gradient-hero:       linear-gradient(135deg, #0F172A 0%, #1E3A5F 50%, #2563EB 100%);
+    --gradient-card:       linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%);
+    --gradient-cta:        linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+
+    /* Typography Scale */
+    --font-display:        'Poppins', sans-serif;
+    --font-body:           'Open Sans', sans-serif;
+    --font-mono:           'JetBrains Mono', monospace;
+
+    /* Spacing Scale */
+    --space-xs:            0.25rem;
+    --space-sm:            0.5rem;
+    --space-md:            1rem;
+    --space-lg:            1.5rem;
+    --space-xl:            2rem;
+    --space-2xl:           3rem;
+    --space-3xl:           4rem;
+
+    /* Border Radius */
+    --radius-sm:           0.375rem;
+    --radius-md:           0.5rem;
+    --radius-lg:           0.75rem;
+    --radius-xl:           1rem;
+    --radius-2xl:          1.5rem;
+    --radius-full:         9999px;
+
+    /* Transitions */
+    --transition-fast:     150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base:     250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow:     350ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring:   500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Dark Mode ── */
+[data-mode="dark"] {
+    --bg-body:             #0B1120;
+    --bg-card:             #1E293B;
+    --text-primary:        #F1F5F9;
+    --text-secondary:      #CBD5E1;
+    --text-muted:          #94A3B8;
+    --border-color:        #334155;
+    --border-light:        #1E293B;
+
+    --sidebar-bg:          #060A14;
+    --sidebar-text:        #94A3B8;
+    --sidebar-hover-bg:    #1E293B;
+    --sidebar-hover-text:  #F1F5F9;
+    --sidebar-active-bg:   var(--accent, #2563EB);
+    --sidebar-active-text: #FFFFFF;
+
+    --navbar-bg:           rgba(15, 23, 42, 0.9);
+    --navbar-text:         #F1F5F9;
+    --navbar-border:       rgba(51, 65, 85, 0.5);
+
+    --input-bg:            #0F172A;
+    --input-border:        #334155;
+    --input-focus-border:  var(--accent, #2563EB);
+    --input-focus-ring:    rgba(37, 99, 235, 0.25);
+
+    --table-bg:            #1E293B;
+    --table-stripe:        #172033;
+    --table-hover:         #253349;
+    --table-border:        #334155;
+
+    --modal-bg:            #1E293B;
+    --modal-backdrop:      rgba(0, 0, 0, 0.7);
+
+    --dropdown-bg:         #1E293B;
+    --dropdown-hover:      #253349;
+    --dropdown-border:     #334155;
+
+    --badge-text:          #FFFFFF;
+
+    --shadow-sm:           0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md:           0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+    --shadow-lg:           0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    --shadow-xl:           0 20px 40px -10px rgba(0, 0, 0, 0.6);
+    --shadow-glow:         0 0 30px rgba(37, 99, 235, 0.2);
+
+    --glass-bg:            rgba(30, 41, 59, 0.7);
+    --glass-border:        rgba(51, 65, 85, 0.3);
+    --glass-blur:          12px;
+
+    --gradient-hero:       linear-gradient(135deg, #0B1120 0%, #1E293B 50%, #0F172A 100%);
+    --gradient-card:       linear-gradient(145deg, #1E293B 0%, #172033 100%);
+    --gradient-cta:        linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+}
+
+/* ── Accent: Blue (Premium) ── */
+[data-accent="blue"],
+:root {
+    --accent:              #2563EB;
+    --accent-hover:        #1D4ED8;
+    --accent-light:        #DBEAFE;
+    --accent-text:         #FFFFFF;
+    --accent-rgb:          37, 99, 235;
+    --brand-primary:       #2563EB;
+    --brand-primary-hover: #1D4ED8;
+}
+
+/* ── Accent: Emerald ── */
+[data-accent="emerald"] {
+    --accent:              #059669;
+    --accent-hover:        #047857;
+    --accent-light:        #D1FAE5;
+    --accent-text:         #FFFFFF;
+    --accent-rgb:          5, 150, 105;
+    --brand-primary:       #059669;
+    --brand-primary-hover: #047857;
+}
+
+/* ── Accent: Purple ── */
+[data-accent="purple"] {
+    --accent:              #7C3AED;
+    --accent-hover:        #6D28D9;
+    --accent-light:        #EDE9FE;
+    --accent-text:         #FFFFFF;
+    --accent-rgb:          124, 58, 237;
+    --brand-primary:       #7C3AED;
+    --brand-primary-hover: #6D28D9;
+}
+
+/* ── Accent: Rose ── */
+[data-accent="rose"] {
+    --accent:              #E11D48;
+    --accent-hover:        #BE123C;
+    --accent-light:        #FFE4E6;
+    --accent-text:         #FFFFFF;
+    --accent-rgb:          225, 29, 72;
+    --brand-primary:       #E11D48;
+    --brand-primary-hover: #BE123C;
+}
+
+/* ── Accent: Amber ── */
+[data-accent="amber"] {
+    --accent:              #D97706;
+    --accent-hover:        #B45309;
+    --accent-light:        #FEF3C7;
+    --accent-text:         #0F172A;
+    --accent-rgb:          217, 119, 6;
+    --brand-primary:       #D97706;
+    --brand-primary-hover: #B45309;
+}
+
+/* ── Accent: Indigo ── */
+[data-accent="indigo"] {
+    --accent:              #4F46E5;
+    --accent-hover:        #4338CA;
+    --accent-light:        #E0E7FF;
+    --accent-text:         #FFFFFF;
+    --accent-rgb:          79, 70, 229;
+    --brand-primary:       #4F46E5;
+    --brand-primary-hover: #4338CA;
+}
+
+/* ── Smooth transitions on theme switch ── */
+html {
+    background: var(--bg-body);
+    transition: background-color var(--transition-base), color var(--transition-base);
+}
+
+html * {
+    transition: background-color var(--transition-fast),
+                border-color var(--transition-fast),
+                color var(--transition-fast),
+                box-shadow var(--transition-fast);
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+    html,
+    html * {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
