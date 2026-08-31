@@ -124,6 +124,7 @@ $files = array(
     'create-table-document-engine',
     'add-type-specific-columns-documents',
     'add-fk-document-engine',
+    'ensure-fk-document-engine',
     'add-title-column-document-files',
 
     // Append new migration filenames below only (do not insert in the middle).
