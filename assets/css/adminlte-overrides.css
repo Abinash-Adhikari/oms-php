@@ -276,6 +276,34 @@ body.layout-fixed .main-sidebar .brand-link {
     }
 }
 
+/* ── Mobile sidebar (<992px): off-canvas drawer ──
+   AdminLTE's stock CSS pushes the sidebar off-screen with margin-left:-250px
+   (its default width). Our sidebar is 290px, so we must override the offset
+   to fully hide it. The ::before pseudo-element must also cover the full
+   viewport when the sidebar is open to act as a dark backdrop overlay. */
+@media (max-width: 991.98px) {
+    /* Collapsed: push the full 290px sidebar off-screen */
+    body.sidebar-collapse .main-sidebar,
+    body.sidebar-collapse .main-sidebar::before {
+        margin-left: -290px !important;
+    }
+
+    /* Open: ::before covers the entire viewport as a dark backdrop */
+    body:not(.sidebar-collapse) .main-sidebar::before {
+        width: 100vw !important;
+        left: 0 !important;
+        background: rgba(0, 0, 0, .5) !important;
+        z-index: 1044 !important;
+    }
+
+    /* Open: no content shift on mobile — sidebar overlays the page */
+    body:not(.sidebar-collapse) .content-wrapper,
+    body:not(.sidebar-collapse) .main-footer,
+    body:not(.sidebar-collapse) .main-header {
+        margin-left: 0 !important;
+    }
+}
+
 .cms-brand-wrap {
     display: flex;
     align-items: center;
