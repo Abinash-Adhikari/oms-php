@@ -62,15 +62,14 @@ $query = [
         `amount`        DECIMAL(18,4) NOT NULL DEFAULT 0.0000,
         `sort_order`    INT NOT NULL DEFAULT 0,
         PRIMARY KEY (`id`),
-        KEY `idx_di_doc` (`document_id`),
-        CONSTRAINT `fk_document_items_doc` FOREIGN KEY (`document_id`) REFERENCES `tbl_documents` (`id`) ON DELETE CASCADE
+        KEY `idx_di_doc` (`document_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     COMMENT='Shared line items for all document types'",
 
     // ═══════════════════════════════════════════════════════════════
     // tbl_document_files — shared attachments for all documents
     // ═══════════════════════════════════════════════════════════════
-    "CREATE TABLE `tbl_document_files` (
+    "CREATE TABLE IF NOT EXISTS `tbl_document_files` (
         `id`              INT NOT NULL AUTO_INCREMENT,
         `document_id`     INT NOT NULL,
         `file_name`       VARCHAR(255) NOT NULL,
@@ -80,8 +79,7 @@ $query = [
         `added_by`        INT DEFAULT NULL,
         `added_on`        DATETIME DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (`id`),
-        KEY `idx_df_doc` (`document_id`),
-        CONSTRAINT `fk_document_files_doc` FOREIGN KEY (`document_id`) REFERENCES `tbl_documents` (`id`) ON DELETE CASCADE
+        KEY `idx_df_doc` (`document_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     COMMENT='Shared file attachments for all document types'",
 ];
