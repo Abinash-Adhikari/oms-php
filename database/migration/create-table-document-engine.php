@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Migration: Create unified document engine tables.
  *
@@ -9,7 +10,7 @@ $query = [
     // ═══════════════════════════════════════════════════════════════
     // tbl_documents — unified header for ALL document types
     // ═══════════════════════════════════════════════════════════════
-    "CREATE TABLE `tbl_documents` (
+    "CREATE TABLE IF NOT EXISTS `tbl_documents` (
         `id`              INT NOT NULL AUTO_INCREMENT,
         `document_type`   VARCHAR(30) NOT NULL COMMENT 'quotation|invoice|proforma|proposal|contract|price_list|brochure|credit_note',
         `document_number` VARCHAR(50) NOT NULL COMMENT 'Unique number: QTN-2026-0001, INV-2026-0001, etc.',
@@ -50,7 +51,7 @@ $query = [
     // ═══════════════════════════════════════════════════════════════
     // tbl_document_items — shared line items for all item-based docs
     // ═══════════════════════════════════════════════════════════════
-    "CREATE TABLE `tbl_document_items` (
+    "CREATE TABLE IF NOT EXISTS `tbl_document_items` (
         `id`            INT NOT NULL AUTO_INCREMENT,
         `document_id`   INT NOT NULL,
         `item_name`     VARCHAR(255) NOT NULL,
