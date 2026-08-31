@@ -37,6 +37,9 @@ $command = $argv[1] ?? 'help';
 
 function artisanDb(): mysqli
 {
+    // Report errors via return values (not exceptions) so the runner's skip
+    // logic in runQueries() can detect already-present schema changes.
+    mysqli_report(MYSQLI_REPORT_OFF);
     global $host, $user, $pass, $dbName, $socket;
     $mysqli = new mysqli($host, $user, $pass, $dbName, $socket && ($host === 'localhost' || $host === '127.0.0.1') ? null : 0, $socket && ($host === 'localhost' || $host === '127.0.0.1') ? $socket : null);
     if ($mysqli->connect_errno) {
@@ -66,6 +69,11 @@ function appliedMigrations(mysqli $mysqli): array
 
 function ensureDatabase(): mysqli
 {
+    // The runner relies on query() returning false (not throwing) so that the
+    // already-present-schema skip logic in runQueries() can detect and continue.
+    // Servers with mysqli_report = MYSQLI_REPORT_ERROR in php.ini would otherwise
+    // throw a fatal mysqli_sql_exception on re-run (e.g. CREATE TABLE IF NOT EXISTS).
+    mysqli_report(MYSQLI_REPORT_OFF);
     global $host, $user, $pass, $dbName, $socket;
     $useSocket = $socket && ($host === 'localhost' || $host === '127.0.0.1');
     $conn = new mysqli($host, $user, $pass, null, $useSocket ? null : 0, $useSocket ? $socket : null);
