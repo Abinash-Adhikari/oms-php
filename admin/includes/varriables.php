@@ -273,7 +273,8 @@ $pages = [
  * page whose Auth::can grant applies.
  */
 $innerPageGrants = [
-    'clients' => ['detail' => 'clients'],
+    'clients'          => ['detail' => 'clients'],
+    'staff_management' => ['detail' => 'add_staff'],
 ];
 
 /**

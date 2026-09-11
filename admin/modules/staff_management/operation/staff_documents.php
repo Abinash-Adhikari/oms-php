@@ -6,7 +6,7 @@
 $db = Database::instance();
 $action = $_POST['action'] ?? 'add';
 $staffId = (int) ($_POST['staff_id'] ?? 0);
-$back = pageUrl('staff_management', 'add_staff') . '&id=' . $staffId;
+$back = pageUrl('staff_management', 'staff_documents') . '&id=' . $staffId;
 
 if ($action === 'delete') {
     $id = (int) ($_POST['id'] ?? 0);
