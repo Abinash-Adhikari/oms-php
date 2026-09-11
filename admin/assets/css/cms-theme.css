@@ -1,0 +1,2187 @@
+/**
+ * CMS admin shell: light/dark themes, accent palettes, modern sidebar.
+ * Driven by <html data-theme="light|dark" data-accent="emerald|blue|...">.
+ */
+
+:root {
+  --cms-font: "Inter", "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --cms-radius: 10px;
+  --cms-radius-sm: 8px;
+  --cms-sidebar-width: 290px;
+  /* Shared UI type scale — 12 / 13 / 14 / 15 / 17 / 22 */
+  --cms-fs-xs: 0.75rem;
+  --cms-fs-sm: 0.8125rem;
+  --cms-fs-md: 0.875rem;
+  --cms-fs-lg: 0.95rem;
+  --cms-fs-xl: 1.05rem;
+  --cms-fs-stat: 1.35rem;
+}
+
+/* Accent presets (primary + soft bg for light sidebar highlights) */
+html[data-accent="blue"] {
+  --cms-accent: #3b82f6;
+  --cms-accent-hover: #2563eb;
+  --cms-accent-soft: rgba(59, 130, 246, 0.12);
+  --cms-accent-contrast: #fff;
+}
+
+html[data-accent="emerald"] {
+  --cms-accent: #10b981;
+  --cms-accent-hover: #059669;
+  --cms-accent-soft: rgba(16, 185, 129, 0.14);
+  --cms-accent-contrast: #fff;
+}
+
+html[data-accent="purple"] {
+  --cms-accent: #8b5cf6;
+  --cms-accent-hover: #7c3aed;
+  --cms-accent-soft: rgba(139, 92, 246, 0.14);
+  --cms-accent-contrast: #fff;
+}
+
+html[data-accent="rose"] {
+  --cms-accent: #f43f5e;
+  --cms-accent-hover: #e11d48;
+  --cms-accent-soft: rgba(244, 63, 94, 0.14);
+  --cms-accent-contrast: #fff;
+}
+
+html[data-accent="amber"] {
+  --cms-accent: #f59e0b;
+  --cms-accent-hover: #d97706;
+  --cms-accent-soft: rgba(245, 158, 11, 0.18);
+  --cms-accent-contrast: #1a1a1a;
+}
+
+html[data-accent="indigo"] {
+  --cms-accent: #6366f1;
+  --cms-accent-hover: #4f46e5;
+  --cms-accent-soft: rgba(99, 102, 241, 0.14);
+  --cms-accent-contrast: #fff;
+}
+
+/* Light theme surface tokens */
+html[data-theme="light"],
+html:not([data-theme]) {
+  --cms-page-bg: #f3f4f6;
+  --cms-content-bg: #f3f4f6;
+  --cms-card-bg: #ffffff;
+  --cms-card-border: rgba(15, 23, 42, 0.06);
+  --cms-text: #0f172a;
+  --cms-text-muted: #64748b;
+  --cms-header-bg: #ffffff;
+  --cms-header-border: rgba(15, 23, 42, 0.08);
+  --cms-input-bg: #ffffff;
+  --cms-input-border: rgba(15, 23, 42, 0.12);
+  --cms-sidebar-bg: #ffffff;
+  --cms-sidebar-border: rgba(15, 23, 42, 0.08);
+  --cms-sidebar-text: #334155;
+  --cms-sidebar-muted: #94a3b8;
+  --cms-sidebar-section-bg: transparent;
+  --cms-footer-bg: #ffffff;
+  --cms-footer-border: rgba(15, 23, 42, 0.08);
+  --cms-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --cms-surface-muted: #f8fafc;
+  --cms-surface-hover: #f1f5f9;
+}
+
+html[data-theme="dark"] {
+  --cms-page-bg: #0f1419;
+  --cms-content-bg: #0f1419;
+  --cms-card-bg: #1a2332;
+  --cms-card-border: rgba(148, 163, 184, 0.12);
+  --cms-text: #f1f5f9;
+  --cms-text-muted: #94a3b8;
+  --cms-header-bg: #151c27;
+  --cms-header-border: rgba(148, 163, 184, 0.12);
+  --cms-input-bg: #1a2332;
+  --cms-input-border: rgba(148, 163, 184, 0.2);
+  --cms-sidebar-bg: #151c27;
+  --cms-sidebar-border: rgba(148, 163, 184, 0.1);
+  --cms-sidebar-text: #e2e8f0;
+  --cms-sidebar-muted: #64748b;
+  --cms-sidebar-section-bg: transparent;
+  --cms-footer-bg: #151c27;
+  --cms-footer-border: rgba(148, 163, 184, 0.12);
+  --cms-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --cms-surface-muted: #151c27;
+  --cms-surface-hover: rgba(148, 163, 184, 0.12);
+}
+
+html[data-theme="light"] body.cms-admin,
+html:not([data-theme]) body.cms-admin,
+html[data-theme="dark"] body.cms-admin {
+  font-family: var(--cms-font);
+  color: var(--cms-text);
+  background-color: var(--cms-page-bg);
+}
+
+/* Layout */
+body.cms-admin .wrapper {
+  background-color: var(--cms-page-bg);
+}
+
+body.cms-admin .content-wrapper {
+  background-color: var(--cms-content-bg) !important;
+  color: var(--cms-text);
+}
+
+body.cms-admin .content-header h1 {
+  color: var(--cms-text);
+}
+
+body.cms-admin .breadcrumb-item,
+body.cms-admin .breadcrumb-item a {
+  color: var(--cms-text-muted);
+}
+
+body.cms-admin .main-footer {
+  background-color: var(--cms-footer-bg);
+  border-top: 1px solid var(--cms-footer-border);
+  color: var(--cms-text-muted);
+}
+
+body.cms-admin .main-footer a {
+  color: var(--cms-accent);
+}
+
+/* Top navbar */
+body.cms-admin .main-header.navbar {
+  background-color: var(--cms-header-bg) !important;
+  border-bottom: 1px solid var(--cms-header-border) !important;
+}
+
+body.cms-admin .main-header .nav-link {
+  color: var(--cms-text-muted) !important;
+}
+
+body.cms-admin .main-header .nav-link:hover {
+  color: var(--cms-text) !important;
+}
+
+body.cms-admin .navbar-search-block {
+  background-color: var(--cms-header-bg);
+  border-color: var(--cms-header-border);
+}
+
+body.cms-admin .form-control-navbar {
+  background-color: var(--cms-input-bg);
+  color: var(--cms-text);
+  border-color: var(--cms-input-border);
+}
+
+/* Cards & boxes */
+body.cms-admin .card {
+  background-color: var(--cms-card-bg);
+  border: 1px solid var(--cms-card-border);
+  box-shadow: var(--cms-shadow);
+  border-radius: var(--cms-radius);
+}
+
+body.cms-admin .card-header {
+  background-color: transparent;
+  border-bottom-color: var(--cms-card-border);
+  color: var(--cms-text);
+}
+
+body.cms-admin .small-box,
+body.cms-admin .info-box {
+  border-radius: var(--cms-radius);
+}
+
+/* Primary / accent buttons alignment */
+body.cms-admin .btn-primary {
+  background-color: var(--cms-accent);
+  border-color: var(--cms-accent);
+}
+
+body.cms-admin .btn-primary:hover {
+  background-color: var(--cms-accent-hover);
+  border-color: var(--cms-accent-hover);
+}
+
+/* ——— Sidebar shell ——— */
+/* No !important: AdminLTE .sidebar-mini.sidebar-collapse must win (4.6rem rail). */
+body.cms-admin .main-sidebar,
+body.cms-admin .main-sidebar::before {
+  width: var(--cms-sidebar-width);
+}
+
+/* Staff (cms-staff-app): no right-edge hairline; student portal keeps border when not staff */
+body.cms-admin .main-sidebar {
+  background-color: var(--cms-sidebar-bg) !important;
+  box-shadow: none;
+}
+
+body.cms-admin:not(.cms-staff-app) .main-sidebar {
+  border-right: 1px solid var(--cms-sidebar-border);
+}
+
+/* Match AdminLTE layout-fixed brand strip to sidebar width (not mini-collapsed rail; see below) */
+body.cms-admin.layout-fixed .main-sidebar .brand-link {
+  width: var(--cms-sidebar-width) !important;
+}
+
+@media (min-width: 992px) {
+  /* Collapsed icon rail — must match AdminLTE (overrides wider --cms-sidebar-width). */
+  body.cms-admin.sidebar-mini.sidebar-collapse .main-sidebar,
+  body.cms-admin.sidebar-mini.sidebar-collapse .main-sidebar::before {
+    width: 4.6rem !important;
+  }
+
+  body.cms-admin.sidebar-mini.sidebar-collapse .main-sidebar .brand-link {
+    width: 4.6rem !important;
+  }
+}
+
+/* Full hide when sidebar is toggled off (non–mini modes) */
+body.cms-admin.sidebar-collapse:not(.sidebar-mini):not(.sidebar-mini-md):not(.sidebar-mini-xs) .main-sidebar,
+body.cms-admin.sidebar-collapse:not(.sidebar-mini):not(.sidebar-mini-md):not(.sidebar-mini-xs) .main-sidebar::before {
+  margin-left: calc(-1 * var(--cms-sidebar-width)) !important;
+}
+
+/* Push main column to match wider sidebar (AdminLTE default 250px).
+   Use min-width 992px so mobile/tablet overlay (<992px) keeps margin-left:0; 768px here
+   collided with AdminLTE and hid the top pushmenu. Exclude mini collapsed. */
+@media (min-width: 992px) {
+  body.cms-admin:not(.sidebar-mini-md):not(.sidebar-mini-xs):not(.layout-top-nav):not(.sidebar-mini.sidebar-collapse):not(.sidebar-mini-md.sidebar-collapse):not(.sidebar-mini-xs.sidebar-collapse) .content-wrapper,
+  body.cms-admin:not(.sidebar-mini-md):not(.sidebar-mini-xs):not(.layout-top-nav):not(.sidebar-mini.sidebar-collapse):not(.sidebar-mini-md.sidebar-collapse):not(.sidebar-mini-xs.sidebar-collapse) .main-footer,
+  body.cms-admin:not(.sidebar-mini-md):not(.sidebar-mini-xs):not(.layout-top-nav):not(.sidebar-mini.sidebar-collapse):not(.sidebar-mini-md.sidebar-collapse):not(.sidebar-mini-xs.sidebar-collapse) .main-header {
+    margin-left: var(--cms-sidebar-width) !important;
+  }
+}
+
+/* sidebar-mini: expanded hover / focus width (AdminLTE uses 250px) */
+@media (min-width: 992px) {
+  body.cms-admin.sidebar-mini.sidebar-collapse .main-sidebar:not(.sidebar-no-expand):hover,
+  body.cms-admin.sidebar-mini.sidebar-collapse .main-sidebar:not(.sidebar-no-expand).sidebar-focused {
+    width: var(--cms-sidebar-width) !important;
+  }
+
+  body.cms-admin.sidebar-mini.sidebar-collapse .main-sidebar:not(.sidebar-no-expand):hover .brand-link,
+  body.cms-admin.sidebar-mini.sidebar-collapse .main-sidebar:not(.sidebar-no-expand).sidebar-focused .brand-link {
+    width: var(--cms-sidebar-width) !important;
+  }
+
+  body.cms-admin.sidebar-mini.sidebar-collapse.layout-fixed .main-sidebar:hover .brand-link,
+  body.cms-admin.sidebar-mini.sidebar-collapse.layout-fixed .main-sidebar.sidebar-focused .brand-link {
+    width: var(--cms-sidebar-width) !important;
+  }
+}
+
+body.cms-admin .main-sidebar.sidebar-dark-success,
+body.cms-admin .main-sidebar .sidebar-dark-success {
+  background-color: var(--cms-sidebar-bg) !important;
+}
+
+body.cms-admin .main-sidebar .cms-brand-wrap {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--cms-sidebar-border);
+  background-color: var(--cms-sidebar-bg);
+}
+
+body.cms-admin .main-sidebar .cms-brand-wrap .brand-link {
+  border-bottom: none;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 0.75rem 0.85rem 1rem;
+}
+
+body.layout-navbar-fixed .wrapper .main-sidebar .cms-brand-wrap .brand-link {
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+body.cms-admin .main-sidebar .brand-link {
+  background-color: var(--cms-sidebar-bg);
+  transition: padding 0.2s ease;
+}
+
+body.cms-admin .main-sidebar .brand-link .brand-image {
+  max-height: 36px;
+  width: 36px;
+  object-fit: cover;
+}
+
+body.cms-admin .main-sidebar .brand-link .brand-text {
+  color: var(--cms-text) !important;
+  font-weight: 600;
+  font-size: var(--cms-fs-xl);
+  flex: 1;
+  letter-spacing: -0.02em;
+}
+
+body.cms-admin .cms-brand-collapse {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  margin: 0.6rem 0.75rem 0.6rem 0;
+  border-radius: var(--cms-radius-sm);
+  color: var(--cms-sidebar-muted);
+  border: 1px solid var(--cms-sidebar-border);
+  background: transparent;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  align-self: center;
+}
+
+body.cms-admin .cms-brand-collapse:hover {
+  background: var(--cms-accent-soft);
+  color: var(--cms-accent);
+}
+
+/* Sidebar search */
+body.cms-admin .cms-sidebar-search-wrap {
+  padding: 0.75rem 1rem 0.5rem;
+}
+
+body.cms-admin .cms-sidebar-search {
+  width: 100%;
+  border-radius: var(--cms-radius-sm);
+  border: 1px solid var(--cms-input-border);
+  background-color: var(--cms-input-bg);
+  color: var(--cms-text);
+  padding: 0.45rem 0.75rem 0.45rem 2.25rem;
+  font-size: var(--cms-fs-md);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+body.cms-admin .cms-sidebar-search:focus {
+  outline: none;
+  border-color: var(--cms-accent);
+  box-shadow: 0 0 0 3px var(--cms-accent-soft);
+}
+
+body.cms-admin .cms-sidebar-search-wrap {
+  position: relative;
+}
+
+body.cms-admin .cms-sidebar-search-wrap .cms-sidebar-search-icon {
+  position: absolute;
+  left: 1.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 2px;
+  color: var(--cms-sidebar-muted);
+  font-size: var(--cms-fs-md);
+  pointer-events: none;
+}
+
+/* Section headers */
+body.cms-admin .cms-sidebar .nav-header.cms-sidebar-section {
+  color: var(--cms-sidebar-muted) !important;
+  font-size: var(--cms-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 1rem 1rem 0.35rem;
+  margin-top: 0.25rem;
+  background: transparent;
+}
+
+body.cms-admin .cms-sidebar .nav-link {
+  border: none !important;
+  border-radius: var(--cms-radius-sm) !important;
+  color: var(--cms-sidebar-text) !important;
+  margin: 2px 0.75rem;
+  padding: 0.55rem 0.85rem !important;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+body.cms-admin .cms-sidebar .nav-link p {
+  margin: 0;
+  flex: 1;
+  font-size: var(--cms-fs-md);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+body.cms-admin .cms-sidebar .nav-icon {
+  font-size: 1.08rem;
+  opacity: 0.9;
+  width: 1.45rem;
+  text-align: center;
+}
+
+body.cms-admin .cms-sidebar .nav-link:hover {
+  background-color: var(--cms-accent-soft) !important;
+  color: var(--cms-text) !important;
+}
+
+/* Active — light: left bar; dark: filled pill */
+html[data-theme="light"] body.cms-admin .cms-sidebar .nav-link.active,
+html:not([data-theme]) body.cms-admin .cms-sidebar .nav-link.active {
+  background-color: var(--cms-accent-soft) !important;
+  color: var(--cms-accent) !important;
+  box-shadow: inset 3px 0 0 0 var(--cms-accent);
+}
+
+html[data-theme="dark"] body.cms-admin .cms-sidebar .nav-link.active {
+  background-color: var(--cms-accent) !important;
+  color: var(--cms-accent-contrast) !important;
+  box-shadow: none;
+}
+
+html[data-theme="dark"] body.cms-admin .cms-sidebar .nav-link.active .nav-icon {
+  color: var(--cms-accent-contrast) !important;
+}
+
+/* Tree submenu */
+body.cms-admin .cms-sidebar .nav-treeview {
+  padding-left: 0.25rem;
+}
+
+body.cms-admin .cms-sidebar .nav-treeview .nav-link {
+  font-size: var(--cms-fs-sm);
+  padding-left: 2rem !important;
+}
+
+body.cms-admin .cms-sidebar .nav-treeview .nav-icon {
+  font-size: 0.75rem;
+}
+
+/* Sidebar user */
+body.cms-admin .cms-sidebar-user {
+  margin-top: auto;
+  padding: 1rem;
+  border-top: 1px solid var(--cms-sidebar-border);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--cms-sidebar-bg);
+}
+
+body.cms-admin .cms-sidebar-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--cms-sidebar-border);
+}
+
+body.cms-admin .cms-sidebar-user-name {
+  font-size: var(--cms-fs-md);
+  font-weight: 600;
+  color: var(--cms-text);
+  line-height: 1.25;
+}
+
+body.cms-admin .cms-sidebar-user-meta {
+  font-size: var(--cms-fs-xs);
+  color: var(--cms-sidebar-muted);
+  line-height: 1.2;
+}
+
+/*
+ * Sidebar shell: brand fixed; .sidebar fills remainder; .cms-sidebar-scroll scrolls.
+ * !important beats AdminLTE layout-fixed inline height + .sidebar { overflow-y: initial }.
+ */
+body.cms-admin .main-sidebar {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100vh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+
+body.cms-admin .main-sidebar .cms-brand-wrap {
+  flex: 0 0 auto !important;
+  z-index: 1;
+}
+
+body.cms-admin.layout-fixed .main-sidebar > .sidebar,
+body.cms-admin .main-sidebar > .sidebar.cms-sidebar {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  /* Clear AdminLTE Layout._fixHeight() pixel height so flex can constrain */
+  height: auto !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  overflow-y: hidden !important;
+  position: relative !important;
+  padding-bottom: 0 !important;
+}
+
+body.cms-admin .cms-sidebar-search-wrap {
+  flex: 0 0 auto !important;
+  background: var(--cms-sidebar-bg);
+  z-index: 1;
+}
+
+body.cms-admin .cms-sidebar-scroll {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 0 !important; /* flex item takes remaining space instead of content height */
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding-bottom: 0.75rem;
+  /* Hide scrollbar; scrolling still works (wheel / touch / trackpad). */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge legacy */
+}
+
+body.cms-admin .cms-sidebar-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none; /* Chrome, Safari, Edge */
+}
+
+body.cms-admin .cms-sidebar-user {
+  flex: 0 0 auto !important;
+}
+
+/* Remove legacy sidebar footer */
+body.cms-admin .sidebar-custom {
+  display: none;
+}
+
+/* Theme dropdown */
+body.cms-admin .cms-theme-panel.dropdown-menu {
+  min-width: 280px;
+  padding: 1rem;
+  border-radius: var(--cms-radius);
+  box-shadow: var(--cms-shadow);
+  background: var(--cms-card-bg);
+  border: 1px solid var(--cms-card-border);
+}
+
+body.cms-admin .cms-theme-panel .cms-theme-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--cms-text);
+}
+
+body.cms-admin .cms-theme-panel .cms-theme-sub {
+  font-size: 0.75rem;
+  color: var(--cms-text-muted);
+  margin-bottom: 0.75rem;
+}
+
+body.cms-admin .cms-mode-toggle {
+  display: flex;
+  border-radius: var(--cms-radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--cms-input-border);
+  margin-bottom: 1rem;
+}
+
+body.cms-admin .cms-mode-btn {
+  flex: 1;
+  border: none;
+  background: var(--cms-input-bg);
+  color: var(--cms-text-muted);
+  padding: 0.45rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+body.cms-admin .cms-mode-btn.active {
+  background: var(--cms-accent);
+  color: var(--cms-accent-contrast);
+}
+
+body.cms-admin .cms-palette-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+body.cms-admin .cms-palette-item {
+  position: relative;
+  border: 2px solid var(--cms-card-border);
+  border-radius: var(--cms-radius-sm);
+  padding: 0.5rem;
+  padding-right: 1.75rem;
+  cursor: pointer;
+  text-align: left;
+  background: var(--cms-input-bg);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+body.cms-admin .cms-palette-check {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+}
+
+body.cms-admin .cms-palette-item:hover {
+  border-color: var(--cms-accent);
+}
+
+body.cms-admin .cms-palette-item.selected {
+  border-color: var(--cms-accent);
+  box-shadow: 0 0 0 2px var(--cms-accent-soft);
+}
+
+body.cms-admin .cms-palette-swatches {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+body.cms-admin .cms-palette-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+}
+
+body.cms-admin .cms-palette-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--cms-text);
+}
+
+body.cms-admin .cms-palette-hex {
+  font-size: 0.65rem;
+  color: var(--cms-text-muted);
+  font-family: ui-monospace, monospace;
+}
+
+body.cms-admin .cms-palette-check {
+  float: right;
+  color: var(--cms-accent);
+  font-size: 0.85rem;
+}
+
+/* Language dropdown (Google Translate) */
+body.cms-admin .cms-lang-panel.dropdown-menu {
+  min-width: 240px;
+  padding: 1rem;
+  border-radius: var(--cms-radius);
+  box-shadow: var(--cms-shadow);
+  background: var(--cms-card-bg);
+  border: 1px solid var(--cms-card-border);
+}
+
+body.cms-admin .cms-lang-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+body.cms-admin .cms-lang-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  border: 2px solid var(--cms-card-border);
+  border-radius: var(--cms-radius-sm);
+  padding: 0.45rem 1.6rem 0.45rem 0.55rem;
+  cursor: pointer;
+  text-align: left;
+  background: var(--cms-input-bg);
+  color: var(--cms-text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+body.cms-admin .cms-lang-item:hover {
+  border-color: var(--cms-accent);
+}
+
+body.cms-admin .cms-lang-item:focus-visible {
+  outline: 2px solid var(--cms-accent);
+  outline-offset: 2px;
+}
+
+body.cms-admin .cms-lang-item.selected {
+  border-color: var(--cms-accent);
+  box-shadow: 0 0 0 2px var(--cms-accent-soft);
+}
+
+body.cms-admin .cms-lang-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--cms-text);
+}
+
+body.cms-admin .cms-lang-code {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--cms-text-muted);
+  letter-spacing: 0.02em;
+}
+
+body.cms-admin .cms-lang-check {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: var(--cms-accent);
+  font-size: 0.8rem;
+}
+
+/* Hide Google Translate chrome; keep engine running */
+#google_translate_element {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.goog-te-banner-frame.skiptranslate,
+.goog-te-balloon-frame,
+iframe.goog-te-banner-frame,
+body > .skiptranslate,
+.VIpgJd-ZVi9od-ORHb-OEVmcd {
+  display: none !important;
+}
+
+body {
+  top: 0 !important;
+  position: static !important;
+}
+
+.goog-tooltip,
+.goog-tooltip:hover,
+#goog-gt-tt,
+.goog-te-spinner-pos {
+  display: none !important;
+}
+
+font font {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Tables & forms — theme-aware surfaces (fixes light-on-white in dark mode) */
+body.cms-admin .table thead th {
+  background-color: var(--cms-surface-muted, #f8fafc);
+  color: var(--cms-text-muted, #64748b);
+  border-color: var(--cms-card-border);
+}
+
+body.cms-admin .bg-light,
+body.cms-admin .thead-light th {
+  background-color: var(--cms-surface-muted, #f8fafc) !important;
+  color: var(--cms-text, #0f172a) !important;
+}
+
+/* Tables & forms in dark */
+html[data-theme="dark"] body.cms-admin .table {
+  color: var(--cms-text);
+}
+
+html[data-theme="dark"] body.cms-admin .table-bordered td,
+html[data-theme="dark"] body.cms-admin .table-bordered th {
+  border-color: var(--cms-card-border);
+}
+
+html[data-theme="dark"] body.cms-admin .form-control {
+  background-color: var(--cms-input-bg);
+  border-color: var(--cms-input-border);
+  color: var(--cms-text);
+}
+
+html[data-theme="dark"] body.cms-admin .form-control:focus {
+  background-color: var(--cms-input-bg);
+  color: var(--cms-text);
+}
+
+html[data-theme="dark"] body.cms-admin .modal-content {
+  background-color: var(--cms-card-bg);
+  color: var(--cms-text);
+  border-color: var(--cms-card-border);
+}
+
+html[data-theme="dark"] body.cms-admin .modal-header,
+html[data-theme="dark"] body.cms-admin .modal-footer {
+  border-color: var(--cms-card-border);
+}
+
+html[data-theme="dark"] body.cms-admin .modal-title {
+  color: var(--cms-text);
+  background: transparent;
+}
+
+html[data-theme="dark"] body.cms-admin .bg-white {
+  background-color: var(--cms-card-bg) !important;
+  color: var(--cms-text) !important;
+}
+
+html[data-theme="dark"] body.cms-admin .modal .table,
+html[data-theme="dark"] body.cms-admin .modal .table td,
+html[data-theme="dark"] body.cms-admin .modal .table th {
+  background-color: transparent;
+  color: var(--cms-text);
+}
+
+html[data-theme="dark"] body.cms-admin .dropdown-menu {
+  background-color: var(--cms-card-bg);
+  border-color: var(--cms-card-border);
+}
+
+html[data-theme="dark"] body.cms-admin .dropdown-item {
+  color: var(--cms-text);
+}
+
+html[data-theme="dark"] body.cms-admin .dropdown-item:hover {
+  background-color: var(--cms-accent-soft);
+}
+
+html[data-theme="dark"] body.cms-admin .select2-container--default .select2-selection--single .select2-selection__rendered {
+  color: var(--cms-text) !important;
+}
+
+html[data-theme="dark"] body.cms-admin .select2-dropdown {
+  background-color: var(--cms-card-bg);
+  border-color: var(--cms-card-border);
+}
+
+/* Select2 — full dark surfaces (default / classic / bootstrap4) */
+html[data-theme="dark"] body.cms-admin .select2-container--default .select2-selection--single,
+html[data-theme="dark"] body.cms-admin .select2-container--classic .select2-selection--single,
+html[data-theme="dark"] body.cms-admin .select2-container--bootstrap4 .select2-selection--single,
+html[data-theme="dark"] body.cms-admin .select2-container--default .select2-selection--multiple,
+html[data-theme="dark"] body.cms-admin .select2-container--classic .select2-selection--multiple,
+html[data-theme="dark"] body.cms-admin .select2-container--bootstrap4 .select2-selection--multiple {
+  background-color: var(--cms-input-bg) !important;
+  border-color: var(--cms-input-border) !important;
+  color: var(--cms-text) !important;
+}
+
+html[data-theme="dark"] body.cms-admin .select2-container--default .select2-selection--single .select2-selection__rendered,
+html[data-theme="dark"] body.cms-admin .select2-container--classic .select2-selection--single .select2-selection__rendered,
+html[data-theme="dark"] body.cms-admin .select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
+  color: var(--cms-text) !important;
+}
+
+html[data-theme="dark"] body.cms-admin .select2-container--default .select2-selection--single .select2-selection__placeholder,
+html[data-theme="dark"] body.cms-admin .select2-container--classic .select2-selection--single .select2-selection__placeholder,
+html[data-theme="dark"] body.cms-admin .select2-container--bootstrap4 .select2-selection--single .select2-selection__placeholder {
+  color: var(--cms-text-muted) !important;
+}
+
+html[data-theme="dark"] body.cms-admin .select2-container--default .select2-selection--single .select2-selection__arrow b,
+html[data-theme="dark"] body.cms-admin .select2-container--classic .select2-selection--single .select2-selection__arrow b {
+  border-color: var(--cms-text-muted) transparent transparent transparent;
+}
+
+html[data-theme="dark"] body.cms-admin .select2-dropdown,
+html[data-theme="dark"] body.cms-admin .select2-container--default .select2-dropdown,
+html[data-theme="dark"] body.cms-admin .select2-container--classic .select2-dropdown,
+html[data-theme="dark"] body.cms-admin .select2-container--bootstrap4 .select2-dropdown {
+  background-color: var(--cms-card-bg) !important;
+  border-color: var(--cms-card-border) !important;
+  color: var(--cms-text);
+}
+
+html[data-theme="dark"] body.cms-admin .select2-container--default .select2-results__option,
+html[data-theme="dark"] body.cms-admin .select2-container--classic .select2-results__option,
+html[data-theme="dark"] body.cms-admin .select2-container--bootstrap4 .select2-results__option {
+  color: var(--cms-text);
+}
+
+html[data-theme="dark"] body.cms-admin .select2-container--default .select2-results__option[aria-selected="true"],
+html[data-theme="dark"] body.cms-admin .select2-container--classic .select2-results__option[aria-selected="true"],
+html[data-theme="dark"] body.cms-admin .select2-container--bootstrap4 .select2-results__option[aria-selected="true"] {
+  background-color: var(--cms-surface-hover) !important;
+  color: var(--cms-text) !important;
+}
+
+html[data-theme="dark"] body.cms-admin .select2-results__option--highlighted,
+html[data-theme="dark"] body.cms-admin .select2-container--default .select2-results__option--highlighted,
+html[data-theme="dark"] body.cms-admin .select2-container--classic .select2-results__option--highlighted,
+html[data-theme="dark"] body.cms-admin .select2-container--bootstrap4 .select2-results__option--highlighted,
+html[data-theme="dark"] body.cms-admin .select2-results__option--highlighted[aria-selected],
+html[data-theme="dark"] body.cms-admin .select2-results__option--highlighted[aria-selected="true"],
+html[data-theme="dark"] body.cms-admin .select2-results__option--highlighted[aria-selected="false"],
+html[data-theme="dark"] body.cms-admin .select2-container--default .select2-results__option.select2-results__option--highlighted {
+  background-color: #047857 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] body.cms-admin .select2-results__option--highlighted *,
+html[data-theme="dark"] body.cms-admin .select2-results__option--highlighted .text-muted,
+html[data-theme="dark"] body.cms-admin .select2-results__option--highlighted .lib-copy-meta,
+html[data-theme="dark"] body.cms-admin .select2-results__option--highlighted .lib-copy-option__title {
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] body.cms-admin .select2-container--default .select2-search--dropdown .select2-search__field,
+html[data-theme="dark"] body.cms-admin .select2-container--classic .select2-search--dropdown .select2-search__field,
+html[data-theme="dark"] body.cms-admin .select2-container--bootstrap4 .select2-search--dropdown .select2-search__field {
+  background-color: var(--cms-input-bg) !important;
+  border-color: var(--cms-input-border) !important;
+  color: var(--cms-text) !important;
+}
+
+html[data-theme="dark"] body.cms-admin .select2-container--default .select2-selection--multiple .select2-selection__choice,
+html[data-theme="dark"] body.cms-admin .select2-container--classic .select2-selection--multiple .select2-selection__choice,
+html[data-theme="dark"] body.cms-admin .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice {
+  background-color: var(--cms-surface-muted) !important;
+  border-color: var(--cms-card-border) !important;
+  color: var(--cms-text) !important;
+}
+
+/* Collapsed sidebar: point collapse chevron outward */
+body.sidebar-collapse .main-sidebar .cms-brand-collapse i {
+  transform: rotate(180deg);
+}
+
+/**
+ * AdminLTE mini-collapse + our flex nav-links: width:0 on <p> does not shrink
+ * correctly with flex, which stacks characters vertically (“C” column bug).
+ * When the rail is collapsed (and not hover-expanded), fully hide labels,
+ * submenus, search field, and tighten brand / user.
+ */
+@media (min-width: 768px) {
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-brand-wrap,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-brand-wrap {
+    justify-content: center;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-brand-wrap .brand-link,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-brand-wrap .brand-link {
+    justify-content: center;
+    flex: 0 0 auto;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-brand-wrap .brand-text,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-brand-wrap .brand-text {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Top header hamburger still toggles; hide chevron in narrow rail to match AdminLTE */
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-brand-collapse,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-brand-collapse {
+    display: none !important;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:hover .cms-brand-collapse,
+  body.sidebar-mini.sidebar-collapse .main-sidebar.sidebar-focused .cms-brand-collapse,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:hover .cms-brand-collapse,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar.sidebar-focused .cms-brand-collapse {
+    display: inline-flex !important;
+  }
+
+  /* Search: icon-only hint when rail is narrow */
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar-search-wrap .cms-sidebar-search,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar-search-wrap .cms-sidebar-search {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    border: 0 !important;
+    opacity: 0 !important;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar-search-wrap,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar-search-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.55rem 0.25rem;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar-search-wrap .cms-sidebar-search-icon,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar-search-wrap .cms-sidebar-search-icon {
+    position: static;
+    transform: none;
+    margin-top: 0;
+    opacity: 0.55;
+    font-size: 1rem;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar .nav-header.cms-sidebar-section,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar .nav-header.cms-sidebar-section {
+    display: none !important;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar .nav-sidebar > .nav-item > .nav-link,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar .nav-sidebar > .nav-item > .nav-link {
+    justify-content: center;
+    margin-left: 0.35rem;
+    margin-right: 0.35rem;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar .nav-sidebar > .nav-item > .nav-link > p,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar .nav-sidebar > .nav-item > .nav-link > p {
+    display: none !important;
+    flex: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar .nav-sidebar > .nav-item > .nav-treeview,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar .nav-sidebar > .nav-item > .nav-treeview {
+    display: none !important;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:hover .cms-sidebar .nav-sidebar > .nav-item.menu-open > .nav-treeview,
+  body.sidebar-mini.sidebar-collapse .main-sidebar.sidebar-focused .cms-sidebar .nav-sidebar > .nav-item.menu-open > .nav-treeview,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:hover .cms-sidebar .nav-sidebar > .nav-item.menu-open > .nav-treeview,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar.sidebar-focused .cms-sidebar .nav-sidebar > .nav-item.menu-open > .nav-treeview {
+    display: block !important;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:hover .cms-sidebar .nav-sidebar > .nav-item:not(.menu-open) > .nav-treeview,
+  body.sidebar-mini.sidebar-collapse .main-sidebar.sidebar-focused .cms-sidebar .nav-sidebar > .nav-item:not(.menu-open) > .nav-treeview,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:hover .cms-sidebar .nav-sidebar > .nav-item:not(.menu-open) > .nav-treeview,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar.sidebar-focused .cms-sidebar .nav-sidebar > .nav-item:not(.menu-open) > .nav-treeview {
+    display: none !important;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:hover .cms-sidebar .nav-sidebar > .nav-item > .nav-link > p,
+  body.sidebar-mini.sidebar-collapse .main-sidebar.sidebar-focused .cms-sidebar .nav-sidebar > .nav-item > .nav-link > p,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:hover .cms-sidebar .nav-sidebar > .nav-item > .nav-link > p,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar.sidebar-focused .cms-sidebar .nav-sidebar > .nav-item > .nav-link > p {
+    display: block !important;
+    flex: 1 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    overflow: visible !important;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:hover .cms-sidebar-search-wrap .cms-sidebar-search,
+  body.sidebar-mini.sidebar-collapse .main-sidebar.sidebar-focused .cms-sidebar-search-wrap .cms-sidebar-search,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:hover .cms-sidebar-search-wrap .cms-sidebar-search,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar.sidebar-focused .cms-sidebar-search-wrap .cms-sidebar-search {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    clip: auto !important;
+    opacity: 1 !important;
+    padding: 0.45rem 0.75rem 0.45rem 2.25rem !important;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:hover .cms-sidebar-search-wrap,
+  body.sidebar-mini.sidebar-collapse .main-sidebar.sidebar-focused .cms-sidebar-search-wrap,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:hover .cms-sidebar-search-wrap,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar.sidebar-focused .cms-sidebar-search-wrap {
+    display: block;
+    padding: 0.75rem 1rem 0.5rem;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:hover .cms-sidebar-search-wrap .cms-sidebar-search-icon,
+  body.sidebar-mini.sidebar-collapse .main-sidebar.sidebar-focused .cms-sidebar-search-wrap .cms-sidebar-search-icon,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:hover .cms-sidebar-search-wrap .cms-sidebar-search-icon,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar.sidebar-focused .cms-sidebar-search-wrap .cms-sidebar-search-icon {
+    position: absolute;
+    left: 1.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-top: 2px;
+    opacity: 1;
+  }
+
+  /* Icon rail: soft active affordance instead of full-height solid block */
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar .nav-sidebar > .nav-item > .nav-link.active,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar .nav-sidebar > .nav-item > .nav-link.active {
+    background-color: var(--cms-accent-soft) !important;
+    color: var(--cms-accent) !important;
+    box-shadow: inset 3px 0 0 0 var(--cms-accent) !important;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar .nav-sidebar > .nav-item > .nav-link.active .nav-icon,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar .nav-sidebar > .nav-item > .nav-link.active .nav-icon {
+    color: var(--cms-accent) !important;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar-user .cms-sidebar-user-text,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar-user .cms-sidebar-user-text {
+    display: none !important;
+  }
+
+  body.sidebar-mini.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar-user,
+  body.sidebar-mini-md.sidebar-collapse .main-sidebar:not(:hover):not(.sidebar-focused) .cms-sidebar-user {
+    justify-content: center;
+    padding: 0.65rem 0.35rem;
+  }
+}
+
+/* Login page */
+body.login-page {
+  font-family: var(--cms-font);
+}
+
+html[data-theme="dark"] body.login-page {
+  background: var(--cms-page-bg) !important;
+  color: var(--cms-text);
+}
+
+html[data-theme="dark"] body.login-page .card {
+  background-color: var(--cms-card-bg);
+  border-color: var(--cms-card-border);
+  color: var(--cms-text);
+}
+
+html[data-theme="dark"] body.login-page .card .form-control {
+  background: var(--cms-input-bg);
+  border-color: var(--cms-input-border);
+  color: var(--cms-text);
+}
+
+html[data-theme="dark"] body.login-page .login-box-msg {
+  color: var(--cms-text-muted);
+}
+
+/* Soft loading state when swapping main content (fullscreen SPA navigation) */
+.wrapper > .content-wrapper.cms-spa-loading {
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+/* Select2 in browser fullscreen: top-layer stacking can hide the dropdown behind the shell */
+html:fullscreen .select2-dropdown,
+html:-webkit-full-screen .select2-dropdown,
+html:-moz-full-screen .select2-dropdown,
+html:-ms-fullscreen .select2-dropdown {
+  z-index: 2147483646 !important;
+}
+
+html:fullscreen .select2-container--open,
+html:-webkit-full-screen .select2-container--open,
+html:-moz-full-screen .select2-container--open,
+html:-ms-fullscreen .select2-container--open {
+  z-index: 2147483646 !important;
+}
+
+/* ——— Staff CRM shell (body.cms-staff-app on admin only; not on student /portal) ——— */
+/* Belt-and-suspenders: kill edge (border/elevation) and seam vs overlay; markup uses elevation-0 not elevation-4 */
+body.cms-staff-app.cms-admin .main-sidebar,
+body.cms-staff-app.cms-admin .main-sidebar::before {
+  border: none !important;
+  border-inline-end: 0 !important;
+  outline: 0;
+  box-shadow: none !important;
+}
+
+body.cms-staff-app.cms-admin .main-header.navbar,
+body.cms-staff-app.cms-admin .content-wrapper,
+body.cms-staff-app.cms-admin .main-footer {
+  border-left: 0 !important;
+  box-shadow: none;
+}
+
+/* Small screens: sidebar off-DOM when closed; hamburger (pushmenu) → full-width drawer + same toggle to close */
+@media (max-width: 991.98px) {
+  body.cms-staff-app.cms-admin:not(.sidebar-open):not(.sidebar-is-opening) .main-sidebar {
+    display: none !important;
+  }
+
+  /* MUST stay flex — display:block collapses .cms-sidebar-scroll to 0 height */
+  body.cms-staff-app.cms-admin.sidebar-open .main-sidebar,
+  body.cms-staff-app.cms-admin.sidebar-is-opening .main-sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    min-width: 0;
+    left: 0 !important;
+    right: 0 !important;
+    margin-left: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    z-index: 1040;
+  }
+
+  body.cms-staff-app.cms-admin.sidebar-open .main-sidebar::before,
+  body.cms-staff-app.cms-admin.sidebar-is-opening .main-sidebar::before {
+    display: none !important;
+  }
+
+  body.cms-staff-app.cms-admin.sidebar-open .main-sidebar .cms-brand-wrap,
+  body.cms-staff-app.cms-admin.sidebar-is-opening .main-sidebar .cms-brand-wrap {
+    flex: 0 0 auto !important;
+  }
+
+  body.cms-staff-app.cms-admin.sidebar-open .main-sidebar > .sidebar,
+  body.cms-staff-app.cms-admin.sidebar-is-opening .main-sidebar > .sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: hidden !important;
+    overflow-y: hidden !important;
+  }
+
+  body.cms-staff-app.cms-admin.sidebar-open .main-sidebar .cms-sidebar-scroll,
+  body.cms-staff-app.cms-admin.sidebar-is-opening .main-sidebar .cms-sidebar-scroll {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.cms-staff-app.cms-admin.sidebar-open .main-sidebar,
+  body.cms-staff-app.cms-admin.sidebar-open .main-sidebar::before,
+  body.cms-staff-app.cms-admin.sidebar-is-opening .main-sidebar,
+  body.cms-staff-app.cms-admin.sidebar-is-opening .main-sidebar::before {
+    box-shadow: 0 8px 32px rgba(15, 23, 42, 0.15) !important;
+  }
+
+  body.cms-staff-app.cms-admin .main-header .navbar-nav:first-child {
+    display: flex !important;
+    flex-shrink: 0;
+  }
+
+  body.cms-staff-app.cms-admin .main-header [data-widget="pushmenu"] {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    color: var(--cms-text) !important;
+  }
+}
+
+/* ——— Align legacy Bootstrap “success” / green UI with selected accent (replacing setup.php THEME) ——— */
+body.cms-admin .border-success,
+body.cms-admin .card.border-success {
+  border-color: var(--cms-accent) !important;
+}
+
+body.cms-admin a.text-success:not(.btn),
+body.cms-admin .text-success:not(.btn) {
+  color: var(--cms-accent) !important;
+}
+
+body.cms-admin .btn-success {
+  background-color: var(--cms-accent);
+  border-color: var(--cms-accent);
+  color: var(--cms-accent-contrast);
+}
+
+body.cms-admin .btn-success:hover,
+body.cms-admin .btn-success:focus {
+  background-color: var(--cms-accent-hover);
+  border-color: var(--cms-accent-hover);
+  color: var(--cms-accent-contrast);
+}
+
+body.cms-admin .btn-outline-success {
+  color: var(--cms-accent);
+  border-color: var(--cms-accent);
+  background: transparent;
+}
+
+body.cms-admin .btn-outline-success:hover,
+body.cms-admin .btn-outline-success:focus {
+  background-color: var(--cms-accent-soft);
+  color: var(--cms-accent);
+  border-color: var(--cms-accent);
+}
+
+body.cms-admin .badge-success {
+  background-color: var(--cms-accent);
+  color: var(--cms-accent-contrast);
+}
+
+body.cms-admin .badge-outline-success {
+  color: var(--cms-accent);
+  border: 1px solid var(--cms-accent);
+  background: transparent;
+}
+
+/* Highlight strip on tabbed inner panels (Admission / Account fees shell) */
+body.cms-admin .cms-tab-inner-panel {
+  border-color: var(--cms-card-border) !important;
+  border-top: 3px solid var(--cms-accent) !important;
+}
+
+/* Panel headers previously hard-coded purple (#6f42c1) — account module */
+body.cms-admin .cms-accent-header {
+  background: var(--cms-accent) !important;
+  color: var(--cms-accent-contrast) !important;
+  font-weight: 600;
+}
+
+/* Ledger / postings table links inherit accent */
+body.cms-admin .link-ledger-drill {
+  color: var(--cms-accent) !important;
+}
+
+/* ── TMS-style dashboard / analytics cards ───────────────────────── */
+body.cms-admin .tms-dash-shell {
+  background: var(--cms-card-bg, #fff);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  padding: 1.25rem 1.35rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+body.cms-admin .tms-dash-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+body.cms-admin .tms-dash-pills .tms-pill {
+  border: none;
+  border-radius: 999px;
+  padding: 0.45rem 1.15rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: #e8eef5;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+body.cms-admin .tms-dash-pills .tms-pill:hover {
+  background: #dbe5f0;
+}
+
+body.cms-admin .tms-dash-pills .tms-pill.active {
+  background: #3b82f6;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+}
+
+body.cms-admin .tms-dash-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+}
+
+body.cms-admin .tms-quick-access {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.65rem;
+  margin: 0;
+}
+
+body.cms-admin .tms-quick-access__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--cms-text-muted, #64748b);
+  margin-right: 0.15rem;
+}
+
+body.cms-admin .tms-quick-access__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--cms-radius-sm, 8px);
+  border: 1px solid var(--cms-input-border, rgba(15, 23, 42, 0.12));
+  background: var(--cms-input-bg, #fff);
+  color: var(--cms-text, #0f172a);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+body.cms-admin .tms-quick-access__link:hover {
+  background: var(--cms-accent-soft, rgba(16, 185, 129, 0.14));
+  border-color: var(--cms-accent, #10b981);
+  color: var(--cms-accent-hover, #059669);
+  text-decoration: none;
+}
+
+body.cms-admin .tms-quick-access__link i {
+  color: var(--cms-accent, #10b981);
+}
+
+body.cms-admin .tms-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 1199.98px) {
+  body.cms-admin .tms-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 575.98px) {
+  body.cms-admin .tms-kpi-grid { grid-template-columns: 1fr; }
+}
+
+body.cms-admin .tms-kpi-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  background-color: var(--cms-card-bg, #fff) !important;
+  background-image: none !important;
+  background: var(--cms-card-bg, #fff) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-top: 3px solid var(--tms-accent, #3b82f6);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  min-height: 78px;
+  text-decoration: none;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+body.cms-admin .tms-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+body.cms-admin .tms-kpi-card--clickable {
+  cursor: pointer;
+}
+
+body.cms-admin .tms-kpi-card--clickable:focus {
+  outline: 2px solid var(--tms-accent, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* Force variant bg-* classes (bg-info, bg-success, …) to stay as pure color
+   tokens — no background fill. Coordinated with adminlte-overrides.css so both
+   theme systems agree. */
+body.cms-admin .tms-kpi-card.bg-info,
+body.cms-admin .tms-kpi-card.bg-success,
+body.cms-admin .tms-kpi-card.bg-warning,
+body.cms-admin .tms-kpi-card.bg-danger,
+body.cms-admin .tms-kpi-card.bg-primary,
+body.cms-admin .tms-kpi-card.bg-teal,
+body.cms-admin .tms-kpi-card.bg-orange,
+body.cms-admin .tms-kpi-card.bg-secondary {
+  background-color: var(--cms-card-bg, #fff) !important;
+  background-image: none !important;
+  background: var(--cms-card-bg, #fff) !important;
+}
+
+body.cms-admin .tms-kpi-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.05rem;
+  background: var(--tms-soft, rgba(59, 130, 246, 0.12));
+  color: var(--tms-accent, #3b82f6);
+}
+
+body.cms-admin .tms-kpi-meta {
+  min-width: 0;
+  width: 100%;
+}
+
+body.cms-admin .tms-kpi-label {
+  font-size: var(--cms-fs-sm);
+  color: var(--cms-text-muted, #64748b);
+  margin: 0 0 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.cms-admin .tms-kpi-value {
+  font-size: var(--cms-fs-stat);
+  font-weight: 700;
+  color: var(--cms-text, #0f172a);
+  line-height: 1.2;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.cms-admin .tms-kpi-hint {
+  font-size: var(--cms-fs-xs);
+  line-height: 1.3;
+  margin: 0.15rem 0 0;
+}
+
+body.cms-admin .tms-kpi-card.accent-blue { --tms-accent: #3b82f6; --tms-soft: rgba(59,130,246,.12); }
+body.cms-admin .tms-kpi-card.accent-green { --tms-accent: #10b981; --tms-soft: rgba(16,185,129,.14); }
+body.cms-admin .tms-kpi-card.accent-pink { --tms-accent: #ec4899; --tms-soft: rgba(236,72,153,.12); }
+body.cms-admin .tms-kpi-card.accent-orange { --tms-accent: #f59e0b; --tms-soft: rgba(245,158,11,.16); }
+body.cms-admin .tms-kpi-card.accent-purple { --tms-accent: #8b5cf6; --tms-soft: rgba(139,92,246,.14); }
+body.cms-admin .tms-kpi-card.accent-teal { --tms-accent: #14b8a6; --tms-soft: rgba(20,184,166,.14); }
+body.cms-admin .tms-kpi-card.accent-indigo { --tms-accent: #6366f1; --tms-soft: rgba(99,102,241,.14); }
+body.cms-admin .tms-kpi-card.accent-rose { --tms-accent: #f43f5e; --tms-soft: rgba(244,63,94,.12); }
+
+body.cms-admin .tms-chart-panel {
+  background: var(--cms-card-bg, #fff);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 10px;
+  padding: 1rem 1.1rem 0.75rem;
+  height: 100%;
+  border-top: 3px solid var(--tms-accent, #3b82f6);
+}
+
+body.cms-admin .tms-chart-panel.accent-green { --tms-accent: #10b981; }
+body.cms-admin .tms-chart-panel.accent-blue { --tms-accent: #3b82f6; }
+body.cms-admin .tms-chart-panel.accent-purple { --tms-accent: #8b5cf6; }
+body.cms-admin .tms-chart-panel.accent-orange { --tms-accent: #f59e0b; }
+
+body.cms-admin .tms-chart-title {
+  font-size: var(--cms-fs-lg);
+  font-weight: 600;
+  color: var(--cms-text, #0f172a);
+  margin: 0 0 0.25rem;
+}
+
+body.cms-admin .tms-chart-sub {
+  font-size: var(--cms-fs-xs);
+  color: var(--cms-text-muted, #64748b);
+  margin: 0 0 0.5rem;
+}
+
+body.cms-admin .tms-filter-bar {
+  background: rgba(15, 23, 42, 0.02);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.15rem;
+}
+
+html[data-theme="dark"] body.cms-admin .tms-dash-shell,
+html[data-theme="dark"] body.cms-admin .tms-kpi-card,
+html[data-theme="dark"] body.cms-admin .tms-chart-panel {
+  background: var(--cms-card-bg);
+  border-color: rgba(148, 163, 184, 0.12);
+}
+
+html[data-theme="dark"] body.cms-admin .tms-dash-pills .tms-pill {
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] body.cms-admin .tms-dash-pills .tms-pill.active {
+  background: #3b82f6;
+  color: #fff;
+}
+
+html[data-theme="dark"] body.cms-admin .tms-filter-bar {
+  background: rgba(148, 163, 184, 0.06);
+  border-color: rgba(148, 163, 184, 0.12);
+}
+
+/* Reports / Database shared */
+body.cms-admin .analytics-page-shell .card {
+  border-radius: 10px;
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+/* ── Navbar notifications ───────────────────────────────────── */
+body.cms-admin .cms-notif-menu {
+  width: 380px;
+  max-width: calc(100vw - 2rem);
+  padding: 0;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+  overflow: hidden;
+}
+
+body.cms-admin .cms-notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem 0.6rem;
+}
+
+body.cms-admin .cms-notif-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--cms-text, #0f172a);
+  line-height: 1.2;
+}
+
+body.cms-admin .cms-notif-sub {
+  font-size: 0.75rem;
+  color: var(--cms-text-muted, #64748b);
+}
+
+body.cms-admin .cms-notif-markall {
+  white-space: nowrap;
+  font-size: 0.78rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+}
+
+body.cms-admin .cms-notif-list {
+  max-height: 390px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+body.cms-admin .cms-notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.8rem 1rem;
+  color: var(--cms-text, #0f172a);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+  position: relative;
+  transition: background 0.14s ease;
+}
+
+body.cms-admin .cms-notif-item:hover {
+  background: rgba(59, 130, 246, 0.06);
+  color: var(--cms-text, #0f172a);
+}
+
+body.cms-admin .cms-notif-item.is-unread {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+body.cms-admin .cms-notif-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  background: rgba(100, 116, 139, 0.12);
+  color: #475569;
+}
+
+body.cms-admin .cms-notif-icon.cms-notif-blue { background: rgba(59, 130, 246, 0.14); color: #2563eb; }
+body.cms-admin .cms-notif-icon.cms-notif-purple { background: rgba(139, 92, 246, 0.14); color: #7c3aed; }
+body.cms-admin .cms-notif-icon.cms-notif-green { background: rgba(16, 185, 129, 0.15); color: #059669; }
+body.cms-admin .cms-notif-icon.cms-notif-orange { background: rgba(245, 158, 11, 0.18); color: #d97706; }
+body.cms-admin .cms-notif-icon.cms-notif-amber { background: rgba(245, 158, 11, 0.18); color: #d97706; }
+body.cms-admin .cms-notif-icon.cms-notif-indigo { background: rgba(99, 102, 241, 0.14); color: #4f46e5; }
+body.cms-admin .cms-notif-icon.cms-notif-teal { background: rgba(20, 184, 166, 0.15); color: #0d9488; }
+body.cms-admin .cms-notif-icon.cms-notif-slate { background: rgba(100, 116, 139, 0.12); color: #475569; }
+
+body.cms-admin .cms-notif-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+body.cms-admin .cms-notif-text {
+  font-size: 0.84rem;
+  line-height: 1.35;
+  color: var(--cms-text, #0f172a);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+body.cms-admin .cms-notif-meta {
+  font-size: 0.72rem;
+  color: var(--cms-text-muted, #64748b);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+body.cms-admin .cms-notif-time {
+  white-space: nowrap;
+}
+
+body.cms-admin .cms-notif-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #3b82f6;
+  flex-shrink: 0;
+  margin-top: 0.55rem;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+body.cms-admin .cms-notif-empty {
+  text-align: center;
+  padding: 2.2rem 1rem;
+  color: var(--cms-text-muted, #64748b);
+}
+
+body.cms-admin .cms-notif-empty i {
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+  color: var(--cms-text-muted, #94a3b8);
+}
+
+body.cms-admin .cms-notif-empty p {
+  margin: 0 0 0.15rem;
+  font-weight: 600;
+  color: var(--cms-text, #0f172a);
+}
+
+body.cms-admin .cms-notif-footer {
+  font-weight: 600;
+  font-size: 0.84rem;
+  color: var(--cms-accent, #2563eb);
+  padding: 0.7rem 1rem;
+  text-align: center;
+}
+
+body.cms-admin .cms-notif-footer:hover {
+  background: rgba(59, 130, 246, 0.07);
+  color: var(--cms-accent, #2563eb);
+}
+
+/* Notification center page */
+body.cms-admin .cms-notif-center-list {
+  max-height: none;
+}
+
+body.cms-admin .cms-notif-center-item.is-unread {
+  background: rgba(59, 130, 246, 0.045);
+  border-left: 3px solid #3b82f6;
+}
+
+body.cms-admin .cms-notif-center-item {
+  border-left: 3px solid transparent;
+}
+
+body.cms-admin .cms-notif-center-text {
+  color: var(--cms-text, #0f172a);
+}
+
+html[data-theme="dark"] body.cms-admin .cms-notif-menu {
+  background: var(--cms-card-bg, #1e293b);
+  border-color: rgba(148, 163, 184, 0.14);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme="dark"] body.cms-admin .cms-notif-item {
+  color: #e2e8f0;
+  border-bottom-color: rgba(148, 163, 184, 0.08);
+}
+
+html[data-theme="dark"] body.cms-admin .cms-notif-item:hover,
+html[data-theme="dark"] body.cms-admin .cms-notif-item.is-unread {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+html[data-theme="dark"] body.cms-admin .cms-notif-text,
+html[data-theme="dark"] body.cms-admin .cms-notif-title {
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] body.cms-admin .cms-notif-footer:hover {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+html[data-theme="dark"] body.cms-admin .cms-notif-center-item.is-unread {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+html[data-theme="dark"] body.cms-admin .cms-notif-center-text {
+  color: #e2e8f0;
+}
+
+/* Dashboard: school logo watermark — inside .cms-tab-inner-panel (not behind the opaque card). */
+body.cms-admin .dashboard-analytics-wrap.has-school-watermark .cms-tab-inner-panel.has-dash-watermark {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(248, 250, 252, 0.92) !important;
+}
+
+body.cms-admin .dashboard-analytics-wrap.has-school-watermark .dashboard-school-watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.18;
+}
+
+body.cms-admin .dashboard-analytics-wrap.has-school-watermark .dashboard-school-watermark img {
+  width: min(440px, 58vw);
+  max-height: 72%;
+  height: auto;
+  object-fit: contain;
+}
+
+body.cms-admin .dashboard-analytics-wrap.has-school-watermark .cms-tab-inner-panel.has-dash-watermark > .card-body {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+}
+
+/* Soft inner tiles so the crest shows between KPIs / widgets */
+body.cms-admin .dashboard-analytics-wrap.has-school-watermark .tms-kpi-card,
+body.cms-admin .dashboard-analytics-wrap.has-school-watermark .tms-dash-shell,
+body.cms-admin .dashboard-analytics-wrap.has-school-watermark .tms-chart-panel {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Dashboard office calendar + staff — equal height, compact side-by-side */
+body.cms-admin .dashboard-office-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+body.cms-admin .dashboard-office-row > [class*="col-"] {
+  display: flex;
+  flex-direction: column;
+}
+
+body.cms-admin .dashboard-office-row .dashboard-office-cal-panel,
+body.cms-admin .dashboard-office-row .dashboard-staff-panel {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  max-height: 500px;
+  padding: 0.6rem 0.7rem 0.45rem;
+}
+
+body.cms-admin .dashboard-office-row .dashboard-office-cal-panel .tms-chart-title,
+body.cms-admin .dashboard-office-row .dashboard-staff-panel .tms-chart-title {
+  margin-bottom: 0;
+}
+
+body.cms-admin .dashboard-office-row .dashboard-office-cal-panel .tms-chart-sub,
+body.cms-admin .dashboard-office-row .dashboard-staff-panel .tms-chart-sub {
+  margin-bottom: 0.3rem;
+}
+
+body.cms-admin .dashboard-analytics-wrap #dashboardMonthLabel {
+  font-size: var(--cms-fs-sm);
+}
+
+body.cms-admin .dashboard-office-cal-panel .btn-sm,
+body.cms-admin .dashboard-staff-table .btn-xs {
+  font-size: var(--cms-fs-sm) !important;
+  line-height: 1.25;
+}
+
+body.cms-admin .dashboard-office-row .dashboard-office-cal,
+body.cms-admin .dashboard-office-row .dashboard-staff-panel .dashboard-staff-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  /* Hide scrollbar; wheel / touch still scroll */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body.cms-admin .dashboard-office-row .dashboard-office-cal::-webkit-scrollbar,
+body.cms-admin .dashboard-office-row .dashboard-staff-panel .dashboard-staff-table-wrap::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* Compact calendar grid (overrides get_calander.php 15vh cell height) */
+body.cms-admin .dashboard-office-cal .content.mb-5 {
+  margin-bottom: 0.2rem !important;
+}
+
+body.cms-admin .dashboard-office-cal .calendar-toolbar {
+  gap: 0.35rem;
+  margin-bottom: 0.35rem !important;
+}
+
+body.cms-admin .dashboard-office-cal .calendar-toolbar-title {
+  font-size: var(--cms-fs-md);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+body.cms-admin .dashboard-office-cal .calendar-toolbar-time,
+body.cms-admin .dashboard-office-cal #current_time {
+  font-size: var(--cms-fs-md) !important;
+  font-weight: 600;
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1.2;
+}
+
+body.cms-admin .dashboard-office-cal .calendar-toolbar-btn,
+body.cms-admin .dashboard-office-cal .btn.calendar-toolbar-btn {
+  padding: 0.2rem 0.5rem !important;
+  font-size: var(--cms-fs-sm) !important;
+  line-height: 1.2 !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+body.cms-admin .dashboard-office-cal .calendar {
+  font-size: var(--cms-fs-xs);
+  table-layout: fixed;
+  margin-bottom: 0 !important;
+}
+
+body.cms-admin .dashboard-office-cal .calendar th {
+  padding: 0.2rem 0.08rem !important;
+  font-size: var(--cms-fs-xs);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+body.cms-admin .dashboard-office-cal .calendar td {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 4rem !important;
+  width: 14.28% !important;
+  padding: 1px 2px !important;
+  vertical-align: top !important;
+}
+
+body.cms-admin .dashboard-office-cal .calendar td[style*="cursor"] {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 4rem !important;
+}
+
+body.cms-admin .dashboard-office-cal .calendar-cell {
+  min-height: 4rem !important;
+  max-height: 4rem;
+  overflow: hidden;
+  position: relative;
+}
+
+body.cms-admin .dashboard-office-cal .calendar-cell h1,
+body.cms-admin .dashboard-office-cal .calendar-cell h1.mt-5 {
+  font-size: var(--cms-fs-md) !important;
+  font-weight: 600;
+  margin: 0.08rem 0 0 !important;
+  padding: 0 !important;
+  line-height: 1.15 !important;
+}
+
+body.cms-admin .dashboard-office-cal .calendar-cell .float-right {
+  font-size: var(--cms-fs-xs);
+  margin: 0 !important;
+  line-height: 1.2;
+}
+
+body.cms-admin .dashboard-office-cal .banner-nepali,
+body.cms-admin .dashboard-office-cal .holiday-banner,
+body.cms-admin .dashboard-office-cal .banner {
+  font-size: var(--cms-fs-xs) !important;
+  padding: 1px 3px !important;
+  line-height: 1.25 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+body.cms-admin .dashboard-office-cal .holiday-banner .badge,
+body.cms-admin .dashboard-office-cal .banner-nepali .badge {
+  font-size: 0.85em;
+}
+
+body.cms-admin .dashboard-office-cal .holiday-banner {
+  top: auto !important;
+  transform: none !important;
+  position: static !important;
+  display: block;
+  margin-top: 1px;
+}
+
+/* Staff clock table — same type scale as sidebar / calendar */
+body.cms-admin .dashboard-staff-table {
+  font-size: var(--cms-fs-md);
+}
+
+body.cms-admin .dashboard-staff-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--cms-card-bg, #fff);
+  z-index: 1;
+  white-space: nowrap;
+  padding: 0.35rem 0.4rem !important;
+  font-size: var(--cms-fs-xs);
+  font-weight: 600;
+}
+
+body.cms-admin .dashboard-staff-table td {
+  padding: 0.45rem 0.5rem !important;
+  vertical-align: middle !important;
+}
+
+body.cms-admin .dashboard-staff-table img.rounded-circle {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+body.cms-admin .dashboard-staff-table .font-weight-bold {
+  font-size: var(--cms-fs-md);
+  line-height: 1.25;
+}
+
+body.cms-admin .dashboard-staff-table .small {
+  font-size: var(--cms-fs-xs);
+  line-height: 1.3;
+}
+
+body.cms-admin .dashboard-staff-table .btn-xs {
+  padding: 0.2rem 0.45rem;
+  font-size: var(--cms-fs-sm);
+  line-height: 1.25;
+}
+
+body.cms-admin .dashboard-staff-table .badge {
+  font-size: var(--cms-fs-xs);
+  font-weight: 600;
+  padding: 0.25em 0.45em;
+}
+
+body.cms-admin .dashboard-upcoming-list {
+  max-height: 420px;
+  overflow: auto;
+}
+
+body.cms-admin .dashboard-upcoming-item {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+body.cms-admin .dashboard-upcoming-item:last-child {
+  border-bottom: 0;
+}
+
+body.cms-admin .dashboard-upcoming-date {
+  flex: 0 0 3.25rem;
+  font-size: var(--cms-fs-xs);
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+body.cms-admin .dashboard-upcoming-kind {
+  display: inline-block;
+  font-size: var(--cms-fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748b;
+  margin-bottom: 0.15rem;
+}
+
+body.cms-admin .dashboard-upcoming-item.tone-holiday .dashboard-upcoming-kind {
+  color: #b91c1c;
+}
+
+body.cms-admin .dashboard-upcoming-item.tone-event .dashboard-upcoming-kind {
+  color: #0369a1;
+}
+
+body.cms-admin .dashboard-upcoming-title {
+  font-size: var(--cms-fs-md);
+  font-weight: 600;
+  color: #0f172a;
+}
+
+body.cms-admin .dashboard-upcoming-meta {
+  font-size: var(--cms-fs-xs);
+  color: #64748b;
+}
+
+html[data-theme="dark"] body.cms-admin .dashboard-upcoming-title {
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] body.cms-admin .dashboard-analytics-wrap.has-school-watermark .dashboard-school-watermark {
+  opacity: 0.22;
+}
+
+html[data-theme="dark"] body.cms-admin .dashboard-analytics-wrap.has-school-watermark .cms-tab-inner-panel.has-dash-watermark {
+  background-color: rgba(30, 41, 59, 0.92) !important;
+}
+
+html[data-theme="dark"] body.cms-admin .dashboard-analytics-wrap.has-school-watermark .tms-kpi-card,
+html[data-theme="dark"] body.cms-admin .dashboard-analytics-wrap.has-school-watermark .tms-dash-shell,
+html[data-theme="dark"] body.cms-admin .dashboard-analytics-wrap.has-school-watermark .tms-chart-panel {
+  background-color: rgba(30, 41, 59, 0.9) !important;
+}
+
+/*
+ * Select2 multi: placeholder was clipped to ~"Sel" because search width:100%
+ * resolved against a shrink-wrapped inline-block parent (~25px).
+ * Expand the search field only while the placeholder is shown; keep choice tags normal.
+ */
+.select2-container .select2-selection--multiple .select2-selection__rendered {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: normal;
+  text-overflow: clip;
+  list-style: none;
+}
+
+.select2-container .select2-selection--multiple .select2-selection__choice {
+  float: left;
+  margin-top: 4px;
+  margin-right: 4px;
+}
+
+.select2-container .select2-selection--multiple .select2-search--inline {
+  float: left;
+}
+
+.select2-container .select2-selection--multiple .select2-search--inline .select2-search__field {
+  width: auto !important;
+  min-width: 0.75em !important;
+  margin-top: 0;
+}
+
+/* Empty multi-select: give placeholder room to show full text */
+.select2-container .select2-selection--multiple .select2-search--inline .select2-search__field:placeholder-shown {
+  width: 100% !important;
+  min-width: 12rem !important;
+}

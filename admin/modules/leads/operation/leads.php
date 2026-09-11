@@ -14,7 +14,10 @@ if (!$canManage) {
     die('Access denied: you need the manage_leads permission.');
 }
 $action = (string) ($_POST['action'] ?? '');
-$back = 'show_page.php?module=leads&page=leads';
+$fromClientId = (int) ($_POST['from_client_id'] ?? 0);
+$back = $fromClientId
+    ? pageUrl('clients', 'detail') . '&id=' . $fromClientId
+    : 'show_page.php?module=leads&page=leads';
 
 /** Append an activity + refresh last_activity_on. */
 function logLeadActivity(Database $db, int $leadId, string $type, string $note, int $actor): void
@@ -31,9 +34,14 @@ function logLeadActivity(Database $db, int $leadId, string $type, string $note, 
 try {
     if ($action === 'save_lead') {
         $id = (int) ($_POST['id'] ?? 0);
+        $source = (string) ($_POST['source'] ?? 'Website');
+        if (!in_array($source, ['Website', 'Phone', 'Email', 'Walk-in', 'Referral', 'Social', 'Other'], true)) {
+            $source = 'Website';
+        }
+        $isReferral = $source === 'Referral';
         $contactName = trim((string) ($_POST['contact_name'] ?? ''));
-        if ($contactName === '') {
-            setFlash('error', 'Contact name is required.');
+        if ($isReferral && $contactName === '') {
+            setFlash('error', 'Source name is required.');
             redirect($back);
         }
         $stage = (string) ($_POST['stage'] ?? 'New');
@@ -44,25 +52,27 @@ try {
         if (!in_array($priority, ['Hot', 'Warm', 'Cold'], true)) {
             $priority = 'Warm';
         }
-        $source = (string) ($_POST['source'] ?? 'Website');
-        if (!in_array($source, ['Website', 'Phone', 'Email', 'Walk-in', 'Referral', 'Social', 'Other'], true)) {
-            $source = 'Website';
-        }
         $data = [
             'source'            => $source,
             'company'           => trim((string) ($_POST['company'] ?? '')) ?: null,
-            'contact_name'      => $contactName,
-            'email'             => trim((string) ($_POST['email'] ?? '')) ?: null,
-            'phone'             => trim((string) ($_POST['phone'] ?? '')) ?: null,
+            'contact_name'      => $isReferral ? $contactName : null,
+            'email'             => $isReferral ? (trim((string) ($_POST['email'] ?? '')) ?: null) : null,
+            'phone'             => $isReferral ? (trim((string) ($_POST['phone'] ?? '')) ?: null) : null,
             'service_interest'  => trim((string) ($_POST['service_interest'] ?? '')) ?: null,
             'message'           => trim((string) ($_POST['message'] ?? '')) ?: null,
             'priority'          => $priority,
             'estimated_value'   => ($_POST['estimated_value'] ?? '') !== '' ? round((float) $_POST['estimated_value'], 4) : null,
             'stage'             => $stage,
+            'client_id' => (int) ($_POST['client_id'] ?? 0) ?: null,
             'assigned_to'       => (int) ($_POST['assigned_to'] ?? 0) ?: null,
             'lost_reason'       => $stage === 'Lost' ? (trim((string) ($_POST['lost_reason'] ?? '')) ?: null) : null,
             'updated_by'        => $me,
         ];
+
+        if ($data['company'] === null && $data['client_id'] !== null) {
+            $client = $db->selectOne('SELECT `name` FROM `tbl_clients` WHERE `id` = ?', [$data['client_id']]);
+            $data['company'] = $client['name'] ?? null;
+        }
 
         if ($id) {
             $existing = $db->selectOne('SELECT * FROM `tbl_leads` WHERE `id` = ?', [$id]);

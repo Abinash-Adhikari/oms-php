@@ -26,15 +26,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-include __DIR__ . '/includes/route.php';
-
 $action = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) ($_GET['action'] ?? ($_POST['action'] ?? '')));
-$moduleFs = (string) $moduleFs;
 
 if ($action === '') {
     echo json_encode(['success' => false, 'message' => 'Missing action']);
     exit;
 }
+
+// ── Global shell actions (theme chrome; no module context required) ──
+$userId = (int) Auth::id();
+$db = Database::instance();
+
+if ($action === 'get_unread_count') {
+    $row = $db->selectOne(
+        'SELECT COUNT(*) AS c FROM `tbl_notifications`
+         WHERE `receiver` = ? AND (`viewed` = 0 OR `viewed` IS NULL)',
+        [$userId]
+    );
+    echo json_encode(['success' => true, 'count' => (int) ($row['c'] ?? 0)]);
+    exit;
+}
+
+if ($action === 'mark_notification_read') {
+    $nid = (int) ($_POST['id'] ?? $_GET['id'] ?? 0);
+    $ok = $nid > 0;
+    if ($ok) {
+        $ok = (bool) $db->update(
+            'tbl_notifications',
+            ['viewed' => 1],
+            '`id` = ? AND `receiver` = ?',
+            [$nid, $userId]
+        );
+    }
+    echo json_encode(['success' => $ok]);
+    exit;
+}
+
+if ($action === 'mark_all_notifications_read') {
+    $db->update(
+        'tbl_notifications',
+        ['viewed' => 1],
+        '`receiver` = ? AND (`viewed` = 0 OR `viewed` IS NULL)',
+        [$userId]
+    );
+    echo json_encode(['success' => true]);
+    exit;
+}
+
+if ($action === 'getNepaliDate') {
+    // Returns a plain-text B.S. date (YYYY-MM-DD) converted from the A.D.
+    // value posted by the shell's getNepaliDate() helper.
+    $date = trim((string) ($_POST['date'] ?? ''));
+    $bs = (function_exists('adToBs') && $date !== '') ? adToBs($date) : null;
+    echo $bs ?? '';
+    exit;
+}
+
+include __DIR__ . '/includes/route.php';
+
+$moduleFs = (string) $moduleFs;
 
 // Action handlers live in modules/<module>/ajax/<action>.php.
 // $action is sanitized to [a-zA-Z0-9_-] to prevent path traversal.

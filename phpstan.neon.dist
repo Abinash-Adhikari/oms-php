@@ -1,0 +1,21 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+    paths:
+        - classes
+        - functions
+        - config
+        - database
+        - tests
+    # Admin/public page scripts (procedural view+handler files with heavy
+    # global usage) are intentionally out of PHPStan scope for now; the
+    # security conventions for them are enforced by scripts/check_rules.sh
+    # instead. Pull page files in later, one module at a time.
+    excludePaths:
+        - admin
+        - website
+        - vendor
+    bootstrapFiles:
+        - tests/bootstrap.php

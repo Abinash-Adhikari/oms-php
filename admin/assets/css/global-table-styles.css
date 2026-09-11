@@ -1,0 +1,290 @@
+/* ============================================
+   GLOBAL TABLE STYLES - Reusable across all modules
+   ============================================ */
+
+/* Modern Entity-Based Table Display Pattern */
+.table {
+    font-size: 12px;
+    line-height: 1.25rem;
+}
+
+.table tbody tr {
+    transition: background-color 0.18s ease;
+}
+
+.table .table-entity-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.table .table-entity-link:focus-visible {
+    outline: none;
+}
+
+.table .table-entity-link:focus-visible .table-entity {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
+}
+
+.table .table-entity {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.25rem 0.4rem;
+    background: none;
+    border: none;
+    box-shadow: none;
+}
+
+.table .table-entity-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.24);
+}
+
+.table .table-entity-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.table .table-entity-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.table .table-entity-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1f2937;
+    line-height: 1.15;
+}
+
+.table .table-entity-title::first-letter {
+    font-weight: 700;
+}
+
+.table .table-entity-subtitle {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #6b7280;
+}
+
+.table tbody tr > td .btn {
+    transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+}
+
+.table tbody tr > td .btn:hover,
+.table tbody tr > td .btn:focus {
+    transform: translateX(3px);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+}
+
+.table tbody tr > td .btn:active {
+    transform: translateX(1px);
+}
+
+/* Compact Table Spacing */
+.table > thead > tr > th,
+.table > tbody > tr > th,
+.table > tbody > tr > td,
+.table > tfoot > tr > td {
+    padding: 0.32rem 0.48rem;
+    vertical-align: middle;
+}
+
+.table thead th {
+    font-size: 11.5px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.table thead th::first-letter {
+    font-weight: 700;
+}
+
+/* Compact Scope Styles - Applied to supplier module containers */
+.supplier-module-scope {
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.supplier-module-scope h1,
+.supplier-module-scope h2,
+.supplier-module-scope h3,
+.supplier-module-scope h4,
+.supplier-module-scope h5,
+.supplier-module-scope h6 {
+    margin-bottom: 0.6rem;
+}
+
+.supplier-module-scope .form-control,
+.supplier-module-scope .select2-container .select2-selection {
+    font-size: 12px;
+    min-height: 30px;
+    padding: 0.35rem 0.45rem;
+    line-height: 1.2;
+}
+
+.supplier-module-scope .form-control-sm,
+.supplier-module-scope .select2-container .select2-selection--single .select2-selection__rendered {
+    font-size: 11.5px;
+}
+
+.supplier-module-scope textarea.form-control {
+    min-height: 60px;
+}
+
+.supplier-module-scope .select2-selection__rendered {
+    padding: 0.2rem 0.45rem;
+    line-height: 1.2;
+}
+
+.supplier-module-scope .select2-selection__arrow {
+    height: 30px;
+}
+
+.supplier-module-scope .btn {
+    font-size: 11px;
+    padding: 0.25rem 0.55rem;
+    line-height: 1.1;
+    border-radius: 0.45rem;
+}
+
+.supplier-module-scope .btn-sm {
+    font-size: 10.5px;
+    padding: 0.2rem 0.45rem;
+    border-radius: 0.4rem;
+}
+
+.supplier-module-scope .btn i {
+    font-size: 12px;
+}
+
+.supplier-module-scope .badge,
+.supplier-module-scope .label {
+    font-size: 11px;
+    padding: 0.2rem 0.4rem;
+    border-radius: 999px;
+}
+
+.supplier-module-scope .dropdown-menu {
+    padding: 0.3rem 0;
+    border-radius: 0.5rem;
+    font-size: 11.5px;
+}
+
+.supplier-module-scope .dropdown-item {
+    padding: 0.35rem 0.7rem;
+    font-size: 11.5px;
+    line-height: 1.2;
+}
+
+.supplier-module-scope .supplier-module-actions {
+    gap: 0.35rem;
+}
+
+.supplier-module-scope .supplier-module-actions .btn {
+    border-radius: 999px;
+    padding: 0.25rem 0.6rem;
+    font-size: 11px;
+}
+
+.supplier-module-scope .modal .table {
+    font-size: 12px;
+}
+
+.supplier-module-scope .modal .table th,
+.supplier-module-scope .modal .table td {
+    padding: 0.35rem 0.45rem;
+}
+
+/* Tab Buttons Styling - Modern Design */
+.tab-buttons-container {
+    margin-bottom: 0.75rem;
+}
+
+.tab-buttons-container #tab-wrapper {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+}
+
+.tab-buttons-container #tab-inner {
+    gap: 0.75rem !important;
+}
+
+.tab-buttons-container .tab-button {
+    background: #e7eef8;
+    color: #1f2937;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+    font-size: 11px;
+    padding: 0.4rem 0.75rem;
+}
+
+.tab-buttons-container .tab-button i {
+    font-size: 0.95rem;
+}
+
+.tab-buttons-container .inactive-tab {
+    background: linear-gradient(145deg, #eef3fb 0%, #dbe7fb 100%);
+    color: #1f2937;
+}
+
+.tab-buttons-container .inactive-tab:hover {
+    transform: translateX(4px);
+    box-shadow: 0 10px 20px rgba(59, 130, 246, 0.25);
+    background: linear-gradient(145deg, #f8fbff 0%, #e0edff 100%);
+    color: #1d4ed8;
+}
+
+.tab-buttons-container .active-tab {
+    background: linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.35);
+}
+
+.tab-buttons-container .active-tab:hover {
+    transform: translateX(3px);
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.4);
+}
+
+.tab-buttons-container .tab-dropdown .dropdown-menu .dropdown-item {
+    font-weight: 500;
+    transition: padding-left 0.2s ease, background-color 0.2s ease;
+}
+
+.tab-buttons-container .tab-dropdown .dropdown-menu .dropdown-item:hover {
+    padding-left: 1.5rem;
+    background: rgba(37, 99, 235, 0.08);
+}
+
+@media screen and (max-width: 576px) {
+    .tab-buttons-container .tab-button {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.65rem;
+    }
+}
+

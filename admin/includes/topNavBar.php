@@ -1,12 +1,16 @@
 <?php
 /**
- * SB-Tech — top navbar: sidebar toggle, page breadcrumb, user dropdown,
- * logout. Uses $_SESSION keys set at login (userId, username, fullname).
+ * SB-Tech — top navbar (Smart-School shell ported wholesale).
+ * Notifications are server-rendered then kept fresh by a mobile-friendly
+ * poll; language (Google Translate), theme palette and fullscreen controls
+ * ported verbatim from the Smart-School shell.
  */
+$loggedInUserId = (int) Auth::id();
+
 $orgShort = defined('ORGANIZATION_SHORT_NAME') && ORGANIZATION_SHORT_NAME !== ''
     ? (string) ORGANIZATION_SHORT_NAME : config('organization_short_name', 'Office');
 
-/** Initials for the premium avatar chip (falls back to a user icon). */
+/** Initials for the avatar chip (falls back to a user icon). */
 $userFullname = trim((string) ($_SESSION['fullname'] ?? ''));
 $userInitials = '';
 if ($userFullname !== '') {
@@ -17,7 +21,7 @@ if ($userFullname !== '') {
 }
 ?>
 <!-- Navbar -->
-<nav class="main-header navbar navbar-expand navbar-white navbar-light">
+<nav class="main-header navbar navbar-expand navbar-light border-bottom cms-top-navbar">
     <!-- Left navbar links -->
     <ul class="navbar-nav">
         <li class="nav-item">
@@ -30,63 +34,280 @@ if ($userFullname !== '') {
 
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
-        <!-- SSE Status Indicator -->
-        <li class="nav-item d-none d-sm-inline-flex align-items-center">
-            <span id="sse-status" class="sse-status"></span>
-        </li>
-
-        <!-- Notification Bell -->
-        <li class="nav-item dropdown">
-            <a class="nav-link position-relative" data-toggle="dropdown" href="#" id="notif-bell">
+        <?php
+        $navNotifUnread = count_unread_notifications($loggedInUserId);
+        $navNotifications = get_user_notifications($loggedInUserId, 8);
+        ?>
+        <!-- Notifications Dropdown Menu (real data) -->
+        <li class="nav-item dropdown cms-notif-nav">
+            <a class="nav-link" data-toggle="dropdown" href="#" title="Notifications" aria-label="Notifications">
                 <i class="far fa-bell"></i>
-                <span id="notif-badge" class="notification-badge" style="display:none;"></span>
+                <span class="badge badge-danger navbar-badge cms-notif-badge <?php echo $navNotifUnread > 0 ? '' : 'd-none'; ?>"><?php echo $navNotifUnread; ?></span>
             </a>
-            <div class="dropdown-menu dropdown-menu-right notification-dropdown">
-                <div class="notif-header">
-                    <h6>Notifications</h6>
-                    <a href="#" id="notif-mark-all" class="text-muted" style="font-size:.75rem;">Mark all read</a>
-                </div>
-                <div class="notif-body" id="notif-body">
-                    <div class="notif-empty">
-                        <i class="fas fa-bell-slash fa-2x mb-2 d-block" style="opacity:.3"></i>
-                        No notifications yet
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right cms-notif-menu">
+                <div class="cms-notif-header">
+                    <div>
+                        <div class="cms-notif-title">Notifications</div>
+                        <div class="cms-notif-sub" id="cmsNotifSub"><?php echo $navNotifUnread > 0 ? $navNotifUnread . ' unread' : 'You\'re all caught up'; ?></div>
                     </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary cms-notif-markall" id="cmsNotifMarkAll" <?php echo $navNotifUnread > 0 ? '' : 'disabled'; ?>>
+                        <i class="fas fa-check-double"></i> Mark all read
+                    </button>
                 </div>
-                <div class="notif-footer">
-                    <a href="<?= pageUrl('dashboard') ?>">View All Notifications</a>
+                <div class="dropdown-divider"></div>
+                <div class="cms-notif-list" id="cmsNotifList">
+                    <?php if (empty($navNotifications)): ?>
+                        <div class="cms-notif-empty">
+                            <i class="far fa-bell-slash"></i>
+                            <p>No notifications yet</p>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($navNotifications as $navNotif):
+                            $navMeta = notification_type_meta($navNotif['type']);
+                            $navUnread = empty($navNotif['viewed']);
+                            $navText = htmlspecialchars(strip_tags((string) $navNotif['details']), ENT_QUOTES, 'UTF-8');
+                            $navUrl = notification_target_url($navNotif);
+                        ?>
+                            <a href="<?php echo $navUrl; ?>" class="cms-notif-item <?php echo $navUnread ? 'is-unread' : ''; ?>" data-id="<?php echo (int) $navNotif['id']; ?>">
+                                <span class="cms-notif-icon cms-notif-<?php echo $navMeta['color']; ?>"><i class="<?php echo $navMeta['icon']; ?>"></i></span>
+                                <span class="cms-notif-body">
+                                    <span class="cms-notif-text"><?php echo $navText; ?></span>
+                                    <span class="cms-notif-meta">
+                                        <?php if (!empty($navNotif['sender_name'])): ?><span class="cms-notif-sender"><?php echo htmlspecialchars($navNotif['sender_name'], ENT_QUOTES, 'UTF-8'); ?></span><?php endif; ?>
+                                        <span class="cms-notif-time"><?php echo notification_time_ago($navNotif['added_on']); ?></span>
+                                    </span>
+                                </span>
+                                <?php if ($navUnread): ?><span class="cms-notif-dot"></span><?php endif; ?>
+                            </a>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
+                <div class="dropdown-divider"></div>
+                <a href="<?= pageUrl('dashboard') ?>" class="dropdown-item dropdown-footer cms-notif-footer">
+                    <i class="fas fa-list-ul mr-1"></i> See All Notifications
+                </a>
             </div>
         </li>
 
-        <!-- Theme Switcher -->
+        <!-- Language (Google Translate) -->
+        <li class="nav-item dropdown cms-lang-nav notranslate">
+            <a class="nav-link" data-toggle="dropdown" href="#" title="Language" aria-label="Change language" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-globe" aria-hidden="true"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right cms-lang-panel">
+                <div class="cms-theme-title">Language</div>
+                <div class="cms-theme-sub">Translate this site with Google</div>
+                <div class="cms-lang-list" role="group" aria-label="Site language">
+                    <button type="button" class="cms-lang-item" data-lang="en" aria-pressed="false">
+                        <span class="cms-lang-check d-none"><i class="fas fa-check" aria-hidden="true"></i></span>
+                        <span class="cms-lang-name">English</span>
+                        <span class="cms-lang-code">EN</span>
+                    </button>
+                    <button type="button" class="cms-lang-item" data-lang="ne" aria-pressed="false">
+                        <span class="cms-lang-check d-none"><i class="fas fa-check" aria-hidden="true"></i></span>
+                        <span class="cms-lang-name">नेपाली</span>
+                        <span class="cms-lang-code">NE</span>
+                    </button>
+                    <button type="button" class="cms-lang-item" data-lang="hi" aria-pressed="false">
+                        <span class="cms-lang-check d-none"><i class="fas fa-check" aria-hidden="true"></i></span>
+                        <span class="cms-lang-name">हिन्दी</span>
+                        <span class="cms-lang-code">HI</span>
+                    </button>
+                    <button type="button" class="cms-lang-item" data-lang="zh-CN" aria-pressed="false">
+                        <span class="cms-lang-check d-none"><i class="fas fa-check" aria-hidden="true"></i></span>
+                        <span class="cms-lang-name">中文</span>
+                        <span class="cms-lang-code">ZH</span>
+                    </button>
+                    <button type="button" class="cms-lang-item" data-lang="ar" aria-pressed="false">
+                        <span class="cms-lang-check d-none"><i class="fas fa-check" aria-hidden="true"></i></span>
+                        <span class="cms-lang-name">العربية</span>
+                        <span class="cms-lang-code">AR</span>
+                    </button>
+                    <button type="button" class="cms-lang-item" data-lang="es" aria-pressed="false">
+                        <span class="cms-lang-check d-none"><i class="fas fa-check" aria-hidden="true"></i></span>
+                        <span class="cms-lang-name">Español</span>
+                        <span class="cms-lang-code">ES</span>
+                    </button>
+                    <button type="button" class="cms-lang-item" data-lang="fr" aria-pressed="false">
+                        <span class="cms-lang-check d-none"><i class="fas fa-check" aria-hidden="true"></i></span>
+                        <span class="cms-lang-name">Français</span>
+                        <span class="cms-lang-code">FR</span>
+                    </button>
+                    <button type="button" class="cms-lang-item" data-lang="de" aria-pressed="false">
+                        <span class="cms-lang-check d-none"><i class="fas fa-check" aria-hidden="true"></i></span>
+                        <span class="cms-lang-name">Deutsch</span>
+                        <span class="cms-lang-code">DE</span>
+                    </button>
+                </div>
+            </div>
+            <div id="google_translate_element" aria-hidden="true"></div>
+        </li>
+
         <li class="nav-item dropdown">
-            <a class="nav-link" data-toggle="dropdown" href="#" title="Change theme">
+            <a class="nav-link" data-toggle="dropdown" href="#" title="Theme">
                 <i class="fas fa-palette"></i>
             </a>
-            <div class="dropdown-menu dropdown-menu-right theme-switcher-dropdown" id="theme-switcher-container">
-                <!-- Populated by theme-switcher.js -->
+            <div class="dropdown-menu dropdown-menu-right cms-theme-panel">
+                <div class="cms-theme-title">Theme</div>
+                <div class="cms-theme-sub">Color mode and accent palette</div>
+                <div class="cms-mode-toggle" role="group" aria-label="Color mode">
+                    <button type="button" class="cms-mode-btn" id="cmsThemeModeLight" data-mode="light">
+                        <i class="fas fa-sun"></i> Light
+                    </button>
+                    <button type="button" class="cms-mode-btn" id="cmsThemeModeDark" data-mode="dark">
+                        <i class="fas fa-moon"></i> Dark
+                    </button>
+                </div>
+                <div class="cms-palette-grid">
+                    <button type="button" class="cms-palette-item" data-accent="blue" title="Blue">
+                        <span class="cms-palette-check d-none"><i class="fas fa-check"></i></span>
+                        <div class="cms-palette-swatches">
+                            <span class="cms-palette-swatch" style="background:#3b82f6"></span>
+                            <span class="cms-palette-swatch" style="background:rgba(59,130,246,0.2)"></span>
+                        </div>
+                        <div class="cms-palette-name">Blue</div>
+                        <div class="cms-palette-hex">#3B82F6</div>
+                    </button>
+                    <button type="button" class="cms-palette-item" data-accent="emerald" title="Emerald">
+                        <span class="cms-palette-check d-none"><i class="fas fa-check"></i></span>
+                        <div class="cms-palette-swatches">
+                            <span class="cms-palette-swatch" style="background:#10b981"></span>
+                            <span class="cms-palette-swatch" style="background:rgba(16,185,129,0.2)"></span>
+                        </div>
+                        <div class="cms-palette-name">Emerald</div>
+                        <div class="cms-palette-hex">#10B981</div>
+                    </button>
+                    <button type="button" class="cms-palette-item" data-accent="purple" title="Purple">
+                        <span class="cms-palette-check d-none"><i class="fas fa-check"></i></span>
+                        <div class="cms-palette-swatches">
+                            <span class="cms-palette-swatch" style="background:#8b5cf6"></span>
+                            <span class="cms-palette-swatch" style="background:rgba(139,92,246,0.2)"></span>
+                        </div>
+                        <div class="cms-palette-name">Purple</div>
+                        <div class="cms-palette-hex">#8B5CF6</div>
+                    </button>
+                    <button type="button" class="cms-palette-item" data-accent="rose" title="Rose">
+                        <span class="cms-palette-check d-none"><i class="fas fa-check"></i></span>
+                        <div class="cms-palette-swatches">
+                            <span class="cms-palette-swatch" style="background:#f43f5e"></span>
+                            <span class="cms-palette-swatch" style="background:rgba(244,63,94,0.2)"></span>
+                        </div>
+                        <div class="cms-palette-name">Rose</div>
+                        <div class="cms-palette-hex">#F43F5E</div>
+                    </button>
+                    <button type="button" class="cms-palette-item" data-accent="amber" title="Amber">
+                        <span class="cms-palette-check d-none"><i class="fas fa-check"></i></span>
+                        <div class="cms-palette-swatches">
+                            <span class="cms-palette-swatch" style="background:#f59e0b"></span>
+                            <span class="cms-palette-swatch" style="background:rgba(245,158,11,0.22)"></span>
+                        </div>
+                        <div class="cms-palette-name">Amber</div>
+                        <div class="cms-palette-hex">#F59E0B</div>
+                    </button>
+                    <button type="button" class="cms-palette-item" data-accent="indigo" title="Indigo">
+                        <span class="cms-palette-check d-none"><i class="fas fa-check"></i></span>
+                        <div class="cms-palette-swatches">
+                            <span class="cms-palette-swatch" style="background:#6366f1"></span>
+                            <span class="cms-palette-swatch" style="background:rgba(99,102,241,0.2)"></span>
+                        </div>
+                        <div class="cms-palette-name">Indigo</div>
+                        <div class="cms-palette-hex">#6366F1</div>
+                    </button>
+                </div>
             </div>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link" data-widget="fullscreen" href="#" role="button" title="Fullscreen (preference saved for this browser)" aria-label="Toggle fullscreen">
+                <i class="fas fa-expand-arrows-alt"></i>
+            </a>
         </li>
 
         <!-- User Dropdown -->
         <li class="nav-item dropdown">
-            <a class="nav-link d-flex align-items-center" data-toggle="dropdown" href="#">
-                <?php if ($userInitials !== ''): ?>
-                    <span class="user-avatar-chip"><?= e($userInitials) ?></span>
-                <?php else: ?>
-                    <span class="user-avatar-chip"><i class="fas fa-user"></i></span>
-                <?php endif; ?>
-                <span class="d-none d-sm-inline ml-1"><?= e($userFullname) ?></span>
-            </a>
-            <div class="dropdown-menu dropdown-menu-right">
-                <span class="dropdown-header">
-                    <?= e($_SESSION['fullname'] ?? '') ?><br>
-                    <small class="text-muted">@<?= e($_SESSION['username'] ?? '') ?></small>
-                </span>
-                <div class="dropdown-divider"></div>
-                <a href="logout.php" class="dropdown-item"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
+            <div class="dropdown main-profile-menu">
+                <a class="d-flex nav-link" data-toggle="dropdown" href="#">
+                    <?php if ($userInitials !== ''): ?>
+                        <span class="user-avatar-chip"><?= e($userInitials) ?></span>
+                    <?php else: ?>
+                        <span class="user-avatar-chip"><i class="fas fa-user"></i></span>
+                    <?php endif; ?>
+                </a>
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                    <div class="header-navheading text-center mt-2">
+                        <h5 class="main-notification-title"><?php echo htmlspecialchars((string) ($_SESSION['fullname'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></h5>
+                        <p class="main-notification-text">@<?php echo htmlspecialchars((string) ($_SESSION['username'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></p>
+                    </div>
+                    <hr>
+                    <a class="dropdown-item" href="logout.php">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Sign Out
+                    </a>
+                </div>
             </div>
         </li>
     </ul>
 </nav>
 <!-- /.navbar -->
+
+<script>
+$(function() {
+    var $badge = $('.cms-notif-badge');
+    var $sub = $('#cmsNotifSub');
+    var $markAll = $('#cmsNotifMarkAll');
+
+    function setBadge(count) {
+        count = parseInt(count, 10) || 0;
+        $badge.text(count).toggleClass('d-none', count === 0);
+        $sub.text(count > 0 ? count + ' unread' : "You're all caught up");
+        $markAll.prop('disabled', count === 0);
+    }
+
+    function refreshBadge() {
+        $.getJSON('ajax.php', { action: 'get_unread_count' })
+            .done(function(res) {
+                if (res && typeof res.count !== 'undefined') setBadge(res.count);
+            })
+            .fail(function() {});
+    }
+
+    // Clicking an unread item marks it read (and navigates to the center)
+    $('.cms-notif-list').on('click', '.cms-notif-item.is-unread', function(e) {
+        e.preventDefault();
+        var $item = $(this);
+        var id = $item.data('id');
+        var href = $item.attr('href');
+        $item.removeClass('is-unread').find('.cms-notif-dot').remove();
+        var go = function() { window.location.href = href; };
+        if (id) {
+            // Navigate only after the mark-read POST settles so it isn't aborted
+            $.post('ajax.php', { action: 'mark_notification_read', id: id })
+                .done(function() { refreshBadge(); })
+                .always(go);
+        } else {
+            go();
+        }
+    });
+
+    // Mark all read
+    $markAll.on('click', function(e) {
+        e.preventDefault();
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+        $.post('ajax.php', { action: 'mark_all_notifications_read' })
+            .done(function(res) {
+                if (res && res.success) {
+                    $('.cms-notif-item').removeClass('is-unread').find('.cms-notif-dot').remove();
+                    setBadge(0);
+                }
+            })
+            .always(function() {
+                $btn.html('<i class="fas fa-check-double"></i> Mark all read');
+                refreshBadge();
+            });
+    });
+
+    // Poll every 60s so the badge stays fresh without a reload
+    setInterval(refreshBadge, 60000);
+    refreshBadge();
+});
+</script>

@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+* {
+  box-sizing: border-box;
+  font-family: 'Montserrat', sans-serif;
+}
+body {
+  font-family: 'Montserrat', sans-serif;
+  color: #0c0c0c;
+  background-color: #ffffff;
+  overflow-x: hidden;
+}
+  
+.bg-tild {
+  color: #000;
+  background-color:  #20c997;
+  border-color:  #157347;
+} 
+
+.btn-tild:hover {
+  color: #fff;
+  background-color: #198754;
+  border-color: #157347;
+}
+.btn-check:focus + .btn-tild, .btn-tild:focus {
+  color: #fff;
+  background-color: #198754;
+  border-color: #146c43;
+  box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 1);
+}
+.btn-check:checked + .btn-tild, .btn-check:active + .btn-tild, .btn-tild:active, .btn-tild.active, .show > .btn-tild.dropdown-toggle {
+  color: #fff;
+  background-color: #20c997;
+  border-color: #157347;
+}
+.btn-check:checked + .btn-tild:focus, .btn-check:active + .btn-tild:focus, .btn-tild:active:focus, .btn-tild.active:focus, .show > .btn-tild.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 1);
+}
+.btn-tild:disabled, .btn-tild.disabled {
+  color: #fff;
+  background-color:  #20c997;
+  border-color:  #20c997;
+}
+
+.btn-outline-tild {
+  color: #20c997;
+  border-color: #157347;
+}
+.btn-outline-tild:hover {
+  color: #fff;
+  background-color: #20c997;
+  border-color: #2eaa70;
+}
+.btn-check:focus + .btn-outline-tild, .btn-outline-tild:focus {
+  box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 1);
+}
+.btn-check:checked + .btn-outline-tild, .btn-check:active + .btn-outline-tild, .btn-outline-tild:active, .btn-outline-tild.active, .btn-outline-tild.dropdown-toggle.show {
+  color: #fff;
+  background-color: #20c997;
+  border-color: #20c996;
+}
+.btn-check:checked + .btn-outline-tild:focus, .btn-check:active + .btn-outline-tild:focus, .btn-outline-tild:active:focus, .btn-outline-tild.active:focus, .btn-outline-tild.dropdown-toggle.show:focus {
+  box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 1);
+}
+.btn-outline-tild:disabled, .btn-outline-tild.disabled {
+  color: #20c997;
+  background-color: transparent;
+}
+.no-spin {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

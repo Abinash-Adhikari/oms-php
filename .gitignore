@@ -10,6 +10,10 @@ user_uploads/*
 .cache/
 storage/
 .phpunit.result.cache
+.phpunit.cache
+.php-cs-fixer.cache
+.phpstan-cache/
+.phpcs-cache
 
 # Composer dependencies (regenerate via `composer install`)
 /vendor/

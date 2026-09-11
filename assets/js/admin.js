@@ -3,17 +3,8 @@
 (function ($) {
     'use strict';
 
-    // Auto-enable select2 on elements marked .select2
-    $(function () {
-        $('.select2').each(function () {
-            $(this).select2({
-                theme: 'bootstrap4',
-                width: '100%',
-                placeholder: $(this).data('placeholder') || 'Select...',
-                allowClear: $(this).data('allow-clear') === true
-            });
-        });
-    });
+    // NOTE: global select2 init lives in admin/includes/javascript.php
+    // (smart-school cmsSelect2BaseOptions) — do NOT re-init .select2 here.
 
     // ── Confirmation helper ──
     // <button class="confirm-submit" data-confirm="..."> inside a form now opens

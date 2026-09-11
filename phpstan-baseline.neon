@@ -1,0 +1,157 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Access to constant ENCRYPTION_STARTTLS on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 1
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Access to property \$AltBody on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 2
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Access to property \$Body on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 2
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Access to property \$CharSet on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 2
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Access to property \$Host on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 2
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Access to property \$Password on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 2
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Access to property \$Port on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 2
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Access to property \$SMTPAuth on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 2
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Access to property \$SMTPSecure on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 2
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Access to property \$Subject on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 2
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Access to property \$Username on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 2
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Call to method addAddress\(\) on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 1
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Call to method isHTML\(\) on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 1
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Call to method isSMTP\(\) on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 1
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Call to method send\(\) on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 1
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Call to method setFrom\(\) on an unknown class PHPMailer\.$#'
+			identifier: class.notFound
+			count: 1
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Instantiated class PHPMailer not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-falsy\-string and '''' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: classes/CommunicationService.php
+
+		-
+			message: '#^Offset ''center''\|''left''\|''right'' on array\{left\: ''left'', center\: ''center'', right\: ''right''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: classes/DocumentWord.php
+
+		-
+			message: '#^Offset 0 on array\{0\: int\<0, max\>, 1\: int\<0, max\>, 2\: int, 3\: string, mime\: string, channels\?\: int, bits\?\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: classes/DocumentWord.php
+
+		-
+			message: '#^Offset 1 on array\{0\: int\<1, max\>, 1\: int\<0, max\>, 2\: int, 3\: string, mime\: string, channels\?\: int, bits\?\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: classes/DocumentWord.php
+
+		-
+			message: '#^Method Dompdf\\Canvas\:\:page_text\(\) invoked with 10 parameters, 5\-9 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: classes/PdfGenerator.php
+
+		-
+			message: '#^Method PdfGenerator\:\:render\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: classes/PdfGenerator.php
+
+		-
+			message: '#^Function makePDF_dompdf\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: functions/pdf_helpers.php
+
+		-
+			message: '#^Method Dompdf\\Canvas\:\:page_text\(\) invoked with 10 parameters, 5\-9 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: functions/pdf_helpers.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-falsy\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: functions/pdf_helpers.php

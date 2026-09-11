@@ -29,6 +29,11 @@ foreach ($subNavBars as $mod => $subs) {
 
 $activeModule = strtolower((string) ($permissionModule ?? ''));
 $activePage   = strtolower((string) ($page ?? ''));
+// Inner pages (e.g. clients/detail) highlight their parent page in the
+// sidebar — a drill-down view belongs to the parent menu entry.
+if (isset($innerPageGrants[$activeModule][$activePage])) {
+    $activePage = strtolower((string) $innerPageGrants[$activeModule][$activePage]);
+}
 
 /** Initials for the pinned sidebar user card (Smart-School pattern). */
 $sbFullname = trim((string) ($_SESSION['fullname'] ?? ''));
@@ -99,7 +104,7 @@ foreach (($navBadgeQueries ?? []) as $key => $b) {
                     $section = $navSidebarSections[$m] ?? 'MAIN';
                     if ($section !== $lastSection) {
                         $lastSection = $section;
-                        echo '<li class="nav-header">' . e($section) . '</li>';
+                        echo '<li class="nav-header cms-sidebar-section">' . e($section) . '</li>';
                     }
 
                     $icon = $icons[$m] ?? 'nav-icon fas fa-circle';

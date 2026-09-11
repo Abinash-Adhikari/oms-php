@@ -29,6 +29,11 @@ $staffs = $db->select(
      ORDER BY u.fullname"
 );
 
+// Load business sources (clients) for lead form
+$businessSources = $db->select(
+    'SELECT id, name, type, contact_person, email, phone FROM `tbl_clients` ORDER BY `name` ASC'
+);
+
 // ── Helper: human time ago ──
 function leadTimeAgo($datetime) {
     if (!$datetime) return 'never';
@@ -180,7 +185,7 @@ if (isset($_GET['id'])) {
                                     <tr><th class="text-muted">Lost Reason</th><td class="text-danger"><?= e($lead['lost_reason']) ?></td></tr>
                                 <?php endif; ?>
                                 <?php if ($lead['client_name']): ?>
-                                    <tr><th class="text-muted">Client</th><td><a href="<?= pageUrl('leads', 'clients') ?>&id=<?= (int) $lead['client_id'] ?>"><i class="fas fa-link mr-1"></i><?= e($lead['client_name']) ?></a></td></tr>
+                                    <tr><th class="text-muted">Client</th><td><a href="<?= pageUrl('clients', 'detail') ?>&id=<?= (int) $lead['client_id'] ?>"><i class="fas fa-link mr-1"></i><?= e($lead['client_name']) ?></a></td></tr>
                                 <?php endif; ?>
                             </table>
                         </div>
@@ -325,7 +330,7 @@ if (isset($_GET['id'])) {
                             <div class="border rounded p-3 mt-2 bg-light">
                                 <h6 class="mb-2"><i class="fas fa-link text-primary mr-1"></i>Linked Client</h6>
                                 <div class="d-flex align-items-center justify-content-between mb-2">
-                                    <a href="<?= pageUrl('leads', 'clients') ?>&id=<?= (int) $lead['client_id'] ?>" class="font-weight-bold">
+                                    <a href="<?= pageUrl('clients', 'detail') ?>&id=<?= (int) $lead['client_id'] ?>" class="font-weight-bold">
                                         <i class="fas fa-building mr-1"></i><?= e($lead['client_name']) ?>
                                     </a>
                                     <form action="operation.php?module=leads&page=leads" method="post" class="d-inline">
@@ -427,11 +432,16 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
                 <input type="hidden" name="id" value="<?= $edit ? (int) $edit['id'] : 0 ?>">
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="form-group"><label>Company</label><input type="text" name="company" class="form-control" value="<?= $edit ? e($edit['company']) : '' ?>"></div>
-                        <div class="form-group"><label>Contact name *</label><input type="text" name="contact_name" class="form-control" required value="<?= $edit ? e($edit['contact_name']) : '' ?>"></div>
-                        <div class="row">
-                            <div class="col-6 form-group"><label>Email</label><input type="email" name="email" class="form-control" value="<?= $edit ? e($edit['email']) : '' ?>"></div>
-                            <div class="col-6 form-group"><label>Phone</label><input type="text" name="phone" class="form-control" value="<?= $edit ? e($edit['phone']) : '' ?>"></div>
+                        <div class="form-group"><label>Client</label>
+                            <select name="client_id" class="form-control">
+                                <option value="">— Select client —</option>
+                                <?php foreach ($businessSources as $bs): ?>
+                                    <option value="<?= (int) $bs['id'] ?>" <?= $edit && (int) $edit['client_id'] === (int) $bs['id'] ? 'selected' : '' ?>>
+                                        <?= e($bs['name']) ?> (<?= e($bs['type'] === 'Individual' ? 'Person' : 'Company') ?>)
+                                        <?php if ($bs['contact_person']): ?> — <?= e($bs['contact_person']) ?><?php endif; ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="form-group"><label>Service interest</label><input type="text" name="service_interest" class="form-control" value="<?= $edit ? e($edit['service_interest']) : '' ?>"></div>
                         <div class="form-group"><label>Message</label><textarea name="message" class="form-control" rows="3"><?= $edit ? e($edit['message']) : '' ?></textarea></div>
@@ -439,7 +449,7 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
                     <div class="col-md-6">
                         <div class="row">
                             <div class="col-6 form-group"><label>Source</label>
-                                <select name="source" class="form-control"><?php foreach (['Website', 'Phone', 'Email', 'Walk-in', 'Referral', 'Social', 'Other'] as $s): ?><option value="<?= $s ?>" <?= $edit && $edit['source'] === $s ? 'selected' : '' ?>><?= $s ?></option><?php endforeach; ?></select>
+                                <select name="source" id="sourceSelectFull" class="form-control" onchange="toggleReferralFields()"><?php foreach (['Website', 'Phone', 'Email', 'Walk-in', 'Referral', 'Social', 'Other'] as $s): ?><option value="<?= $s ?>" <?= $edit && $edit['source'] === $s ? 'selected' : '' ?>><?= $s ?></option><?php endforeach; ?></select>
                             </div>
                             <div class="col-6 form-group"><label>Priority</label>
                                 <select name="priority" class="form-control"><?php foreach ($priorities as $p): ?><option value="<?= $p ?>" <?= !$edit || $edit['priority'] === $p ? 'selected' : '' ?>><?= $p ?></option><?php endforeach; ?></select>
@@ -449,6 +459,13 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
                             <select name="stage" class="form-control"><?php foreach ($stages as $st): ?><option value="<?= $st ?>" <?= $edit && $edit['stage'] === $st ? 'selected' : '' ?>><?= $st ?></option><?php endforeach; ?></select>
                         </div>
                         <div class="form-group"><label>Estimated value (NPR)</label><input type="number" name="estimated_value" class="form-control" step="0.01" min="0" value="<?= $edit && $edit['estimated_value'] !== null ? e($edit['estimated_value']) : '' ?>"></div>
+                        <div id="fullReferralFields"<?= $edit && $edit['source'] === 'Referral' ? '' : ' style="display:none"' ?>>
+                            <div class="form-group"><label>Source name *</label><input type="text" name="contact_name" id="contactNameFull" class="form-control" <?= $edit && $edit['source'] === 'Referral' ? 'required' : '' ?> value="<?= $edit ? e($edit['contact_name']) : '' ?>"></div>
+                            <div class="row">
+                                <div class="col-6 form-group"><label>Email</label><input type="email" name="email" class="form-control" value="<?= $edit ? e($edit['email']) : '' ?>"></div>
+                                <div class="col-6 form-group"><label>Phone</label><input type="text" name="phone" class="form-control" value="<?= $edit ? e($edit['phone']) : '' ?>"></div>
+                            </div>
+                        </div>
                         <div class="form-group"><label>Owner</label>
                             <select name="assigned_to" class="form-control"><option value="">Unassigned</option><?php foreach ($staffs as $st): ?><option value="<?= (int) $st['id'] ?>" <?= $edit && (int) $edit['assigned_to'] === (int) $st['id'] ? 'selected' : '' ?>><?= e($st['fullname']) ?></option><?php endforeach; ?></select>
                         </div>
@@ -796,22 +813,13 @@ $pageUrl = pageUrl('leads', 'leads');
 
             <h6 class="text-muted text-uppercase mb-2" style="font-size:.7rem;letter-spacing:.05em">Contact Details</h6>
             <div class="form-group">
-                <label class="small font-weight-bold">Company</label>
-                <input type="text" name="company" id="leadCompany" class="form-control form-control-sm" placeholder="Company name">
-            </div>
-            <div class="form-group">
-                <label class="small font-weight-bold">Contact Name *</label>
-                <input type="text" name="contact_name" id="leadContact" class="form-control form-control-sm" placeholder="Full name" required>
-            </div>
-            <div class="row">
-                <div class="col-6 form-group">
-                    <label class="small font-weight-bold">Email</label>
-                    <input type="email" name="email" id="leadEmail" class="form-control form-control-sm" placeholder="email@example.com">
-                </div>
-                <div class="col-6 form-group">
-                    <label class="small font-weight-bold">Phone</label>
-                    <input type="text" name="phone" id="leadPhone" class="form-control form-control-sm" placeholder="+977-9800000000">
-                </div>
+                <label class="small font-weight-bold">Client</label>
+                <select name="client_id" id="leadClient" class="form-control form-control-sm">
+                    <option value="">— Select client —</option>
+                    <?php foreach ($businessSources as $bs): ?>
+                        <option value="<?= (int) $bs['id'] ?>"><?= e($bs['name']) ?> (<?= e($bs['type'] === 'Individual' ? 'Person' : 'Company') ?>)<?php if ($bs['contact_person']): ?> — <?= e($bs['contact_person']) ?><?php endif; ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
 
             <hr class="my-3">
@@ -827,7 +835,7 @@ $pageUrl = pageUrl('leads', 'leads');
             <div class="row">
                 <div class="col-6 form-group">
                     <label class="small font-weight-bold">Source</label>
-                    <select name="source" id="leadSource" class="form-control form-control-sm">
+                    <select name="source" id="leadSource" class="form-control form-control-sm" onchange="toggleReferralFields()">
                         <?php foreach (['Website', 'Phone', 'Email', 'Walk-in', 'Referral', 'Social', 'Other'] as $s): ?>
                             <option value="<?= $s ?>"><?= $s ?></option>
                         <?php endforeach; ?>
@@ -856,6 +864,22 @@ $pageUrl = pageUrl('leads', 'leads');
                     <input type="number" name="estimated_value" id="leadValue" class="form-control form-control-sm" step="0.01" min="0" placeholder="0.00">
                 </div>
             </div>
+            <div id="drawerReferralFields" style="display:none">
+                <div class="form-group">
+                    <label class="small font-weight-bold">Source Name *</label>
+                    <input type="text" name="contact_name" id="leadContact" class="form-control form-control-sm" placeholder="Full name" required>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-group">
+                        <label class="small font-weight-bold">Email</label>
+                        <input type="email" name="email" id="leadEmail" class="form-control form-control-sm" placeholder="email@example.com">
+                    </div>
+                    <div class="col-6 form-group">
+                        <label class="small font-weight-bold">Phone</label>
+                        <input type="text" name="phone" id="leadPhone" class="form-control form-control-sm" placeholder="+977-9800000000">
+                    </div>
+                </div>
+            </div>
             <div class="form-group">
                 <label class="small font-weight-bold">Owner</label>
                 <select name="assigned_to" id="leadOwner" class="form-control form-control-sm">
@@ -878,6 +902,25 @@ $pageUrl = pageUrl('leads', 'leads');
 <script>
 var leadsData = <?= json_encode(array_values($leads)) ?>;
 
+function toggleReferralFields() {
+    var fullSource = document.getElementById('sourceSelectFull');
+    if (fullSource) {
+        var fullBox = document.getElementById('fullReferralFields');
+        var fullContact = document.getElementById('contactNameFull');
+        var showFull = fullSource.value === 'Referral';
+        fullBox.style.display = showFull ? '' : 'none';
+        fullContact.required = showFull;
+    }
+    var drawerSource = document.getElementById('leadSource');
+    if (drawerSource) {
+        var drawerBox = document.getElementById('drawerReferralFields');
+        var drawerContact = document.getElementById('leadContact');
+        var showDrawer = drawerSource.value === 'Referral';
+        drawerBox.style.display = showDrawer ? '' : 'none';
+        drawerContact.required = showDrawer;
+    }
+}
+
 function openLeadDrawer(editId) {
     var drawer = document.getElementById('leadDrawer');
     var backdrop = document.getElementById('drawerBackdrop');
@@ -894,7 +937,7 @@ function openLeadDrawer(editId) {
             title.textContent = 'Edit Lead';
             submitText.textContent = 'Update Lead';
             document.getElementById('leadId').value = lead.id;
-            document.getElementById('leadCompany').value = lead.company || '';
+            document.getElementById('leadClient').value = lead.client_id || '';
             document.getElementById('leadContact').value = lead.contact_name || '';
             document.getElementById('leadEmail').value = lead.email || '';
             document.getElementById('leadPhone').value = lead.phone || '';
@@ -905,14 +948,18 @@ function openLeadDrawer(editId) {
             document.getElementById('leadStage').value = lead.stage || 'New';
             document.getElementById('leadValue').value = lead.estimated_value || '';
             document.getElementById('leadOwner').value = lead.assigned_to || '';
+            toggleReferralFields();
         }
     } else {
         title.textContent = 'New Lead';
         submitText.textContent = 'Save Lead';
         document.getElementById('leadId').value = '0';
         document.getElementById('leadForm').reset();
+        toggleReferralFields();
     }
 }
+
+document.addEventListener('DOMContentLoaded', toggleReferralFields);
 
 function closeLeadDrawer() {
     document.getElementById('leadDrawer').classList.remove('open');

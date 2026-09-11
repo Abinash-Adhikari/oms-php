@@ -337,3 +337,136 @@ function formatMinutes(int $minutes): string
     $m = $abs % 60;
     return $sign . ($h > 0 ? $h . ' hr ' : '') . $m . ' min';
 }
+
+/**
+ * Resolve a notification type into display metadata (icon + accent colour + label).
+ */
+function notification_type_meta($type = '')
+{
+    $map = [
+        'task'       => ['icon' => 'fas fa-tasks', 'color' => 'blue', 'label' => 'Task'],
+        'meeting'    => ['icon' => 'fas fa-calendar-alt', 'color' => 'indigo', 'label' => 'Meeting'],
+        'grievance'  => ['icon' => 'fas fa-comment-dots', 'color' => 'purple', 'label' => 'Grievance'],
+        'leave'      => ['icon' => 'fas fa-calendar-check', 'color' => 'green', 'label' => 'Leave'],
+        'leave request' => ['icon' => 'fas fa-calendar-plus', 'color' => 'green', 'label' => 'Leave Request'],
+        'expense'    => ['icon' => 'fas fa-money-bill-wave', 'color' => 'amber', 'label' => 'Expense'],
+        'notice'     => ['icon' => 'fas fa-bullhorn', 'color' => 'teal', 'label' => 'Notice'],
+        'system'     => ['icon' => 'fas fa-bell', 'color' => 'slate', 'label' => 'System'],
+        'general'    => ['icon' => 'fas fa-info-circle', 'color' => 'slate', 'label' => 'General'],
+    ];
+    $key = strtolower(trim((string) $type));
+    if (isset($map[$key])) {
+        return $map[$key];
+    }
+    // Model/entity keys used by notifyUser() land on sensible defaults.
+    if (strpos($key, 'task') !== false) return $map['task'];
+    if (strpos($key, 'leave') !== false) return $map['leave'];
+    if (strpos($key, 'meeting') !== false) return $map['meeting'];
+    return $map['general'];
+}
+
+/**
+ * Latest notifications addressed to a user (receiver), newest first.
+ * Optional restrict to unread only. Sender name joined for the dropdown.
+ */
+function get_user_notifications(?int $userId, int $limit = 10, bool $onlyUnread = false): array
+{
+    if (!$userId) {
+        return [];
+    }
+    $limit = max(1, min((int) $limit, 50));
+    $sql = "SELECT n.*, u.fullname AS sender_name
+            FROM tbl_notifications n
+            LEFT JOIN tbl_users_login u ON u.id = n.added_by
+            WHERE n.receiver = ?";
+    $params = [(int) $userId];
+    if ($onlyUnread) {
+        $sql .= " AND (n.viewed = 0 OR n.viewed IS NULL)";
+    }
+    $sql .= " ORDER BY n.id DESC LIMIT " . (int) $limit;
+    return Database::instance()->select($sql, $params);
+}
+
+/**
+ * Unread notification count for a user.
+ */
+function count_unread_notifications(?int $userId): int
+{
+    if (!$userId) {
+        return 0;
+    }
+    $row = Database::instance()->selectOne(
+        "SELECT COUNT(*) AS c FROM tbl_notifications
+         WHERE receiver = ? AND (viewed = 0 OR viewed IS NULL)",
+        [(int) $userId]
+    );
+    return (int) ($row['c'] ?? 0);
+}
+
+/**
+ * Mark a single notification (or all) as read for a user.
+ */
+function mark_notification_read(?int $userId, $notificationId = null): bool
+{
+    if (!$userId) {
+        return false;
+    }
+    $db = Database::instance();
+    if ($notificationId !== null && $notificationId !== '') {
+        $nid = (int) $notificationId;
+        return (bool) $db->update(
+            'tbl_notifications',
+            ['viewed' => 1],
+            '`id` = ? AND `receiver` = ?',
+            [$nid, (int) $userId]
+        );
+    }
+    return (bool) $db->update(
+        'tbl_notifications',
+        ['viewed' => 1],
+        '`receiver` = ? AND (viewed = 0 OR viewed IS NULL)',
+        [(int) $userId]
+    );
+}
+
+/**
+ * Deep-link target for a notification: the stored `url` column when present,
+ * else the dashboard (codegenexis notifications store ref_id, not routes).
+ */
+function notification_target_url(array $notif): string
+{
+    $url = trim((string) ($notif['url'] ?? ''));
+    if ($url !== '') {
+        return $url;
+    }
+    return pageUrl('dashboard');
+}
+
+/**
+ * Human friendly relative time for a datetime string.
+ */
+function notification_time_ago($datetime): string
+{
+    if (empty($datetime)) {
+        return '';
+    }
+    $ts = strtotime($datetime);
+    if (!$ts) {
+        return htmlspecialchars((string) $datetime, ENT_QUOTES, 'UTF-8');
+    }
+    $diff = time() - $ts;
+    if ($diff < 60) {
+        return 'Just now';
+    }
+    $units = [
+        31536000 => 'year', 2592000 => 'month', 604800 => 'week',
+        86400 => 'day', 3600 => 'hour', 60 => 'minute',
+    ];
+    foreach ($units as $secs => $label) {
+        if ($diff >= $secs) {
+            $n = (int) floor($diff / $secs);
+            return $n . ' ' . $label . ($n > 1 ? 's' : '') . ' ago';
+        }
+    }
+    return date('M j, g:i A', $ts);
+}

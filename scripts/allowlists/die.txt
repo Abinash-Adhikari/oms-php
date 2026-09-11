@@ -1,0 +1,6 @@
+# Files in classes/ or functions/ whose die() calls are legacy-allowed
+# (checked at file level — line numbers shift as code evolves).
+# classes/Database.php no longer dies (PHP 8.1+ mysqli throws; the class
+# throws RuntimeException instead — see docs/PHP-UPGRADE.md). helpers.php:143
+# is pre-existing debt that should trend DOWN. Do not add entries casually.
+functions/helpers.php

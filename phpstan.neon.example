@@ -1,0 +1,4 @@
+# Local PHPStan overrides — git-ignored.
+# Copy this file to phpstan.neon to tweak locally (e.g. raise the level).
+includes:
+    - phpstan.neon.dist

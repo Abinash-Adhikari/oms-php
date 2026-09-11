@@ -1,0 +1,12 @@
+vendor/
+.git/
+.gstack/
+.freebuff/
+.agents/
+.claude/
+node_modules/
+storage/
+user_uploads/
+.phpunit.result.cache
+.phpstan-memory
+docker-compose.override.yml

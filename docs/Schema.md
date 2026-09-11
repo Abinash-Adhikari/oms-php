@@ -19,7 +19,7 @@
 | **Money** | `DECIMAL(18,4)` everywhere. Currency in a separate `CHAR(3)` column. |
 | **FKs** | `ON DELETE RESTRICT` for fiscal/calendar links (must not orphan); `ON DELETE SET NULL` for actor/user links (history must survive). |
 
-**84 tables** total, grouped into 9 domains below. Arrows (→) denote FK
+**98 tables** total, grouped into 9 domains below. Arrows (→) denote FK
 references.
 
 ---
@@ -92,7 +92,13 @@ tbl_office_events            → tbl_users_login
 tbl_office_event_schedules   → tbl_office_events
 tbl_office_grievances        → tbl_users_login
 tbl_office_grievance_files   → tbl_office_grievances
+tbl_daily_tasks              → tbl_users_login (staff_id)
 ```
+
+**`tbl_daily_tasks`** — end-of-day task log per staff member: `date` DATE,
+`tasks` TEXT (free-form daily report), `staff_id` → `tbl_users_login`
+(`ON DELETE SET NULL`), with a denormalized `fullname` mirror for fast
+listing. Indexed `idx_dailytask_staff_date(staff_id, date).
 
 **`tbl_staff_attendances`** — the daily punch record (AC-HR-02.1):
 `checkin`, `checkout`, `status` (present/absent/half-day),
@@ -135,9 +141,18 @@ tbl_account_tds_report_entries → tbl_account_tds_types
 tbl_ledger_closings           → tbl_fiscal_years, tbl_account_terminals
 tbl_expense_claims            → tbl_users_login
 tbl_expense_claim_files       → tbl_expense_claims
+tbl_purchase_vouchers         → tbl_fiscal_years, tbl_users_login (approved_by)
 tbl_bank_reconciliation       → tbl_account_terminals (bank)
 tbl_voucher_logs              → tbl_users_login  (audit of voucher mutations)
 ```
+
+**`tbl_purchase_vouchers`** — purchase-side voucher, mirroring the voucher
+family shape: `UNIQUE(fiscal_year_id, voucher_no)`, money as `amount`/
+`discount_amount`/`tax_amount`/`total_amount DECIMAL(18,4)`, currency trio
+(`currency_code`, `fx_rate DECIMAL(18,8)`, `base_currency_code`),
+`entry_type` ENUM('Manual','Auto'), `status`
+ENUM('Pending','Approved','Rejected'), `file_name` attachment.
+`ON DELETE RESTRICT` from `tbl_fiscal_years`.
 
 **`tbl_account_terminals`** is the **chart of accounts** leaf node. The COA
 hierarchy is: `groups` (Assets/Liabilities/Revenue/Expense) → `sub_groups`
@@ -159,19 +174,81 @@ from all voucher tables: you cannot delete a FY in use.
 ### 2.6 Sales / Leads
 
 ```
-tbl_leads             ← primary sales entity
+tbl_leads             ← primary sales pipeline entity
 tbl_lead_files        → tbl_leads
 tbl_lead_activities   → tbl_leads
-tbl_clients             ← leads converted to clients
-tbl_client_projects     → tbl_clients
-tbl_quotations          → tbl_clients (optionally tbl_leads)
-tbl_sales_vouchers      → tbl_fiscal_years, tbl_clients
+tbl_clients            ← organizations/individuals the sales team works with
+tbl_client_contacts    → tbl_clients (people, one primary)
+tbl_projects           ← the product/catalog catalog (ERP, POS, Website, …)
+tbl_client_projects    → tbl_clients, tbl_leads, tbl_projects (won deployments)
+tbl_quotations         → tbl_clients (client_id), optionally tbl_leads
+tbl_quotation_items    → tbl_quotations (ON DELETE CASCADE)
+tbl_quotation_files    → tbl_quotations (ON DELETE CASCADE)
+tbl_documents          ← unified document engine header (all doc types)
+tbl_document_items     → tbl_documents (shared line items)
+tbl_document_files     → tbl_documents (shared attachments)
+tbl_sales_vouchers     → tbl_fiscal_years, tbl_clients (client_id)
 ```
 
+**`tbl_documents`** — the **unified document engine** (DocumentEngine):
+all business documents share one header table, discriminated by `document_type`
+(quotation | invoice | proforma | proposal | contract | price_list | brochure |
+credit_note). `document_number` is UNIQUE (QTN-2026-0001, INV-2026-0001, …).
+Client snapshot columns (`client_id`, `client_name`, `client_email`,
+`client_phone`, `client_address`) travel with the document so history survives
+client edits; money columns are `DECIMAL(18,4)` with percentage/fixed
+`discount_type`/`tax_type`. `reference_id` links child → parent docs
+(e.g. invoice → quotation), `lead_id` links back to the originating lead.
+
+**`tbl_document_items`** / **`tbl_document_files`** — shared line items and
+attachments for every document type: `document_id`, `item_name`,
+`quantity DECIMAL(10,2)`, `unit_price DECIMAL(18,4)`, `amount DECIMAL(18,4)`,
+`sort_order`; files add `file_name`, `file_location`, `file_extension`,
+`file_size`.
+
 **`tbl_leads`** — the funnel entry point (AC-SALES-01). Columns: `source`
-(Website Form, Call, Referral), `status` (New|Contacted|Qualified|Converted|
-Lost), `assigned_to` → `tbl_users_login`, `converted_to_client` (INT→clients).
-The public website's contact/quote forms write here.
+(Website, Phone, Email, Walk-in, Referral, Social, Other), `priority`
+(Hot|Warm|Cold), `stage` (New|Contacted|Qualified|Proposal|Won|Lost),
+`assigned_to` → `tbl_users_login`, `client_id` (the current source
+association), `won_client_id` (the settled source once Won — the two
+are kept in sync on conversion; unlinking clears both), `project_id` →
+`tbl_projects` (the catalog item the lead is pursuing, `ON DELETE SET NULL`),
+`lost_reason`, `last_activity_on` (bumped on every logged activity). The public
+website's contact/quote forms write here (source = Website).
+
+Reaching **Won auto-provisions** the won Client Project row (and, when
+missing, the Business Source) via `provisionWonLead()` in
+`admin/modules/leads/operation/leads.php` — idempotent for already-linked wins.
+
+**`tbl_clients`** — companies and
+individuals the sales team works with, identified by `type`
+ENUM('Individual','Company'), `name`, and contact channels
+(`email`, `phone`, `address`, `pan_num`, `notes`). `lead_id` records the soft
+originating lead. `contact_person` is a read-fast **mirror** of the primary row
+in `tbl_client_contacts` (the first contact on a source becomes
+primary; re-assigning primary un-sets the others; deleting the primary promotes
+the next — maintained by `syncSourcePrimaryContact()`). Deleting a source
+cascades its contacts; leads and client projects `SET NULL` their links.
+
+**`tbl_client_contacts`** — the people at a source. `name`,
+`designation`, `email`, `phone`, `notes`, `is_primary` TINYINT(1). One (and
+only one) row per source is primary whenever any contact exists.
+
+**`tbl_projects`** — the **Project Catalog** (what the company sells: ERP, POS,
+Website, …). `name`, `code`, `category`, `description`, `status`
+ENUM('Active','Inactive'). Leads point at it via `tbl_leads.project_id`, won
+deployments copy its key onto `tbl_client_projects.project_id`.
+
+**`tbl_client_projects`** — first-class won-deployment records. `client_id`
+→ `tbl_clients` (settled customer, `ON DELETE SET NULL`), `lead_id` →
+`tbl_leads` (origin, `ON DELETE SET NULL`), `project_id` → `tbl_projects`
+(the catalog item). Carries the **module & database entitlements** (edited on
+Leads › Client Access, read via `ClientPermissions`): `permitted_modules`
+(JSON array of granted module keys), `permitted_submodules` (JSON map
+module → submodule keys), and `db_name` (the single deployment database handle
+for this project — the old per-module `module_databases` map was dropped).
+Extra columns: `package` (plan/edition sold), `value DECIMAL(18,4)`,
+`start_date`/`end_date`, `status` ENUM(Active, Completed, On Hold, Cancelled).
 
 ### 2.7 Inventory
 
@@ -282,6 +359,15 @@ tbl_users_login (1)
    ├─< tbl_audit_log (actor)
    └─< tbl_login_attempts
 
+tbl_clients (1)                                ← won deals / prospects
+   ├─< tbl_client_contacts (people, one primary)
+   ├─< tbl_leads (client_id / won_client_id)
+   └─< tbl_client_projects (won deployments)
+
+tbl_projects (1)                               ← project catalog
+   ├─< tbl_leads (project_id — lead pursuing a catalog item)
+   └─< tbl_client_projects (project_id — sold deployment)
+
 tbl_account_groups (1)
    ├─< tbl_account_sub_groups
        ├─< tbl_account_sub_terminals
@@ -350,7 +436,8 @@ Intentional secondary indexes, derived from `EXPLAIN`-worthy query paths:
 | `tbl_ledger_particulars` | `idx_lp_voucher_type(voucher_type, voucher_type_id)` | posting retrieval |
 | `tbl_staff_attendances` | `idx_sa_date(date)`, `idx_sa_staff_id(staff_id, date)` | attendance report |
 | `tbl_staff_leave_applications` | `idx_sla_staff_date(staff_id, from_date)` | leave balance |
-| `tbl_leads` | `idx_leads_status(status)`, `idx_leads_assigned(assigned_to)` | sales funnel |
+| `tbl_leads` | `idx_lead_stage(stage)`, `idx_lead_assigned(assigned_to)`, `idx_lead_source(client_id)`, `idx_lead_won(won_client_id)`, `idx_lead_project(project_id)` | sales funnel |
+| `tbl_client_contacts` | `idx_bsc_source(client_id)`, `idx_bsc_primary(client_id, is_primary)` | primary-contact mirror |
 | `tbl_inv_stock_movements` | `idx_invm_item_date(item_id, created_at)` | stock history |
 | `tbl_cms_news`, `tbl_cms_notices` | `idx_active_position(is_active, position)` | `siteRows()` public query |
 | `tbl_notifications` | `idx_notif_receiver(receiver, viewed)` | notification client |

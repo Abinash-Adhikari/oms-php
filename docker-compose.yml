@@ -1,0 +1,48 @@
+# SB-Tech OMS — reproducible local stack (app + database).
+#
+#   docker compose up -d          # start app on http://localhost:8080
+#   docker compose exec app bash  # shell inside the app container
+#   docker compose exec app composer check   # full verification
+#   make down                     # stop (or: docker compose down)
+#
+# First boot: run migrations once inside the container (creates schema + seed
+# data, including the admin login — do NOT import database/schema.sql, it has
+# no data):
+#   docker compose exec app php artisan migrate
+#
+# No volumes for vendor/ — run `composer install` inside the container once:
+#   docker compose exec app composer install
+services:
+  app:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/setup.php:/var/www/html/config/setup.php:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Silence any host-specific PHP.ini surprises.
+      PHP_MEMORY_LIMIT: 512M
+
+  db:
+    image: mariadb:10.6
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: sb_tech
+      MARIADB_USER: admin
+      MARIADB_PASSWORD: admin
+    ports:
+      - "3307:3306"      # host access without clashing with a local MySQL
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  db_data:

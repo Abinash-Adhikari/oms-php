@@ -2,6 +2,10 @@
  * SB-Tech — Dashboard charts (Chart.js).
  * Reads window.SB_DASH payloads rendered by modules/dashboard/home.php and
  * re-colors charts whenever the theme switcher dispatches `themechange`.
+ *
+ * When a chart's dataset is entirely zero (no data yet), it renders a centered
+ * empty-state message over the canvas instead of a flat zero line / empty
+ * donut — so the card always looks intentional rather than broken.
  */
 (function () {
     'use strict';
@@ -50,66 +54,129 @@
         };
     }
 
+    /**
+     * All-datasets-zero detector. For bar charts a single zero bar looks like
+     * "nothing happened" — we show the empty state instead. For doughnuts an
+     * all-zero state would crash Chart.js (empty dataset), so we also catch it.
+     */
+    function allZero(values) {
+        for (var i = 0; i < values.length; i++) {
+            if (values[i] > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Overlay a centered empty-state message on top of a chart canvas.
+     * The message inherits theme text colors so it stays readable in both modes.
+     */
+    function attachEmptyState(canvas, message) {
+        var existing = canvas._tmsEmptyState;
+        if (existing) {
+            existing.remove();
+        }
+        var wrap = document.createElement('div');
+        wrap.className = 'tms-chart-empty';
+        wrap.setAttribute('role', 'status');
+        wrap.setAttribute('aria-label', message);
+        var node = document.createElement('div');
+        node.className = 'tms-chart-empty__msg';
+        node.innerHTML = '<span class="tms-chart-empty__icon"><i class="fas fa-inbox"></i></span>' +
+            '<span class="tms-chart-empty__text">' + message + '</span>';
+        wrap.appendChild(node);
+        canvas.parentElement.appendChild(wrap);
+        canvas._tmsEmptyState = wrap;
+    }
+
+    function clearEmptyState(canvas) {
+        if (canvas._tmsEmptyState) {
+            canvas._tmsEmptyState.remove();
+            canvas._tmsEmptyState = null;
+        }
+    }
+
     var charts = [];
 
     function buildCharts() {
         // Destroy previous instances on theme rebuild.
         charts.forEach(function (c) { c.destroy(); });
         charts = [];
+        // Clear any lingering empty-state overlays.
+        var nodes = document.querySelectorAll('.tms-chart-empty');
+        for (var i = 0; i < nodes.length; i++) {
+            nodes[i].remove();
+        }
+        Array.prototype.forEach.call(
+            document.querySelectorAll('canvas[id^="leadsByStageChart"], canvas[id^="attendanceChart"]'),
+            function (c) { c._tmsEmptyState = null; }
+        );
 
         var leadsEl = document.getElementById('leadsByStageChart');
+
         if (leadsEl && window.SB_DASH.leads) {
             var d = window.SB_DASH.leads;
             leadsEl.style.height = '240px';
-            charts.push(new Chart(leadsEl.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: d.labels,
-                    datasets: [{
-                        data: d.values,
-                        backgroundColor: d.colors,
-                        borderColor: token('--bg-card', '#FFFFFF'),
-                        borderWidth: 2,
-                        hoverOffset: 6
-                    }]
-                },
-                options: Object.assign(baseOptions(), {
-                    cutout: '62%',
-                    plugins: Object.assign(baseOptions().plugins, {
-                        legend: { position: 'bottom', labels: { color: token('--text-secondary', '#475569'), usePointStyle: true, boxWidth: 8, padding: 14 } }
+            clearEmptyState(leadsEl);
+            if (allZero(d.values)) {
+                attachEmptyState(leadsEl, 'No leads yet — the pipeline starts here.');
+            } else {
+                charts.push(new Chart(leadsEl.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: d.labels,
+                        datasets: [{
+                            data: d.values,
+                            backgroundColor: d.colors,
+                            borderColor: token('--bg-card', '#FFFFFF'),
+                            borderWidth: 2,
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: Object.assign(baseOptions(), {
+                        cutout: '62%',
+                        plugins: Object.assign(baseOptions().plugins, {
+                            legend: { position: 'bottom', labels: { color: token('--text-secondary', '#475569'), usePointStyle: true, boxWidth: 8, padding: 14 } }
+                        })
                     })
-                })
-            }));
+                }));
+            }
         }
 
         var attEl = document.getElementById('attendanceChart');
         if (attEl && window.SB_DASH.attendance) {
             var a = window.SB_DASH.attendance;
             attEl.style.height = '240px';
-            charts.push(new Chart(attEl.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: a.labels,
-                    datasets: [{
-                        data: a.values,
-                        backgroundColor: a.colors.map(function (c) { return c; }),
-                        borderRadius: 8,
-                        maxBarThickness: 56
-                    }]
-                },
-                options: Object.assign(baseOptions(), {
-                    scales: {
-                        x: { grid: { display: false }, ticks: { color: token('--text-secondary', '#475569') } },
-                        y: {
-                            beginAtZero: true,
-                            ticks: { color: token('--text-muted', '#94A3B8'), precision: 0 },
-                            grid: { color: gridColor() },
-                            border: { display: false }
-                        }
+            clearEmptyState(attEl);
+            if (allZero(a.values)) {
+                attachEmptyState(attEl, 'No attendance recorded for today.');
+            } else {
+                charts.push(new Chart(attEl.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: a.labels,
+                        datasets: [{
+                            data: a.values,
+                            backgroundColor: a.colors.map(function (c) { return c; }),
+                            borderRadius: 8,
+                            maxBarThickness: 56
+                        }]
                     },
-                    plugins: Object.assign(baseOptions().plugins, { legend: { display: false } })
-                })
-            }));
+                    options: Object.assign(baseOptions(), {
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: token('--text-secondary', '#475569') } },
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: token('--text-muted', '#94A3B8'), precision: 0 },
+                                grid: { color: gridColor() },
+                                border: { display: false }
+                            }
+                        },
+                        plugins: Object.assign(baseOptions().plugins, { legend: { display: false } })
+                    })
+                }));
+            }
         }
     }
 

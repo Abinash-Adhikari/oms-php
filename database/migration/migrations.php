@@ -1,5 +1,6 @@
 <?php
-$files = array(
+
+$files = [
     // --- Foundation & auth ---
     'create-table-migrations',
     'create-table-office_departments',
@@ -127,5 +128,23 @@ $files = array(
     'ensure-fk-document-engine',
     'add-title-column-document-files',
 
+    // --- Client projects: package/db_name + lead-to-project link ---
+    'alter-table-client_projects-add-package-db_name',
+    'alter-table-leads-add-project_id',
+    'alter-table-client_projects-make-client-optional',
+    'alter-table-clients-add-module-entitlements',
+
+    // --- Sales pipeline re-model: catalog projects + business sources ---
+    'create-table-projects',
+    'rename-table-clients-to-business_sources',
+    'alter-table-business_sources-add-type',
+    'create-table-business_source_contacts',
+    'alter-table-client_projects-provisioning',
+    'alter-table-leads-repoint-business-source',
+    'alter-table-leads-repoint-project-catalog',
+
+    // --- Rename business_sources back to clients ---
+    'rename-tables-back-to-clients',
+
     // Append new migration filenames below only (do not insert in the middle).
-);
+];

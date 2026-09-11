@@ -22,6 +22,22 @@ if (!file_exists(__DIR__ . '/../config/setup.php')) {
     $GLOBALS['APP_CONFIG'] = $APP_CONFIG;
 }
 
+// Environment overrides (CI / disposable DBs): DB_HOST, DB_PORT, DB_USER,
+// DB_PASS, DB_NAME. Lets DB-dependent tests target the database built by
+// scripts/fresh_test_db.sh without touching config/setup.php.
+$envMap = [
+    'DB_HOST' => 'db_host',
+    'DB_PORT' => 'db_port',
+    'DB_USER' => 'db_username',
+    'DB_PASS' => 'db_password',
+    'DB_NAME' => 'db_name',
+];
+foreach ($envMap as $envKey => $cfgKey) {
+    if (getenv($envKey) !== false) {
+        $GLOBALS['APP_CONFIG'][$cfgKey] = getenv($envKey);
+    }
+}
+
 // Load helpers (these don't require a DB connection).
 require_once __DIR__ . '/../functions/helpers.php';
 require_once __DIR__ . '/../functions/hr.php';

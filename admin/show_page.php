@@ -33,6 +33,12 @@ $moduleFs = (string) $moduleFs;
 // Load navigation (used by head + sidebar).
 include __DIR__ . '/includes/varriables.php';
 
+// Inner pages (e.g. clients/detail) share their parent page's permission
+// gate — no separate submodule grant is required to drill down.
+$permissionPage = isset($innerPageGrants[$permissionModule][$page])
+    ? (string) $innerPageGrants[$permissionModule][$page]
+    : $page;
+
 // Phase 2 — canonical redirects: old URLs for moved submodules 301 to their
 // new home (must run before head.php emits any output).
 if (isset($routeCanonical[$permissionModule][$page]) && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
@@ -71,7 +77,7 @@ include __DIR__ . '/includes/head.php';
         <div class="container-fluid">
             <?= renderFlash() ?>
             <?php
-            if (!Auth::can($permissionModule, $page)) {
+            if (!Auth::can($permissionModule, $permissionPage)) {
                 echo '<div class="callout callout-warning"><h5>Access denied</h5>'
                     . '<p>You are not permitted to access <b>' . e($permissionModule . ($page !== '' && $page !== $permissionModule ? '/' . $page : '')) . '</b>. '
                     . 'Please contact the administrator.</p></div>';

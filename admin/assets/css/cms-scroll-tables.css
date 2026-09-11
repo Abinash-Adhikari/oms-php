@@ -1,0 +1,189 @@
+/**
+ * Global data-table chrome for admin (show_page).
+ * - Row borders only (no column borders)
+ * - Sticky header + ~650px scroll viewport (page tables only; modal tables stay static)
+ * - Comfortable-dense cells (readable, still fits one screen)
+ *
+ * Scoped to body.cms-admin .content-wrapper. Modal tables opt out of sticky
+ * (see rules below) because Bootstrap modals render inside .content-wrapper.
+ */
+
+body.cms-admin .content-wrapper .table {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  margin-bottom: 0;
+  background-color: var(--cms-card-bg, #fff);
+  color: var(--cms-text, #0f172a);
+}
+
+/* Comfortable-dense cells — not cramped, not sparse */
+body.cms-admin .content-wrapper .table > :not(caption) > * > *,
+body.cms-admin .content-wrapper .table th,
+body.cms-admin .content-wrapper .table td {
+  padding: 0.5rem 0.75rem !important;
+  vertical-align: middle;
+}
+
+body.cms-admin .content-wrapper .table thead th {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background-color: var(--cms-surface-muted, #f8fafc) !important;
+  color: var(--cms-text-muted, #64748b);
+}
+
+/* Row borders only — kill Bootstrap .table-bordered column lines */
+body.cms-admin .content-wrapper .table,
+body.cms-admin .content-wrapper .table-bordered {
+  border: 0 !important;
+}
+
+body.cms-admin .content-wrapper .table th,
+body.cms-admin .content-wrapper .table td,
+body.cms-admin .content-wrapper .table-bordered th,
+body.cms-admin .content-wrapper .table-bordered td {
+  border: 0 !important;
+  border-bottom: 1px solid var(--cms-card-border, rgba(15, 23, 42, 0.08)) !important;
+}
+
+body.cms-admin .content-wrapper .table thead th,
+body.cms-admin .content-wrapper .table-bordered thead th {
+  border-bottom: 1px solid var(--cms-card-border, rgba(15, 23, 42, 0.14)) !important;
+  box-shadow: 0 1px 0 var(--cms-card-border, rgba(15, 23, 42, 0.06));
+}
+
+body.cms-admin .content-wrapper .table tbody tr:last-child > * {
+  border-bottom: 0 !important;
+}
+
+body.cms-admin .content-wrapper .table-hover tbody tr:hover {
+  background-color: rgba(15, 23, 42, 0.03);
+}
+
+/* Scroll viewport — no extra frame (panel already provides the box) */
+body.cms-admin .content-wrapper .table-responsive,
+body.cms-admin .content-wrapper .cms-table-scroll {
+  max-height: 650px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 0;
+  background: transparent;
+}
+
+/*
+ * Bulk/add entry tables grow with rows — do not lock to data-table viewport.
+ * Use .cms-table-fluid or wrap in .postings-add-panel.
+ */
+body.cms-admin .content-wrapper .table-responsive.cms-table-fluid,
+body.cms-admin .content-wrapper .cms-table-scroll.cms-table-fluid,
+body.cms-admin .content-wrapper .postings-add-panel .table-responsive,
+body.cms-admin .content-wrapper .postings-add-panel .cms-table-scroll {
+  max-height: none;
+  min-height: 0;
+  overflow: visible;
+}
+
+/*
+ * Action/Status dropdown menus inside a scrolling table are portaled to
+ * <body> on open (see show_page.php's show.bs.dropdown handler) so they
+ * render above the page instead of being clipped by overflow:auto — no
+ * table needs a reserved minimum height for this anymore.
+ */
+
+body.cms-admin .content-wrapper .modal .table-responsive,
+body.cms-admin .content-wrapper .modal .cms-table-scroll {
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+}
+
+/* Modals sit inside .content-wrapper — sticky thead piles every table's header
+   onto the modal scrollport (CAS Map subjects, multi-class forms, etc.). */
+body.cms-admin .content-wrapper .modal .table thead th,
+body.cms-admin .content-wrapper .modal .table-bordered thead th {
+  position: static;
+  top: auto;
+  z-index: auto;
+  box-shadow: none;
+}
+
+body.cms-admin .content-wrapper .table-responsive > .table,
+body.cms-admin .content-wrapper .cms-table-scroll > .table {
+  margin-bottom: 0;
+}
+
+/*
+ * Sticky headers: stick each th (Chrome needs th, not thead/tr).
+ * Single-row tables: all th use top:0 — unchanged.
+ * Multi-row thead: only 2nd/3rd rows get an offset so they don't
+ * pile on top of row 1 (Subjects, marks, trial balance, attendance…).
+ */
+body.cms-admin .content-wrapper .table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+body.cms-admin .content-wrapper .table thead tr:nth-child(2) > th {
+  top: var(--cms-thead-row1, 2.35rem);
+  z-index: 2;
+}
+
+body.cms-admin .content-wrapper .table thead tr:nth-child(3) > th {
+  top: calc(var(--cms-thead-row1, 2.35rem) * 2);
+  z-index: 1;
+}
+
+body.cms-admin .content-wrapper .table thead th[rowspan] {
+  z-index: 4;
+}
+
+body.cms-admin .content-wrapper .dataTables_scrollBody {
+  max-height: 650px !important;
+}
+
+body.cms-admin .content-wrapper .dataTables_scrollHead table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+html[data-theme="dark"] body.cms-admin .content-wrapper .table thead th {
+  background-color: var(--cms-surface-muted, #151c27) !important;
+  color: var(--cms-text-muted, #94a3b8);
+}
+
+html[data-theme="dark"] body.cms-admin .content-wrapper .table-hover tbody tr:hover {
+  background-color: rgba(148, 163, 184, 0.08);
+}
+
+@media (max-height: 800px) {
+  body.cms-admin .content-wrapper .table-responsive:not(.cms-table-fluid),
+  body.cms-admin .content-wrapper .cms-table-scroll:not(.cms-table-fluid),
+  body.cms-admin .content-wrapper .dataTables_scrollBody {
+    max-height: 520px;
+  }
+
+  body.cms-admin .content-wrapper .postings-add-panel .table-responsive,
+  body.cms-admin .content-wrapper .postings-add-panel .cms-table-scroll {
+    max-height: none;
+  }
+}
+
+@media (min-height: 1000px) {
+  body.cms-admin .content-wrapper .table-responsive:not(.cms-table-fluid),
+  body.cms-admin .content-wrapper .cms-table-scroll:not(.cms-table-fluid),
+  body.cms-admin .content-wrapper .dataTables_scrollBody {
+    max-height: 700px;
+  }
+
+  body.cms-admin .content-wrapper .postings-add-panel .table-responsive,
+  body.cms-admin .content-wrapper .postings-add-panel .cms-table-scroll {
+    max-height: none;
+  }
+}

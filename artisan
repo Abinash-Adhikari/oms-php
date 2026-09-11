@@ -9,6 +9,11 @@
  *   php artisan rollback [N]       Roll back the last N applied migrations (default 1)
  *   php artisan help               Show usage
  *
+ * Target database can be overridden via environment variables (useful for
+ * disposable test databases / CI — see scripts/fresh_test_db.sh):
+ *   ARTISAN_DB_NAME, ARTISAN_DB_HOST, ARTISAN_DB_USER, ARTISAN_DB_PASS,
+ *   ARTISAN_DB_SOCKET (set to empty string to force TCP)
+ *
  * Migrations are the ordered PHP files listed in database/migration/migrations.php.
  * Each file defines `$query` (up) and `$rollbackQuery` (down). Applied files are
  * tracked in `tbl_migrations`.
@@ -22,11 +27,11 @@ if (PHP_SAPI !== 'cli') {
 define('APP_BOOTSTRAP_SKIP_DB', true);
 require __DIR__ . '/config/setup.php';
 
-$dbName = (string) config('db_name', 'sb_tech');
-$host   = (string) config('db_host', 'localhost');
-$user   = (string) config('db_username', '');
-$pass   = (string) config('db_password', '');
-$socket = config('db_socket') ? (string) config('db_socket') : null;
+$dbName = getenv('ARTISAN_DB_NAME') ?: (string) config('db_name', 'sb_tech');
+$host   = getenv('ARTISAN_DB_HOST') ?: (string) config('db_host', 'localhost');
+$user   = getenv('ARTISAN_DB_USER') ?: (string) config('db_username', '');
+$pass   = getenv('ARTISAN_DB_PASS') !== false ? getenv('ARTISAN_DB_PASS') : (string) config('db_password', '');
+$socket = getenv('ARTISAN_DB_SOCKET') !== false ? getenv('ARTISAN_DB_SOCKET') : (config('db_socket') ? (string) config('db_socket') : null);
 
 require __DIR__ . '/database/migration/migrations.php';
 $migrationDir = __DIR__ . '/database/migration/';

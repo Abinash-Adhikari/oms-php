@@ -1,0 +1,536 @@
+/* theme.css - Complete Dark Mode Fixes */
+
+:root {
+    /* Light Theme Colors */
+    --primary: #7c81df;
+    --primary-dark: #4c51bf;
+    --primary-light: #7f9cf5;
+    
+    --secondary: #718096;
+    --secondary-dark: #4a5568;
+    --secondary-light: #a0aec0;
+    
+    --success: #48bb78;
+    --success-dark: #38a169;
+    --success-light: #68d391;
+    
+    --danger: #f56565;
+    --danger-dark: #e53e3e;
+    --danger-light: #fc8181;
+    
+    --warning: #ed8936;
+    --warning-dark: #dd6b20;
+    --warning-light: #f6ad55;
+    
+    --info: #4299e1;
+    --info-dark: #3182ce;
+    --info-light: #63b3ed;
+    
+    --light: #f7fafc;
+    --dark: #2d3748;
+    
+    /* Light Theme Background/Foreground */
+    --bg-color: #ffffff;
+    --bg-secondary: #f7fafc;
+    --text-color: #2d3748;
+    --text-secondary: #4a5568;
+    --border-color: #e2e8f0;
+    
+    /* Component Colors */
+    --card-bg: #ffffff;
+    --card-border: rgba(0, 0, 0, 0.125);
+    --input-bg: #ffffff;
+    --input-border: #ced4da;
+    --table-bg: #ffffff;
+    --table-stripe: rgba(0, 0, 0, 0.02);
+    --table-border: #e9ecef;
+
+    --nav-color: #f7fafc;
+  }
+  
+  /* Dark Theme Colors */
+  [data-theme="dark"] {
+    --primary: #7f9cf5;
+    --primary-dark: #667eea;
+    --primary-light: #a3bffa;
+    
+    --secondary: #a0aec0;
+    --secondary-dark: #718096;
+    --secondary-light: #cbd5e0;
+    
+    --success: #68d391;
+    --success-dark: #48bb78;
+    --success-light: #9ae6b4;
+    
+    --danger: #fc8181;
+    --danger-dark: #f56565;
+    --danger-light: #fed7d7;
+    
+    --warning: #f6ad55;
+    --warning-dark: #ed8936;
+    --warning-light: #fbd38d;
+    
+    --info: #63b3ed;
+    --info-dark: #4299e1;
+    --info-light: #90cdf4;
+    
+    --light: #4a5568;
+    --dark: #f7fafc;
+   
+    
+    /* Dark Theme Background/Foreground */
+    --bg-color: #1a202c;
+    --bg-secondary: #2d3748;
+    --text-color: #f7fafc;
+    --text-secondary: #e2e8f0;
+    --border-color: #4a5568;
+    
+    /* Component Colors */
+    --card-bg: #2d3748;
+    --card-border: #4a5568;
+    --input-bg: #2d3748;
+    --input-border: #4a5568;
+    --table-bg: #2d3748;
+    --table-stripe: rgba(255, 255, 255, 0.05);
+    --table-border: #4a5568;
+
+    --nav-color: #f7fafc;
+  }
+  
+  /* Base Styles */
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  /* Text Colors */
+  .text-body {
+    color: var(--text-color) !important;
+  }
+  
+  .text-muted {
+    color: var(--text-secondary) !important;
+  }
+  
+  /* Backgrounds */
+  .bg-body {
+    background-color: var(--bg-color) !important;
+  }
+  
+  .bg-light {
+    background-color: var(--bg-secondary) !important;
+  }
+  
+  /* Cards */
+  .card {
+    background-color: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-color) !important;
+  }
+  
+  .card-header {
+    background-color: var(--bg-secondary) !important;
+    border-bottom-color: var(--border-color) !important;
+  }
+  
+  .card-footer {
+    border-top-color: var(--border-color) !important;
+  }
+  
+  /* Tables */
+  .table {
+    color: var(--text-color) !important;
+    background-color: var(--table-bg) !important;
+  }
+  
+  .table th,
+  .table td {
+    border-top-color: var(--border-color) !important;
+  }
+  
+  .table thead th {
+    border-bottom-color: var(--border-color) !important;
+  }
+  
+  .table-striped tbody tr:nth-of-type(odd) {
+    background-color: var(--table-stripe) !important;
+  }
+  
+  .table-bordered {
+    border-color: var(--border-color) !important;
+  }
+  
+  .table-bordered th,
+  .table-bordered td {
+    border-color: var(--border-color) !important;
+  }
+  
+  .table-hover tbody tr:hover {
+    color: var(--text-color) !important;
+    background-color: rgba(255, 255, 255, 0.075) !important;
+  }
+  
+  /* Forms */
+  .form-control {
+    background-color: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-color) !important;
+  }
+  
+  .form-control:focus {
+    background-color: var(--input-bg) !important;
+    color: var(--text-color) !important;
+    border-color: var(--primary-light) !important;
+    box-shadow: 0 0 0 0.2rem rgba(127, 156, 245, 0.25) !important;
+  }
+  
+  .form-control::placeholder {
+    color: var(--text-secondary) !important;
+    opacity: 1;
+  }
+  
+  .custom-select {
+    background-color: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-color) !important;
+  }
+  
+  .custom-file-label {
+    background-color: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-color) !important;
+  }
+  
+  .custom-file-label::after {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-color) !important;
+    border-left-color: var(--border-color) !important;
+  }
+  
+  /* Input Groups */
+  .input-group-text {
+    background-color: var(--bg-secondary) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-color) !important;
+  }
+  
+  /* Alerts */
+  .alert {
+    background-color: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+  }
+  
+  .alert-primary {
+    color: #ebf8ff !important;
+    background-color: rgba(90, 103, 216, 0.2) !important;
+    border-color: rgba(90, 103, 216, 0.3) !important;
+  }
+  
+  /* List Groups */
+  .list-group-item {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+  }
+  
+  .list-group-item-action:hover {
+    background-color: var(--bg-secondary) !important;
+  }
+  
+  .list-group-item.active {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+  }
+  
+  /* Modals */
+  .modal-content {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+  }
+  
+  .modal-header,
+  .modal-footer {
+    border-color: var(--border-color) !important;
+  }
+  
+  /* Navbar */
+  .navbar {
+    background-color: var(--bg-success) !important;
+    border-color: var(--border-color) !important;
+  }
+  
+  .navbar-light .navbar-brand,
+  .navbar-light .navbar-nav .nav-link {
+    color: var(--text-color) !important;
+  }
+  
+  .navbar-light .navbar-toggler {
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+  }
+  
+  .navbar-light .navbar-toggler-icon {
+    filter: invert(1) brightness(var(--icon-brightness, 1));
+  }
+  
+  /* Dropdowns */
+  .dropdown-menu {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+  }
+  
+  .dropdown-item {
+    color: var(--text-color) !important;
+  }
+  
+  .dropdown-item:hover,
+  .dropdown-item:focus {
+    background-color: var(--bg-secondary) !important;
+  }
+  
+  .dropdown-divider {
+    border-top-color: var(--border-color) !important;
+  }
+  
+  /* Pagination */
+  .page-link {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+  }
+  
+  .page-item.disabled .page-link {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-secondary) !important;
+  }
+  
+  .page-item.active .page-link {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+  }
+  
+  /* Breadcrumbs */
+  .breadcrumb {
+    background-color: var(--bg-secondary) !important;
+  }
+  
+  .breadcrumb-item.active {
+    color: var(--text-secondary) !important;
+  }
+  
+  /* Badges */
+  .badge-light {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-color) !important;
+  }
+  
+  /* Custom Fixes for Common Issues */
+  /* a {
+    color: var(--success) !important;
+  }
+  
+  a:hover {
+    color: var(--success-dark) !important;
+  } */
+    
+  
+
+  .text-dark {
+    color: var(--text-color) !important;
+  }
+  
+  .text-light {
+    color: var(--dark) !important;
+  }
+  
+  .border {
+    border-color: var(--border-color) !important;
+  }
+  
+  .border-light {
+    border-color: var(--border-color) !important;
+  }
+  
+  .bg-white {
+    background-color: var(--card-bg) !important;
+  }
+  
+  .bg-dark {
+    background-color: var(--dark) !important;
+  }
+  
+  /* Fix for select2 if you're using it */
+  .select2-container--default .select2-selection--single,
+  .select2-container--default .select2-selection--multiple {
+    background-color: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-color) !important;
+  }
+  
+  .select2-container--default .select2-results__option {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+  }
+  
+  .select2-container--default .select2-results__option--highlighted,
+  .select2-container--default .select2-results__option--highlighted[aria-selected],
+  .select2-container--default .select2-results__option--highlighted[aria-selected="true"],
+  .select2-container--default .select2-results__option--highlighted[aria-selected="false"] {
+    background-color: #047857 !important;
+    color: #ffffff !important;
+  }
+
+  .select2-container--default .select2-results__option--highlighted * {
+    color: #ffffff !important;
+  }
+
+  /* AdminLTE Specific Dark Mode Fixes */
+
+/* Content Wrapper */
+.content-wrapper {
+    background-color: var(--bg-color) !important;
+    color: var(--text-color) !important;
+  }
+  
+  /* Content Header */
+  .content-header {
+    background-color: var(--bg-secondary) !important;
+    padding: 15px 0.5rem !important;
+  }
+  
+  .content-header h1 {
+    color: var(--text-color) !important;
+    font-size: 1.8rem !important;
+    margin: 0 !important;
+  }
+  
+  /* Breadcrumbs */
+  .breadcrumb {
+    background-color: transparent !important;
+    padding: 0 !important;
+    margin-bottom: 0 !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .breadcrumb-item {
+    color: var(--text-secondary) !important;
+  }
+  
+  .breadcrumb-item a {
+    color: var(--primary) !important;
+    text-decoration: none !important;
+  }
+  
+  .breadcrumb-item.active {
+    color: var(--text-secondary) !important;
+  }
+  
+  .breadcrumb-item + .breadcrumb-item::before {
+    color: var(--text-secondary) !important;
+    content: "/" !important;
+  }
+  
+  /* Float-sm-right fix */
+  .float-sm-right {
+    float: right !important;
+  }
+  
+  /* Card Fixes for AdminLTE */
+  .card {
+    border: 1px solid var(--border-color) !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .card-header {
+    background-color: var(--bg-secondary) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    padding: 0.75rem 1.25rem !important;
+  }
+  
+  .card-header h3 {
+    color: var(--text-color) !important;
+    font-size: 1.2rem !important;
+    margin: 0 !important;
+  }
+  
+  .card-body {
+    padding: 1.25rem !important;
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+  }
+  
+  /* Additional AdminLTE-specific fixes */
+  .main-header {
+    background-color: var(--bg-secondary) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+  }
+  
+  .main-sidebar {
+    background-color: var(--dark) !important;
+    color: var(--text-color) !important;
+  }
+  
+  .nav-sidebar .nav-link {
+    color: var(--nav-color) !important;
+  }
+  
+  .nav-sidebar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+  
+  .nav-sidebar .nav-link.active {
+    background-color: var(--success) !important;
+    color: white !important;
+  }
+  
+  /* Fix for small boxes */
+  .small-box {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+  }
+  
+  .small-box .icon {
+    color: rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  [data-theme="dark"] .small-box .icon {
+    color: rgba(255, 255, 255, 0.15) !important;
+  }
+  
+  /* Info boxes */
+  .info-box {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+  }
+  
+  .info-box-icon {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+  }
+  
+  [data-theme="dark"] .info-box-icon {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+  }
+
+
+  .btn-outline-success {
+    color: var(--success);
+    border-color: var(--success);
+  }
+  
+  .btn-outline-success:hover {
+    background-color: var(--success);
+    color: white;
+  }
+
+  /* Add this to your CSS file */
+body:fullscreen {
+    overflow: auto;
+}
+
+body:fullscreen .content-wrapper {
+    height: 100vh;
+}

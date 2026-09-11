@@ -1,7 +1,7 @@
 # SB-Tech Office Management System — Codebase Overview
 
 > **Generated:** 2026-08-26 (analysis snapshot)
-> **Tech stack:** PHP 7.4+ · mysqli (prepared statements) · MySQL · PHPUnit 9.5 · AdminLTE 3 / Bootstrap 4 · vanilla JS
+> **Tech stack:** PHP 8.1+ · mysqli (prepared statements) · MySQL · PHPUnit 11.5 · AdminLTE 3 / Bootstrap 4 · vanilla JS
 
 A single-deployable modular monolith with **two faces sharing one database**: a public marketing website and a role-based staff admin panel ("OMS"). No framework — custom front controllers, routing, auth, and a thin DB layer.
 
@@ -23,7 +23,7 @@ codegenexis/
 ├── docs/                # PRD, system analysis, modules catalog
 ├── artisan              # Custom CLI migration runner (migrate/status/rollback)
 ├── index.php, about.php, services.php, projects.php, ...  # Public pages
-└── composer.json        # PHP ≥7.4, PHPUnit dev-dep, classmap autoload
+└── composer.json        # PHP ≥8.1, PHPUnit dev-dep, classmap autoload
 ```
 
 **Scale:** ~25,700 PHP LOC across 72 source files + 102 migrations. Documented in ~1,335 lines of docs (`docs/`).

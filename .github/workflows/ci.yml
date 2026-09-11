@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+
+jobs:
+  check:
+    name: Test + Static Analysis + Rules Lint
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:10.6
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: sb_tech_test
+          MARIADB_USER: admin
+          MARIADB_PASSWORD: admin
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mysqli, gd, zip, intl
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Rules lint (docs/RULES.md)
+        run: composer lint
+
+      - name: Static analysis (PHPStan, baseline enforced)
+        run: composer stan
+
+      - name: Rebuild test DB from migrations
+        run: bash scripts/fresh_test_db.sh
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: admin
+          DB_PASS: admin
+          DB_NAME: sb_tech_test
+
+      - name: PHPUnit (DB-dependent tests run against the rebuilt DB)
+        run: composer test
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: admin
+          DB_PASS: admin
+          DB_NAME: sb_tech_test
+
+      - name: Schema docs parity (docs/Schema.md vs migrations)
+        run: composer schema:check
+        continue-on-error: true   # informational until parity is achieved

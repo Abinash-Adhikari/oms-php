@@ -31,22 +31,28 @@ class Database
 
     private function __construct(array $cfg)
     {
-        $host     = $cfg['db_host'] ?? 'localhost';
-        $user     = $cfg['db_username'] ?? '';
-        $pass     = $cfg['db_password'] ?? '';
-        $name     = $cfg['db_name'] ?? '';
-        $socket   = $cfg['db_socket'] ?? null;
+        $host   = $cfg['db_host']     ?? 'localhost';
+        $user   = $cfg['db_username'] ?? '';
+        $pass   = $cfg['db_password'] ?? '';
+        $name   = $cfg['db_name']     ?? '';
+        $socket = $cfg['db_socket']   ?? null;
+        $port   = isset($cfg['db_port']) ? (int) $cfg['db_port'] : 0;
 
         $useSocket = $socket && ($host === 'localhost' || $host === '127.0.0.1');
 
         mysqli_report(MYSQLI_REPORT_OFF);
-        $this->mysqli = new mysqli($host, $user, $pass, $name, $useSocket ? null : 0, $useSocket ? $socket : null);
-
-        if ($this->mysqli->connect_errno) {
+        // PHP 8.1+: connection failures ALWAYS throw mysqli_sql_exception,
+        // even with MYSQLI_REPORT_OFF (the @ suppresses the duplicate PHP
+        // warning raised just before the exception). Convert it to our own
+        // RuntimeException so callers can handle it (page bootstrap shows a
+        // friendly error; test helpers skip cleanly).
+        try {
+            $this->mysqli = @new mysqli($host, $user, $pass, $name, $useSocket ? null : $port, $useSocket ? $socket : null);
+        } catch (mysqli_sql_exception $e) {
             if (!empty(config('debug'))) {
-                die('Database connection failed: ' . $this->mysqli->connect_error);
+                throw new RuntimeException('Database connection failed: ' . $e->getMessage(), 0, $e);
             }
-            die('Database connection failed. Contact the administrator.');
+            throw new RuntimeException('Database connection failed. Contact the administrator.', 0, $e);
         }
         $this->mysqli->set_charset('utf8mb4');
     }
@@ -74,7 +80,7 @@ class Database
             $stmt->close();
             throw new RuntimeException('Query failed: ' . $err . ' | SQL: ' . $sql);
         }
-        $rows = [];
+        $rows   = [];
         $result = $stmt->get_result();
         if ($result) {
             while ($row = $result->fetch_assoc()) {
@@ -96,7 +102,7 @@ class Database
             throw new RuntimeException('Query failed: ' . $err . ' | SQL: ' . $sql);
         }
         $result = $stmt->get_result();
-        $row = $result ? $result->fetch_assoc() : null;
+        $row    = $result ? $result->fetch_assoc() : null;
         if ($result) {
             $result->free();
         }
@@ -108,7 +114,7 @@ class Database
     public function execute(string $sql, array $params = []): bool
     {
         $stmt = $this->prepare($sql, $params);
-        $ok = $stmt->execute();
+        $ok   = $stmt->execute();
         if (!$ok) {
             $err = $stmt->error !== '' ? $stmt->error : $this->mysqli->error;
             $stmt->close();
@@ -124,11 +130,11 @@ class Database
         if ($data === []) {
             throw new InvalidArgumentException('insert() requires at least one column.');
         }
-        $cols = array_keys($data);
+        $cols         = array_keys($data);
         $placeholders = implode(', ', array_fill(0, count($cols), '?'));
-        $sql = 'INSERT INTO `' . $table . '` (`' . implode('`, `', $cols) . '`) VALUES (' . $placeholders . ')';
-        $stmt = $this->prepare($sql, array_values($data));
-        $ok = $stmt->execute();
+        $sql          = 'INSERT INTO `' . $table . '` (`' . implode('`, `', $cols) . '`) VALUES (' . $placeholders . ')';
+        $stmt         = $this->prepare($sql, array_values($data));
+        $ok           = $stmt->execute();
         if (!$ok) {
             $err = $stmt->error !== '' ? $stmt->error : $this->mysqli->error;
             $stmt->close();
@@ -149,9 +155,9 @@ class Database
         foreach (array_keys($data) as $col) {
             $set[] = '`' . $col . '` = ?';
         }
-        $sql = 'UPDATE `' . $table . '` SET ' . implode(', ', $set) . ' WHERE ' . $whereSql;
+        $sql  = 'UPDATE `' . $table . '` SET ' . implode(', ', $set) . ' WHERE ' . $whereSql;
         $stmt = $this->prepare($sql, array_merge(array_values($data), $whereParams));
-        $ok = $stmt->execute();
+        $ok   = $stmt->execute();
         if (!$ok) {
             $err = $stmt->error !== '' ? $stmt->error : $this->mysqli->error;
             $stmt->close();
@@ -165,9 +171,9 @@ class Database
     /** Delete rows; returns affected rows. Throws on failure. */
     public function delete(string $table, string $whereSql, array $whereParams = []): int
     {
-        $sql = 'DELETE FROM `' . $table . '` WHERE ' . $whereSql;
+        $sql  = 'DELETE FROM `' . $table . '` WHERE ' . $whereSql;
         $stmt = $this->prepare($sql, $whereParams);
-        $ok = $stmt->execute();
+        $ok   = $stmt->execute();
         if (!$ok) {
             $err = $stmt->error !== '' ? $stmt->error : $this->mysqli->error;
             $stmt->close();

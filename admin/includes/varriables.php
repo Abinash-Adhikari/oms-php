@@ -36,6 +36,7 @@ $modules = [
     'staff_management',
     'webcms',
     'leads',
+    'clients',
     'sales',
     'communication',
     'accounts',
@@ -51,13 +52,13 @@ $navBars = [
     'staff_management' => 'Staff Management',
     'webcms'           => 'Website CMS',
     'leads'            => 'Leads',
+    'clients'          => 'Clients',
     'sales'            => 'Sales Documents',
     'accounts'         => 'Accounts',
     'inventory'        => 'Inventory',
     'reports'          => 'Reports',
     'office_setup'     => 'Office Setup',
     'communication'    => 'Communication',
-    'webcms'           => 'Website CMS',
     'settings'         => 'Settings',
 ];
 
@@ -87,9 +88,11 @@ $subNavBars = [
         'permissions'        => 'Module Permission',
     ],
     'leads' => [
-        'leads'       => 'Leads',
-        'clients'     => 'Clients',
-        'quotations'  => 'Quotations',
+        'leads'    => 'Leads',
+        'projects' => 'Catalog Projects',
+    ],
+    'clients' => [
+        'clients' => 'Clients',
     ],
     'sales' => [
         'documents'     => 'Documents',
@@ -161,6 +164,7 @@ $subIcons = [
     'terminated_staffs'     => 'nav-icon fas fa-user-slash',
     // leads
     'leads'                 => 'nav-icon fas fa-filter',
+    // clients (standalone module)
     'clients'               => 'nav-icon fas fa-handshake',
     // accounts
     'postings'              => 'nav-icon fas fa-file-invoice-dollar',
@@ -249,7 +253,8 @@ $pages = [
     'my_office'        => ['office_calendar', 'office_spaces'],
     'staff_management' => ['add_staff', 'staff_daily_tasks', 'leave_management', 'staff_history', 'terminated_staffs', 'hr_care', 'permissions'],
     'webcms'           => ['cms_home', 'services', 'projects', 'news', 'notices', 'careers', 'team', 'contact', 'webcms_setup'],
-    'leads'            => ['leads', 'clients', 'quotations'],
+    'leads'            => ['leads', 'projects'],
+    'clients'          => ['clients'],
     'sales'            => ['documents'],
     'communication'    => ['email_sms', 'templates', 'logs'],
     'accounts'         => ['postings', 'ledger', 'expense_claims', 'bank_reconciliation', 'chart_of_account', 'fiscal_years', 'account_reports'],
@@ -257,6 +262,18 @@ $pages = [
     'reports'          => ['overview', 'attendance', 'leave', 'tasks', 'leads', 'finance', 'inventory', 'staff', 'audit'],
     'office_setup'     => ['office_profile', 'departments', 'designations', 'holidays', 'meeting_halls', 'bank_details', 'documents'],
     'settings'         => ['users', 'document_setup'],
+];
+
+/**
+ * Inner pages — non-navigable drill-down views that live as their own PHP
+ * file (route.php resolves by file existence) but are NOT standalone
+ * submodules. They share the permission gate of a parent page, so anyone who
+ * can open the parent page can open the inner page too (no extra grant, no
+ * sidebar entry, no permissions checkbox). Key = inner page, value = parent
+ * page whose Auth::can grant applies.
+ */
+$innerPageGrants = [
+    'clients' => ['detail' => 'clients'],
 ];
 
 /**
@@ -278,6 +295,7 @@ $pages = [
 $routeCanonical = [
     'my_office'  => ['hr_care' => ['module' => 'staff_management', 'page' => 'hr_care', 'post' => true]],
     'inventory'  => ['reports' => ['module' => 'reports', 'page' => 'inventory', 'post' => false]],
+    'business_sources' => ['business_sources' => ['module' => 'clients', 'page' => 'clients', 'post' => true]],
     'settings'   => [
         'office_profile' => ['module' => 'office_setup', 'page' => 'office_profile', 'post' => false],
         'permissions'    => ['module' => 'staff_management', 'page' => 'permissions', 'post' => false],
@@ -294,6 +312,7 @@ $navSidebarSections = [
     'staff_management' => 'PEOPLE & HR',
     'webcms'           => 'GROWTH & SALES',
     'leads'            => 'GROWTH & SALES',
+    'clients'          => 'GROWTH & SALES',
     'sales'            => 'GROWTH & SALES',
     'communication'    => 'GROWTH & SALES',
     'accounts'         => 'FINANCE',

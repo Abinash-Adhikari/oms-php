@@ -87,23 +87,45 @@ code, pre, kbd, .font-mono {
 
 .tms-kpi-card {
     display: flex;
-    align-items: center;
-    gap: .85rem;
-    /* !important: the markup also carries a Bootstrap bg-info/bg-success/...
-       utility class for the color mapping below, and Bootstrap ships those
-       with background-color: ... !important — this must beat it. */
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .5rem;
+    padding: .85rem 1.1rem;
+    min-height: 78px;
+    text-decoration: none;
+    /* ── The variant classes (.bg-info, .bg-success, …) are color tokens
+       only: top-border + icon tint. They must NOT paint the card background.
+       Several upstream stylesheets (bootstrap.min.css, color.css,
+       custom.css, cms-theme.css) already set background-color: … !important
+       on those same class names — the resets below neutralize that so the
+       card always renders as a clean white card with a colored top border. */
+    background-color: var(--bg-card) !important;
+    background-image: none !important;
     background: var(--bg-card) !important;
     border: 1px solid var(--border-color);
     border-top: 3px solid var(--kpi-color, var(--accent));
     border-radius: var(--radius-lg);
-    padding: 1rem 1.1rem;
-    min-height: 78px;
     color: inherit;
-    text-decoration: none;
     transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
 
-/* Override Bootstrap/AdminLTE bg-* hover — prevent solid color flood */
+/* Coerce every bg-* utility that touches the card into a pure-color token
+   (no background fill, no hover fill). Specificity beats Bootstrap's
+   `.bg-info { background-color: … !important }` because our selector also
+   carries the .tms-kpi-card base + variant class. */
+.tms-kpi-card.bg-info,
+.tms-kpi-card.bg-success,
+.tms-kpi-card.bg-warning,
+.tms-kpi-card.bg-danger,
+.tms-kpi-card.bg-primary,
+.tms-kpi-card.bg-teal,
+.tms-kpi-card.bg-orange,
+.tms-kpi-card.bg-secondary {
+    background-color: var(--bg-card) !important;
+    background-image: none !important;
+    background: var(--bg-card) !important;
+}
+
 .tms-kpi-card.bg-info:hover,
 .tms-kpi-card.bg-success:hover,
 .tms-kpi-card.bg-warning:hover,
@@ -112,6 +134,8 @@ code, pre, kbd, .font-mono {
 .tms-kpi-card.bg-teal:hover,
 .tms-kpi-card.bg-orange:hover,
 .tms-kpi-card.bg-secondary:hover {
+    background-color: var(--bg-card) !important;
+    background-image: none !important;
     background: var(--bg-card) !important;
 }
 
@@ -144,7 +168,7 @@ code, pre, kbd, .font-mono {
 
 .tms-kpi-meta {
     min-width: 0;
-    flex: 1;
+    width: 100%;
 }
 
 .tms-kpi-label {
@@ -166,6 +190,9 @@ code, pre, kbd, .font-mono {
     font-family: var(--font-display), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.2;
     margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .tms-kpi-card.bg-primary   { --kpi-color: var(--accent); --kpi-color-rgb: var(--accent-rgb, 37, 99, 235); }

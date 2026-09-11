@@ -1,0 +1,25 @@
+# Editor normalization — keeps LLM-generated and human-edited files consistent.
+# The repo uses tabs in PHP (docs/RULES.md style); this mirrors existing reality,
+# it does not impose a new style.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.php]
+indent_style = tab
+indent_size = 4
+
+[*.{json,yml,yaml,neon,js,css,html}]
+indent_style = space
+indent_size = 4
+
+[*.{md,sh}]
+indent_style = space
+indent_size = 2
+
+[Makefile]
+indent_style = tab
