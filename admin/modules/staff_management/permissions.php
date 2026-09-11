@@ -105,8 +105,25 @@ $specialPermissions = [
                 </div>
             </form>
             <script>
-                // Checking a module auto-checks nothing by default; submodules
-                // are independent so admins can grant partial module access.
+                // Checking a module checks all its submodules; unchecking the
+                // module unchecks them too. Conversely the module checkbox
+                // follows its submodules: it is checked only when every
+                // submodule under it is checked.
+                document.querySelectorAll('.module-check').forEach(function (moduleCheck) {
+                    moduleCheck.addEventListener('change', function () {
+                        moduleCheck.closest('.form-group')
+                            .querySelectorAll('input[type="checkbox"][name^="submodules"]')
+                            .forEach(function (sub) { sub.checked = moduleCheck.checked; });
+                    });
+                });
+                document.querySelectorAll('input[type="checkbox"][name^="submodules"]').forEach(function (sub) {
+                    sub.addEventListener('change', function () {
+                        var group = sub.closest('.form-group');
+                        var moduleCheck = group.querySelector('.module-check');
+                        var submodules = group.querySelectorAll('input[type="checkbox"][name^="submodules"]');
+                        moduleCheck.checked = Array.from(submodules).every(function (s) { return s.checked; });
+                    });
+                });
             </script>
         <?php endif; ?>
     </div>
