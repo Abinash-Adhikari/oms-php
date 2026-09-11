@@ -66,8 +66,16 @@ $db = Database::instance();
 $db->mysqli()->begin_transaction();
 $transactionActive = true;
 register_shutdown_function(function () use ($db, &$transactionActive) {
-    if ($transactionActive && $db->mysqli()->errno === 0) {
-        $db->mysqli()->commit();
+    if ($transactionActive) {
+        // If the handler's own catch block set an error flash before
+        // calling redirect() → exit, roll back to undo any partial
+        // inserts.  (Handlers that catch + redirect leave $transactionActive
+        // true but have already stored the error in $_SESSION.)
+        if (!empty($_SESSION['flash']['error'])) {
+            $db->mysqli()->rollback();
+        } else {
+            $db->mysqli()->commit();
+        }
     }
 });
 try {
