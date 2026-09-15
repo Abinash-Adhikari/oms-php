@@ -303,18 +303,39 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                                 $isOffDay = in_array($dayName, $offDays, true);
                                 $isClickable = $dateKey !== '';
                                 $evs = $byDay[$dateKey] ?? [];
+                                $hols = $holidaysByDay[$dateKey] ?? [];
+                                $isHoliday = !empty($hols);
+                                // Cell preview: holidays first (red), then events.
+                                $cellItems = [];
+                                foreach ($hols as $h) {
+                                    $cellItems[] = ['kind' => 'holiday', 'icon' => 'umbrella-beach', 'title' => (string) $h['title'], 'type' => 'Holiday', 'from_time' => ''];
+                                }
+                                foreach ($evs as $ev) {
+                                    $cellItems[] = [
+                                        'kind'      => 'event',
+                                        'icon'      => $ev['type'] === 'Note' ? 'sticky-note' : ($ev['type'] === 'Meeting' ? 'handshake' : 'calendar-day'),
+                                        'title'     => (string) $ev['title'],
+                                        'type'      => (string) $ev['type'],
+                                        'from_time' => (string) $ev['from_time'],
+                                    ];
+                                }
+                                $shownItems = array_slice($cellItems, 0, 3);
+                                $moreCount = count($cellItems) - count($shownItems);
+                                $cellTooltip = $isOffDay
+                                    ? 'Weekly off: ' . $dayName . ($isHoliday ? ' · Holiday: ' . implode(', ', array_column($hols, 'title')) : '')
+                                    : ($isHoliday ? 'Holiday: ' . implode(', ', array_column($hols, 'title')) : ($isClickable ? 'View or add on ' . $dateKey : ''));
                                 ?>
-                                <td class="align-top position-relative <?= $isOffDay ? 'table-danger' : ($isToday ? 'bg-primary-light' : '') ?><?= $isClickable ? ' cal-day-clickable' : '' ?>" data-date="<?= $dateKey !== '' ? e($dateKey) : '' ?>" role="<?= $isClickable ? 'button' : '' ?> " style="height:88px;border:1px solid #dee2e6<?= $isToday ? ';border-left:3px solid #2563eb' : '' ?>" title="<?= $isOffDay ? e('Weekly off: ' . $dayName) : ($isClickable ? 'View or add on ' . e($dateKey) : '') ?>">
-                                    <span class="d-block text-center <?= $isOffDay ? 'text-danger font-weight-bold' : ($isToday ? 'badge badge-primary' : 'text-muted') ?>" style="font-size:1.5rem;line-height:1.4"><?= $dayNum ?></span>
+                                <td class="align-top position-relative <?= ($isOffDay || $isHoliday) ? 'table-danger' : ($isToday ? 'bg-primary-light' : '') ?><?= $isClickable ? ' cal-day-clickable' : '' ?>" data-date="<?= $dateKey !== '' ? e($dateKey) : '' ?>" role="<?= $isClickable ? 'button' : '' ?> " style="height:88px;border:1px solid #dee2e6<?= $isToday ? ';border-left:3px solid #2563eb' : '' ?>" title="<?= e($cellTooltip) ?>">
+                                    <span class="d-block text-center <?= ($isOffDay || $isHoliday) ? 'text-danger font-weight-bold' : ($isToday ? 'badge badge-primary' : 'text-muted') ?>" style="font-size:1.5rem;line-height:1.4"><?= $dayNum ?></span>
                                     <?php if ($isToday): ?><small class="badge badge-pill badge-primary" style="font-size:.55rem">Today</small><?php endif; ?>
-                                    <?php foreach (array_slice($evs, 0, 3) as $ev): ?>
-                                        <div class="text-left small <?= $ev['type'] === 'Note' ? 'text-warning' : ($ev['type'] === 'Meeting' ? 'text-primary' : 'text-success') ?>" title="<?= e($ev['title']) ?>">
-                                            <i class="fas fa-<?= $ev['type'] === 'Note' ? 'sticky-note' : ($ev['type'] === 'Meeting' ? 'handshake' : 'calendar-day') ?> mr-1"></i>
-                                            <?= e(mb_strimwidth($ev['title'], 0, 14, '…')) ?>
-                                            <?php if ($ev['from_time']): ?><br><small class="text-muted"><?= e(date('g:i A', strtotime($ev['from_time']))) ?></small><?php endif; ?>
+                                    <?php foreach ($shownItems as $ci): ?>
+                                        <div class="text-left small <?= $ci['kind'] === 'holiday' ? 'text-danger font-weight-bold' : ($ci['type'] === 'Note' ? 'text-warning' : ($ci['type'] === 'Meeting' ? 'text-primary' : 'text-success')) ?>" title="<?= e($ci['title']) ?>">
+                                            <i class="fas fa-<?= $ci['icon'] ?> mr-1"></i>
+                                            <?= e(mb_strimwidth($ci['title'], 0, 14, '…')) ?>
+                                            <?php if ($ci['from_time'] !== ''): ?><br><small class="text-muted"><?= e(date('g:i A', strtotime($ci['from_time']))) ?></small><?php endif; ?>
                                         </div>
                                     <?php endforeach; ?>
-                                    <?php if (count($evs) > 3): ?><small class="text-muted">+<?= count($evs) - 3 ?> more</small><?php endif; ?>
+                                    <?php if ($moreCount > 0): ?><small class="text-muted">+<?= $moreCount ?> more</small><?php endif; ?>
                                     <?php if ($altCaption !== ''): ?><small class="text-muted position-absolute" style="font-size:.6rem;right:.25rem;bottom:.15rem"><?= e($altCaption) ?></small><?php endif; ?>
                                 </td>
                                 <?php
