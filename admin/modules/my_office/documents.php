@@ -537,22 +537,6 @@ $qsStr = $qs ? '&' . http_build_query($qs) : '';
     </div>
 </div>
 
-<!-- File Preview Modal -->
-<div class="modal fade" id="docFilesModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-paperclip mr-1"></i><span id="docFilesTitle"></span></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            </div>
-            <div class="modal-body" id="docFilesBody"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
 var DOC_FILES = <?= json_encode($filesMap, JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_TAG) ?>;
 var selectedIds = {};
@@ -598,32 +582,8 @@ function deleteDoc(docId) {
 
 function openDocFiles(docId, fileCount) {
     var files = DOC_FILES[docId] || [];
-    document.getElementById('docFilesTitle').textContent = (fileCount === undefined || fileCount === 0)
-        ? 'Document files'
-        : 'Document files (' + fileCount + ')';
-
-    var body = document.getElementById('docFilesBody');
-    body.innerHTML = '';
-
-    if (!files.length) {
-        body.innerHTML = '<div class="text-center text-muted py-4">No files attached to this document.</div>';
-        $('#docFilesModal').modal('show');
-        return;
-    }
-
-    var html = '';
-    files.forEach(function (f) {
-        html += '<div class="d-flex align-items-center border-bottom py-2 px-1" style="gap:10px">';
-        html += '<span class="d-flex align-items-center justify-content-center" style="width:40px;height:40px;border-radius:8px;background:var(--bg-body);border:1px solid var(--border-color);flex-shrink:0">'
-             +  '<i class="' + f.icon + '" style="font-size:1.1rem"></i></span>';
-        html += '<span class="text-truncate font-weight-medium" style="min-width:0;flex:1" title="' + f.name.replace(/"/g, '&quot;') + '">' + f.name + '</span>';
-        html += '<a href="' + f.url + '" target="_blank" rel="noopener" class="btn btn-xs btn-outline-secondary" title="Open in new tab"><i class="fas fa-external-link-alt"></i></a>';
-        html += '<a href="' + f.url + '" download="' + f.name.replace(/"/g, '&quot;') + '" class="btn btn-xs btn-outline-success" title="Download"><i class="fas fa-download"></i></a>';
-        html += '<button type="button" class="btn btn-xs btn-outline-primary" title="Preview" onclick=\'openFilePreview(' + JSON.stringify(f.url) + ',' + JSON.stringify(f.name) + ')\'><i class="fas fa-eye"></i></button>';
-        html += '</div>';
-    });
-    body.innerHTML = html;
-    $('#docFilesModal').modal('show');
+    var title = (fileCount === undefined || fileCount === 0) ? 'Document files' : 'Document files (' + fileCount + ')';
+    openFileGallery(title, files);
 }
 
 /* ── Selection & bulk actions ── */

@@ -635,6 +635,7 @@ function getNepaliDateInput(input) {
 <script src="<?= assetUrl('assets/js/admin.js') ?>"></script>
 <script src="<?= assetUrl('assets/js/file-upload-preview.js') ?>"></script>
 <script src="<?= assetUrl('assets/js/file-preview.js') ?>"></script>
+<script src="<?= assetUrl('assets/js/file-gallery.js') ?>"></script>
 <?php if (($_GET['module'] ?? '') === 'dashboard'): ?>
 <!-- Chart.js — dashboard only -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>

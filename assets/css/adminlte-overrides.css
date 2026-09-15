@@ -1759,6 +1759,86 @@ label {
     letter-spacing: .04em;
 }
 
+/* ── File List + Preview Gallery (shared file-gallery.js) ── */
+.tms-fg-layout {
+    display: flex;
+    min-height: 480px;
+}
+.tms-fg-list {
+    width: 240px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border-color);
+    overflow-y: auto;
+    background: var(--bg-alt, #f8fafc);
+    padding: .35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.tms-fg-item {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    width: 100%;
+    padding: .55rem .7rem;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    border-radius: var(--radius-sm, .4rem);
+}
+.tms-fg-item:hover { background: rgba(37, 99, 235, .07); }
+.tms-fg-item.active { background: rgba(37, 99, 235, .14); }
+.tms-fg-item-icon { width: 20px; text-align: center; flex-shrink: 0; }
+.tms-fg-item-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .84rem;
+    color: var(--text-primary);
+}
+.tms-fg-empty { padding: 1rem; color: var(--text-muted); font-size: .84rem; }
+.tms-fg-pane {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    overflow: auto;
+    background:
+        radial-gradient(circle at 1px 1px, rgba(120, 130, 150, .12) 1px, transparent 0) 0 0 / 22px 22px,
+        var(--bg-alt, #f8fafc);
+}
+.tms-fg-pane .tms-fp-content { max-width: 100%; max-height: 100%; }
+.tms-fg-pane .tms-fp-iframe {
+    width: 100%;
+    height: 100%;
+    min-height: 440px;
+    border: 0;
+    border-radius: var(--radius-md, .5rem);
+    background: #fff;
+}
+.tms-fg-pane .tms-fp-image { max-height: 74vh; }
+.tms-fg-actions { display: flex; gap: .35rem; }
+.tms-fg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm, .4rem);
+    background: var(--bg-card, #ffffff);
+    color: var(--text-muted);
+    font-size: .88rem;
+    cursor: pointer;
+    transition: all var(--transition-fast, .15s ease);
+}
+.tms-fg-btn:hover { color: var(--accent, #2563eb); border-color: var(--accent, #2563eb); }
+
 /* ============================================================
    Google Drive-style File Manager (my_office/documents.php)
    ============================================================ */

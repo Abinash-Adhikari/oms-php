@@ -498,22 +498,6 @@ $pageUrl = pageUrl('my_office', 'expense_claims');
     </div>
 </div>
 
-<!-- Receipt Files Modal -->
-<div class="modal fade" id="claimReceiptsModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-paperclip mr-1"></i><span id="claimReceiptsTitle"></span></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            </div>
-            <div class="modal-body" id="claimReceiptsBody"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
 var claimsData = <?= json_encode(array_values($myClaims)) ?>;
 var CLAIM_FILES = <?= json_encode($receiptsMap, JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_HEX_TAG) ?>;
@@ -574,32 +558,8 @@ function deleteClaim(claimId) {
 
 function openClaimReceipts(claimId, fileCount) {
     var files = CLAIM_FILES[claimId] || [];
-    document.getElementById('claimReceiptsTitle').textContent = (fileCount === undefined || fileCount === 0)
-        ? 'Receipt files'
-        : 'Receipt files (' + fileCount + ')';
-
-    var body = document.getElementById('claimReceiptsBody');
-    body.innerHTML = '';
-
-    if (!files.length) {
-        body.innerHTML = '<div class="text-center text-muted py-4">No receipts attached to this claim.</div>';
-        jQuery('#claimReceiptsModal').modal('show');
-        return;
-    }
-
-    var html = '';
-    files.forEach(function (f) {
-        html += '<div class="d-flex align-items-center border-bottom py-2 px-1" style="gap:10px">';
-        html += '<span class="d-flex align-items-center justify-content-center" style="width:40px;height:40px;border-radius:8px;background:var(--bg-body);border:1px solid var(--border-color);flex-shrink:0">'
-             +  '<i class="' + f.icon + '" style="font-size:1.1rem"></i></span>';
-        html += '<span class="text-truncate font-weight-medium" style="min-width:0;flex:1" title="' + f.name.replace(/"/g, '&quot;') + '">' + f.name + '</span>';
-        html += '<a href="' + f.url + '" target="_blank" rel="noopener" class="btn btn-xs btn-outline-secondary" title="Open in new tab"><i class="fas fa-external-link-alt"></i></a>';
-        html += '<a href="' + f.url + '" download="' + f.name.replace(/"/g, '&quot;') + '" class="btn btn-xs btn-outline-success" title="Download"><i class="fas fa-download"></i></a>';
-        html += '<button type="button" class="btn btn-xs btn-outline-primary" title="Preview" onclick=\'openFilePreview(' + JSON.stringify(f.url) + ',' + JSON.stringify(f.name) + ')\'><i class="fas fa-eye"></i></button>';
-        html += '</div>';
-    });
-    body.innerHTML = html;
-    jQuery('#claimReceiptsModal').modal('show');
+    var title = (fileCount === undefined || fileCount === 0) ? 'Receipt files' : 'Receipt files (' + fileCount + ')';
+    openFileGallery(title, files);
 }
 
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDrawer(); });

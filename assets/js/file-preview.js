@@ -115,19 +115,7 @@
         return 'fas fa-file';
     }
 
-    function openPreview(url, name, declaredType) {
-        var modal = getModal();
-        var mime = getMimeType(url, declaredType);
-        var body = modal.querySelector('.tms-fp-body');
-        var fileName = name || url.split('/').pop().split('?')[0];
-
-        modal.querySelector('.tms-fp-name').textContent = fileName;
-        modal.querySelector('.tms-fp-download').href = url;
-        modal.querySelector('.tms-fp-download').setAttribute('download', fileName);
-        modal.querySelector('.tms-fp-external').href = url;
-
-        body.innerHTML = '';
-
+    function buildPreviewNode(url, mime, fileName) {
         if (isImageType(mime)) {
             var img = document.createElement('img');
             img.className = 'tms-fp-content tms-fp-image';
@@ -136,50 +124,72 @@
             img.onload = function () {
                 if (img.naturalWidth > 1100) img.style.maxWidth = '1100px';
             };
-            body.appendChild(img);
-        } else if (isPdfType(mime)) {
+            return img;
+        }
+        if (isPdfType(mime)) {
             var frame = document.createElement('iframe');
             frame.className = 'tms-fp-content tms-fp-iframe';
             frame.src = url + (url.indexOf('?') === -1 ? '?' : '&') + 'embedded=1';
-            body.appendChild(frame);
-        } else if (isVideoType(mime)) {
+            return frame;
+        }
+        if (isVideoType(mime)) {
             var vid = document.createElement('video');
             vid.className = 'tms-fp-content tms-fp-video';
             vid.controls = true;
             vid.autoplay = true;
             vid.src = url;
-            body.appendChild(vid);
-        } else if (isAudioType(mime)) {
+            return vid;
+        }
+        if (isAudioType(mime)) {
             var aud = document.createElement('audio');
             aud.className = 'tms-fp-content tms-fp-audio';
             aud.controls = true;
             aud.autoplay = true;
             aud.src = url;
-            body.appendChild(aud);
-        } else if (isTextType(mime)) {
+            return aud;
+        }
+        if (isTextType(mime)) {
             var pre = document.createElement('pre');
             pre.className = 'tms-fp-content tms-fp-text';
             pre.textContent = 'Loading…';
-            body.appendChild(pre);
             fetch(url).then(function (r) { return r.text(); }).then(function (txt) {
                 pre.textContent = txt;
             }).catch(function () {
                 pre.textContent = 'Unable to load file content.';
             });
-        } else {
-            // Unsupported — show file icon + download prompt
-            var wrapper = document.createElement('div');
-            wrapper.className = 'tms-fp-content tms-fp-unsupported';
-            var iconClass = fileIcon(mime);
-            var sizeStr = mime.split('/').pop().toUpperCase();
-            wrapper.innerHTML =
-                '<div class="tms-fp-unsupported-icon"><i class="' + iconClass + '"></i></div>' +
-                '<div class="tms-fp-unsupported-name">' + fileName.replace(/</g, '&lt;') + '</div>' +
-                '<div class="tms-fp-unsupported-type">' + sizeStr + '</div>' +
-                '<a href="' + url + '" download="' + fileName.replace(/"/g, '&quot;') + '" class="btn btn-primary mt-3">' +
-                    '<i class="fas fa-download mr-1"></i>Download file</a>';
-            body.appendChild(wrapper);
+            return pre;
         }
+        // Unsupported — show file icon + download prompt
+        var wrapper = document.createElement('div');
+        wrapper.className = 'tms-fp-content tms-fp-unsupported';
+        var iconClass = fileIcon(mime);
+        var sizeStr = mime.split('/').pop().toUpperCase();
+        wrapper.innerHTML =
+            '<div class="tms-fp-unsupported-icon"><i class="' + iconClass + '"></i></div>' +
+            '<div class="tms-fp-unsupported-name">' + fileName.replace(/</g, '&lt;') + '</div>' +
+            '<div class="tms-fp-unsupported-type">' + sizeStr + '</div>' +
+            '<a href="' + url + '" download="' + fileName.replace(/"/g, '&quot;') + '" class="btn btn-primary mt-3">' +
+                '<i class="fas fa-download mr-1"></i>Download file</a>';
+        return wrapper;
+    }
+
+    /** Render a file's preview into an existing container element. */
+    function renderPreviewInto(container, url, name, declaredType) {
+        var mime = getMimeType(url, declaredType);
+        container.innerHTML = '';
+        container.appendChild(buildPreviewNode(url, mime, name || url.split('/').pop().split('?')[0]));
+    }
+
+    function openPreview(url, name, declaredType) {
+        var modal = getModal();
+        var fileName = name || url.split('/').pop().split('?')[0];
+
+        modal.querySelector('.tms-fp-name').textContent = fileName;
+        modal.querySelector('.tms-fp-download').href = url;
+        modal.querySelector('.tms-fp-download').setAttribute('download', fileName);
+        modal.querySelector('.tms-fp-external').href = url;
+
+        renderPreviewInto(modal.querySelector('.tms-fp-body'), url, fileName, declaredType);
 
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
@@ -198,4 +208,5 @@
     // Expose globally
     window.openFilePreview = openPreview;
     window.closeFilePreview = closePreview;
+    window.renderFilePreviewInto = renderPreviewInto;
 })();
