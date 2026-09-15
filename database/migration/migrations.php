@@ -175,5 +175,8 @@ $files = [
     // --- Communication: seed default SMTP settings ---
     'seed-table-communication_settings',
 
+    // --- Office spaces: align schema with is_active usage ---
+    'alter-table-office_spaces-add-is_active',
+
     // Append new migration filenames below only (do not insert in the middle).
 ];
