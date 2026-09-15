@@ -41,7 +41,7 @@ $drawerOpen = ($editSpace !== null);
                     <tr>
                         <td><?= $i + 1 ?></td>
                         <td><strong><?= e($s['title']) ?></strong></td>
-                        <td><?= e(mb_strimwidth($s['description'], 0, 50, '…')) ?></td>
+                        <td><?= e(mb_strimwidth((string) ($s['description'] ?? ''), 0, 50, '…')) ?></td>
                         <td><?= $s['capacity'] ? (int) $s['capacity'] : '—' ?></td>
                         <td><span class="badge badge-<?= ($s['is_active'] ?? 1) ? 'success' : 'secondary' ?>"><?= ($s['is_active'] ?? 1) ? 'Active' : 'Inactive' ?></span></td>
                         <td class="small"><?= e($s['added_by_name']) ?></td>
