@@ -6,7 +6,7 @@
  * Module keys are lowercase snake_case. Sidebar sections group modules by
  * working rhythm and job flow:
  * MAIN / MY OFFICE / PEOPLE & HR / GROWTH & SALES / FINANCE / INVENTORY
- * / REPORTS / OFFICE SETUP / SETTINGS.
+ * / REPORTS / OFFICE SETUP.
  *
  * Phase 1 = presentation reorg (labels/ordering/grouping, keys unchanged).
  * Phase 2 = structural consolidation. hr_care moved my_office → staff_management
@@ -14,6 +14,10 @@
  * sidebar (canonical home = reports/Inventory); dead settings submodules
  * (office_profile, permissions) removed (canonical homes in office_setup and
  * staff_management). Quotations consolidation is deferred (data migration).
+ * Phase 3 = nav restructure: 'Office Setup' renamed to 'Setup' (PDF/Word
+ * setup moved in from Settings); settings module deleted; staff_management
+ * permissions submodule deleted; Document Registry + Expense Claims moved
+ * office_setup/accounts → my_office.
  */
 
 $icons = [
@@ -27,7 +31,6 @@ $icons = [
     'office_setup'     => 'nav-icon fas fa-building',
     'communication'    => 'nav-icon fas fa-envelope',
     'webcms'           => 'nav-icon fas fa-globe',
-    'settings'         => 'nav-icon fas fa-cogs',
 ];
 
 $modules = [
@@ -43,7 +46,6 @@ $modules = [
     'inventory',
     'reports',
     'office_setup',
-    'settings',
 ];
 
 $navBars = [
@@ -57,15 +59,18 @@ $navBars = [
     'accounts'         => 'Accounts',
     'inventory'        => 'Inventory',
     'reports'          => 'Reports',
-    'office_setup'     => 'Office Setup',
+    'office_setup'     => 'Setup',
     'communication'    => 'Communication',
-    'settings'         => 'Settings',
 ];
 
 $subNavBars = [
     'my_office' => [
         'office_calendar'  => 'Office Calendar',
         'office_spaces'    => 'Office Spaces',
+        'notices'          => 'Notices',
+        'documents'        => 'Documents',
+        'warnings'         => 'Warnings',
+        'expense_claims'   => 'Expense Claims',
     ],
     'reports' => [
         'overview'     => 'Overview',
@@ -85,7 +90,6 @@ $subNavBars = [
         'staff_history'      => 'Staff History',
         'terminated_staffs'  => 'Terminated Staffs',
         'hr_care'            => 'HR Care',
-        'permissions'        => 'Module Permission',
     ],
     'leads' => [
         'leads'    => 'Leads',
@@ -100,7 +104,6 @@ $subNavBars = [
     'accounts' => [
         'postings'             => 'Posting',
         'ledger'               => 'Ledger',
-        'expense_claims'       => 'Expense Claims',
         'bank_reconciliation'  => 'Bank Reconciliation',
         'chart_of_account'     => 'Chart of Accounts',
         'fiscal_years'         => 'Fiscal Years',
@@ -122,7 +125,7 @@ $subNavBars = [
         'holidays'        => 'Holidays',
         'meeting_halls'   => 'Meeting Halls',
         'bank_details'    => 'Bank Details',
-        'documents'       => 'Document Registry',
+        'document_setup'  => 'PDF/Word Setup',
     ],
     'communication' => [
         'email_sms'   => 'Email/SMS',
@@ -140,10 +143,6 @@ $subNavBars = [
         'contact'      => 'Contact',
         'webcms_setup' => 'Setup',
     ],
-    'settings' => [
-        'users'          => 'Users',
-        'document_setup' => 'PDF/Word Setup',
-    ],
 ];
 
 /**
@@ -155,11 +154,14 @@ $subIcons = [
     'hr_care'               => 'nav-icon fas fa-user-shield',
     'office_calendar'       => 'nav-icon far fa-calendar-alt',
     'office_spaces'         => 'nav-icon fas fa-door-open',
+    'notices'               => 'nav-icon fas fa-bullhorn',
+    'documents'             => 'nav-icon far fa-folder-open',
+    'warnings'              => 'nav-icon fas fa-exclamation-triangle',
+    'expense_claims'        => 'nav-icon fas fa-receipt',
     // staff_management
     'add_staff'             => 'nav-icon fas fa-users',
     'staff_daily_tasks'     => 'nav-icon fas fa-clipboard-list',
     'leave_management'      => 'nav-icon fas fa-plane-departure',
-    'permissions'           => 'nav-icon fas fa-user-lock',
     'staff_history'         => 'nav-icon fas fa-history',
     'terminated_staffs'     => 'nav-icon fas fa-user-slash',
     // leads
@@ -170,7 +172,6 @@ $subIcons = [
     'postings'              => 'nav-icon fas fa-file-invoice-dollar',
     'ledger'                => 'nav-icon fas fa-book',
     'account_reports'       => 'nav-icon far fa-chart-bar',
-    'expense_claims'        => 'nav-icon fas fa-receipt',
     'fiscal_years'          => 'nav-icon far fa-calendar-check',
     'chart_of_account'      => 'nav-icon fas fa-sitemap',
     'bank_reconciliation'   => 'nav-icon fas fa-university',
@@ -198,7 +199,7 @@ $subIcons = [
     'holidays'              => 'nav-icon fas fa-umbrella-beach',
     'bank_details'          => 'nav-icon fas fa-piggy-bank',
     'meeting_halls'         => 'nav-icon fas fa-chalkboard',
-    'documents'             => 'nav-icon far fa-folder-open',
+    'document_setup'        => 'nav-icon far fa-file-pdf',
     'quotations'            => 'nav-icon fas fa-file-invoice',
     // sales
     'sales'                 => 'nav-icon fas fa-handshake',
@@ -217,9 +218,6 @@ $subIcons = [
     'careers'               => 'nav-icon fas fa-briefcase',
     'contact'               => 'nav-icon far fa-address-book',
     'webcms_setup'          => 'nav-icon fas fa-sliders-h',
-    // settings
-    'users'                 => 'nav-icon fas fa-user-cog',
-    'document_setup'        => 'nav-icon far fa-file-pdf',
 ];
 
 /**
@@ -240,7 +238,7 @@ $navBadgeQueries = [
         'title'  => 'Pending leave applications',
     ],
     'expense_claims' => [
-        'module' => 'accounts',
+        'module' => 'my_office',
         'page'   => 'expense_claims',
         'sql'    => "SELECT COUNT(*) FROM `tbl_expense_claims` WHERE `status` IN ('Submitted','Approved')",
         'title'  => 'Expense claims awaiting payment',
@@ -250,18 +248,17 @@ $navBadgeQueries = [
 /** Valid pages per module (used for sidebar highlighting + page routing). */
 $pages = [
     'dashboard'        => ['home'],
-    'my_office'        => ['office_calendar', 'office_spaces'],
-    'staff_management' => ['add_staff', 'staff_daily_tasks', 'leave_management', 'staff_history', 'terminated_staffs', 'hr_care', 'permissions'],
+    'my_office'        => ['office_calendar', 'office_spaces', 'notices', 'documents', 'warnings', 'expense_claims'],
+    'staff_management' => ['add_staff', 'staff_daily_tasks', 'leave_management', 'staff_history', 'terminated_staffs', 'hr_care'],
     'webcms'           => ['cms_home', 'services', 'projects', 'news', 'notices', 'careers', 'team', 'contact', 'webcms_setup'],
     'leads'            => ['leads', 'projects'],
     'clients'          => ['clients'],
     'sales'            => ['documents'],
     'communication'    => ['email_sms', 'templates', 'logs'],
-    'accounts'         => ['postings', 'ledger', 'expense_claims', 'bank_reconciliation', 'chart_of_account', 'fiscal_years', 'account_reports'],
+    'accounts'         => ['postings', 'ledger', 'bank_reconciliation', 'chart_of_account', 'fiscal_years', 'account_reports'],
     'inventory'        => ['items', 'stock', 'movements', 'categories', 'suppliers', 'purchase_requisitions', 'assets', 'reports'],
     'reports'          => ['overview', 'attendance', 'leave', 'tasks', 'leads', 'finance', 'inventory', 'staff', 'audit'],
-    'office_setup'     => ['office_profile', 'departments', 'designations', 'holidays', 'meeting_halls', 'bank_details', 'documents'],
-    'settings'         => ['users', 'document_setup'],
+    'office_setup'     => ['office_profile', 'departments', 'designations', 'holidays', 'meeting_halls', 'bank_details', 'document_setup'],
 ];
 
 /**
@@ -278,7 +275,7 @@ $innerPageGrants = [
 ];
 
 /**
- * Phase 2 — canonical route map for moved submodules.
+ * Phase 2/3 — canonical route map for moved submodules.
  *
  * Relative URLs like ?module=inventory&page=reports are 301-redirected (GET)
  * to the canonical home, and POSTs to 'post' => true entries are normalized
@@ -297,9 +294,13 @@ $routeCanonical = [
     'my_office'  => ['hr_care' => ['module' => 'staff_management', 'page' => 'hr_care', 'post' => true]],
     'inventory'  => ['reports' => ['module' => 'reports', 'page' => 'inventory', 'post' => false]],
     'business_sources' => ['business_sources' => ['module' => 'clients', 'page' => 'clients', 'post' => true]],
+    'office_setup' => [
+        'documents'      => ['module' => 'my_office', 'page' => 'documents', 'post' => true],
+    ],
+    'accounts'   => ['expense_claims' => ['module' => 'my_office', 'page' => 'expense_claims', 'post' => true]],
     'settings'   => [
         'office_profile' => ['module' => 'office_setup', 'page' => 'office_profile', 'post' => false],
-        'permissions'    => ['module' => 'staff_management', 'page' => 'permissions', 'post' => false],
+        'document_setup' => ['module' => 'office_setup', 'page' => 'document_setup', 'post' => true],
     ],
 ];
 
@@ -320,5 +321,4 @@ $navSidebarSections = [
     'inventory'        => 'INVENTORY',
     'reports'          => 'REPORTS',
     'office_setup'     => 'OFFICE SETUP',
-    'settings'         => 'SETTINGS',
 ];

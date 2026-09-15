@@ -1,6 +1,6 @@
 <?php
 /**
- * SB-Tech — Office Setup / Documents (US-DOC-01).
+ * SB-Tech — My Office / Documents (US-DOC-01).
  * Category CRUD + document register with multi-file upload, renew-date
  * flags, Public/Private access filtering (Private requires the
  * access_private_documents permission) and CSV export.
@@ -55,7 +55,7 @@ $drawerOpen = ($edit !== null);
         <h3 class="card-title"><i class="fas fa-folder mr-1"></i>Categories</h3>
     </div>
     <div class="card-body py-2">
-        <form action="operation.php?module=office_setup&page=documents" method="post" class="form-inline">
+        <form action="operation.php?module=my_office&page=documents" method="post" class="form-inline">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="save_category">
             <input type="text" name="title" class="form-control form-control-sm mr-2" placeholder="New category" required style="max-width: 200px;">
@@ -66,7 +66,7 @@ $drawerOpen = ($edit !== null);
                 <?php foreach ($categories as $c): ?>
                     <span class="badge badge-light border mr-1 mb-1 d-inline-flex align-items-center">
                         <?= e($c['title']) ?>
-                        <form action="operation.php?module=office_setup&page=documents" method="post" class="d-inline ml-1">
+                        <form action="operation.php?module=my_office&page=documents" method="post" class="d-inline ml-1">
                             <?= csrfField() ?>
                             <input type="hidden" name="action" value="delete_category">
                             <input type="hidden" name="id" value="<?= (int) $c['id'] ?>">
@@ -88,7 +88,7 @@ $drawerOpen = ($edit !== null);
                 <i class="fas fa-plus mr-1"></i>Add Document
             </button>
             <form method="get" class="form-inline d-inline ml-2">
-                <input type="hidden" name="module" value="office_setup">
+                <input type="hidden" name="module" value="my_office">
                 <input type="hidden" name="page" value="documents">
                 <select name="category_id" class="form-control form-control-sm mr-1" onchange="this.form.submit()">
                     <option value="0">All categories</option>
@@ -104,7 +104,7 @@ $drawerOpen = ($edit !== null);
                     </select>
                 <?php endif; ?>
             </form>
-            <form action="operation.php?module=office_setup&page=documents" method="post" class="d-inline ml-1">
+            <form action="operation.php?module=my_office&page=documents" method="post" class="d-inline ml-1">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="export_documents">
                 <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="fas fa-file-csv mr-1"></i>CSV</button>
@@ -139,7 +139,7 @@ $drawerOpen = ($edit !== null);
                         <td><?= $d['renew_date'] ? e(formatDateView($d['renew_date'])) . ' ' . $renewBadge : '—' ?></td>
                         <td class="text-right">
                             <button type="button" class="btn btn-xs btn-outline-primary" onclick="openDrawer(<?= (int) $d['id'] ?>)"><i class="fas fa-edit"></i></button>
-                            <form action="operation.php?module=office_setup&page=documents" method="post" class="d-inline">
+                            <form action="operation.php?module=my_office&page=documents" method="post" class="d-inline">
                                 <?= csrfField() ?>
                                 <input type="hidden" name="action" value="delete_document">
                                 <input type="hidden" name="id" value="<?= (int) $d['id'] ?>">
@@ -167,7 +167,7 @@ $drawerOpen = ($edit !== null);
         </button>
     </div>
     <div class="cms-drawer-body">
-        <form action="operation.php?module=office_setup&page=documents" method="post" enctype="multipart/form-data" id="drawerForm">
+        <form action="operation.php?module=my_office&page=documents" method="post" enctype="multipart/form-data" id="drawerForm">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="save_document">
             <input type="hidden" name="id" value="<?= $edit ? (int) $edit['id'] : 0 ?>">
@@ -227,7 +227,7 @@ function openDrawer(docId) {
     document.body.style.overflow = 'hidden';
 
     if (docId) {
-        window.location.href = '<?= pageUrl('office_setup', 'documents') ?>&doc_id=' + docId;
+        window.location.href = '<?= pageUrl('my_office', 'documents') ?>&doc_id=' + docId;
     }
 }
 

@@ -55,7 +55,7 @@ $kpis = [
         'label' => 'Claims Pending Payment',
         'icon'  => 'fas fa-hand-holding-usd',
         'color' => 'orange',
-        'link'  => pageUrl('accounts', 'expense_claims'),
+        'link'  => pageUrl('my_office', 'expense_claims'),
         'value' => (int) ($db->selectOne("SELECT COUNT(*) AS c FROM `tbl_expense_claims` WHERE `status` IN ('Submitted','Approved')")['c'] ?? 0),
     ],
     'active_fy' => [
@@ -154,7 +154,7 @@ $taskStatusTone = [
                     <a href="<?= pageUrl('staff_management', 'staff_daily_tasks') ?>" class="btn btn-outline-primary btn-block text-left mb-2"><i class="fas fa-plus mr-2"></i>New task</a>
                     <a href="<?= pageUrl('leads', 'leads') ?>" class="btn btn-outline-primary btn-block text-left mb-2"><i class="fas fa-filter mr-2"></i>Add lead</a>
                     <a href="<?= pageUrl('staff_management', 'leave_management') ?>" class="btn btn-outline-primary btn-block text-left mb-2"><i class="fas fa-calendar-check mr-2"></i>Review leaves</a>
-                    <a href="<?= pageUrl('accounts', 'expense_claims') ?>" class="btn btn-outline-primary btn-block text-left"><i class="fas fa-hand-holding-usd mr-2"></i>Expense claims</a>
+                    <a href="<?= pageUrl('my_office', 'expense_claims') ?>" class="btn btn-outline-primary btn-block text-left"><i class="fas fa-hand-holding-usd mr-2"></i>Expense claims</a>
                 </div>
             </div>
         </div>

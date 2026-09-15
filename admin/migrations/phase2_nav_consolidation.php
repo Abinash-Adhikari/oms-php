@@ -7,8 +7,15 @@
  *
  *   my_office.hr_care          → staff_management.hr_care
  *   inventory.reports          → reports.inventory
- *   settings.office_profile    → office_setup.office_profile
- *   settings.permissions       → staff_management.permissions
+ *   office_setup.documents     → my_office.documents
+ *   accounts.expense_claims    → my_office.expense_claims
+ *   settings.document_setup    → office_setup.document_setup
+ *
+ * Removed modules/submodules (grants become stale/unused — the modules are
+ * gone from $modules/$subNavBars so no sidebar entry renders for them):
+ *   settings.office_profile   (settings module deleted)
+ *   settings.permissions      (settings module deleted)
+ *   staff_management.permissions (submodule deleted)
  *
  * Idempotent: each map is applied once, in order; 'All' granted users are
  * untouched. Run from the CLI:
@@ -29,10 +36,11 @@ $db = Database::instance();
 
 /** @var array<string, array{0:string,1:string}> */
 $MAP = [
-    'my_office.hr_care'       => ['staff_management', 'hr_care'],
-    'inventory.reports'       => ['reports', 'inventory'],
-    'settings.office_profile' => ['office_setup', 'office_profile'],
-    'settings.permissions'    => ['staff_management', 'permissions'],
+    'my_office.hr_care'        => ['staff_management', 'hr_care'],
+    'inventory.reports'        => ['reports', 'inventory'],
+    'office_setup.documents'   => ['my_office', 'documents'],
+    'accounts.expense_claims'  => ['my_office', 'expense_claims'],
+    'settings.document_setup'  => ['office_setup', 'document_setup'],
 ];
 
 $apply = in_array('--apply', $argv, true);

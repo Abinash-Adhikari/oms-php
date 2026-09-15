@@ -178,5 +178,9 @@ $files = [
     // --- Office spaces: align schema with is_active usage ---
     'alter-table-office_spaces-add-is_active',
 
+    // --- My Office: Notices + Warnings submodules ---
+    'create-table-office_notices',
+    'create-table-staff_warnings',
+
     // Append new migration filenames below only (do not insert in the middle).
 ];

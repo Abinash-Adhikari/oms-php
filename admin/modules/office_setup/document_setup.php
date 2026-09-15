@@ -1,6 +1,6 @@
 <?php
 /**
- * SB-Tech — Settings → PDF/Word Setup.
+ * SB-Tech — Setup → PDF/Word Setup.
  *
  * Single-row configuration used by every PDF/Word document generation page
  * (quotations, proposals, agreements, terms & conditions, vouchers,
@@ -106,7 +106,7 @@ if ($isPdf || $isPreview || $isWord) {
         <div class="doc-setup-side">
             <div class="card card-primary">
             <div class="card-header"><h3 class="card-title"><i class="fas fa-file-pdf mr-2"></i>PDF / Word Setup</h3></div>
-            <form action="operation.php?module=settings&page=document_setup" method="post" enctype="multipart/form-data">
+            <form action="operation.php?module=office_setup&page=document_setup" method="post" enctype="multipart/form-data">
                 <?= csrfField() ?>
                 <div class="card-body">
 
@@ -286,8 +286,8 @@ if ($isPdf || $isPreview || $isWord) {
             <div class="card-header">
                 <h3 class="card-title text-white"><i class="fas fa-eye mr-2"></i>Live preview</h3>
                 <div class="card-tools">
-                    <a href="<?= pageUrl('settings', 'document_setup') ?>&pdf=1" target="_blank" class="btn btn-tool btn-sm text-white" title="Download sample as PDF"><i class="fas fa-download mr-1"></i>PDF</a>
-                    <a href="<?= pageUrl('settings', 'document_setup') ?>&word=1" target="_blank" class="btn btn-tool btn-sm text-white" title="Download sample as Word document"><i class="fas fa-file-word mr-1"></i>Word</a>
+                    <a href="<?= pageUrl('office_setup', 'document_setup') ?>&pdf=1" target="_blank" class="btn btn-tool btn-sm text-white" title="Download sample as PDF"><i class="fas fa-download mr-1"></i>PDF</a>
+                    <a href="<?= pageUrl('office_setup', 'document_setup') ?>&word=1" target="_blank" class="btn btn-tool btn-sm text-white" title="Download sample as Word document"><i class="fas fa-file-word mr-1"></i>Word</a>
                 </div>
             </div>
             <div class="card-body">

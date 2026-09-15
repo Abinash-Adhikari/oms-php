@@ -108,7 +108,6 @@ $badge = static function (string $status): string {
                     </h3>
                     <div class="card-tools">
                         <a href="<?= pageUrl('staff_management', 'add_staff') ?>&id=<?= $uid ?>" class="btn btn-xs btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
-                        <a href="<?= pageUrl('staff_management', 'permissions') ?>&id=<?= $uid ?>" class="btn btn-xs btn-outline-secondary" title="Permissions"><i class="fas fa-user-shield"></i></a>
                         <a href="<?= pageUrl('staff_management', 'staff_history') ?>&id=<?= $uid ?>" class="btn btn-xs btn-outline-info" title="History"><i class="fas fa-history"></i></a>
                         <a href="<?= pageUrl('staff_management', 'staff_documents') ?>&id=<?= $uid ?>" class="btn btn-xs btn-outline-warning" title="Files"><i class="fas fa-folder-open"></i></a>
                     </div>
@@ -463,7 +462,7 @@ $badge = static function (string $status): string {
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-receipt mr-1"></i>Expense claims</h3>
                     <div class="card-tools">
-                        <a href="<?= pageUrl('accounts', 'expense_claims') ?>" class="btn btn-tool"><i class="fas fa-external-link-alt"></i></a>
+                        <a href="<?= pageUrl('my_office', 'expense_claims') ?>" class="btn btn-tool"><i class="fas fa-external-link-alt"></i></a>
                         <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-plus"></i></button>
                     </div>
                 </div>
@@ -567,7 +566,6 @@ $badge = static function (string $status): string {
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-user-shield mr-1"></i>Module permissions <span class="badge badge-light ml-1"><?= $moduleCount ?></span></h3>
                     <div class="card-tools">
-                        <a href="<?= pageUrl('staff_management', 'permissions') ?>&id=<?= $uid ?>" class="btn btn-tool"><i class="fas fa-external-link-alt"></i></a>
                         <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-plus"></i></button>
                     </div>
                 </div>

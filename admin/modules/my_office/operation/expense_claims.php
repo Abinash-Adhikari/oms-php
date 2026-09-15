@@ -1,13 +1,13 @@
 <?php
 /**
- * SB-Tech — Accounts / Expense Claims operations (US-FIN-06/07/08).
+ * SB-Tech — My Office / Expense Claims operations (US-FIN-06/07/08).
  * save_claim / submit_claim / delete_claim / approve_claim (auto-creates a
  * Pending Payment voucher) / reject_claim / export_claims.
  */
 $db = Database::instance();
 $me = (int) Auth::id();
 $action = (string) ($_POST['action'] ?? '');
-$back = pageUrl('accounts', 'expense_claims');
+$back = pageUrl('my_office', 'expense_claims');
 $canApprove = Auth::isSuperAdmin() || Auth::hasSpecial('approve_expense_claims');
 
 try {

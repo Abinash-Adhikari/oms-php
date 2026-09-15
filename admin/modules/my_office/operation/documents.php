@@ -1,6 +1,6 @@
 <?php
 /**
- * SB-Tech — Office Setup / Documents operations (US-DOC-01).
+ * SB-Tech — My Office / Documents operations (US-DOC-01).
  *   save_category / delete_category
  *   save_document / delete_document  (multi-file upload, disk cleanup)
  *   export_documents                (CSV register, access-scoped)
@@ -9,7 +9,7 @@ $db = Database::instance();
 $me = (int) Auth::id();
 $canSeePrivate = Auth::isSuperAdmin() || Auth::hasSpecial('access_private_documents');
 $action = (string) ($_POST['action'] ?? '');
-$back = 'show_page.php?module=office_setup&page=documents';
+$back = 'show_page.php?module=my_office&page=documents';
 
 try {
     if ($action === 'save_category') {

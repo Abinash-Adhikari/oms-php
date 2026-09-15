@@ -1,6 +1,6 @@
 <?php
 /**
- * SB-Tech — Accounts / Expense Claims (US-FIN-06, US-FIN-07, US-FIN-08).
+ * SB-Tech — My Office / Expense Claims (US-FIN-06, US-FIN-07, US-FIN-08).
  * Staff submit claims (Draft → Submitted); finance approves (→ Payment
  * voucher auto-created) or rejects with a reason; the claim becomes Paid
  * when its payment voucher is approved. Edit/delete only while Draft or
@@ -144,7 +144,7 @@ $drawerOpen = ($edit !== null);
                                 <td class="text-right">
                                     <?php if (in_array($c['status'], ['Draft', 'Rejected'], true)): ?>
                                         <button type="button" class="btn btn-xs btn-outline-primary" onclick="openDrawer(<?= (int) $c['id'] ?>)"><i class="fas fa-edit"></i></button>
-                                        <form action="operation.php?module=accounts&page=expense_claims" method="post" class="d-inline">
+                                        <form action="operation.php?module=my_office&page=expense_claims" method="post" class="d-inline">
                                             <?= csrfField() ?>
                                             <input type="hidden" name="action" value="delete_claim">
                                             <input type="hidden" name="id" value="<?= (int) $c['id'] ?>">
@@ -185,7 +185,7 @@ $drawerOpen = ($edit !== null);
                 </select>
                 <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-search"></i></button>
             </form>
-            <form action="operation.php?module=accounts&page=expense_claims" method="post" class="d-inline ml-1">
+            <form action="operation.php?module=my_office&page=expense_claims" method="post" class="d-inline ml-1">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="export_claims">
                 <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-file-csv mr-1"></i>CSV</button>
@@ -208,13 +208,13 @@ $drawerOpen = ($edit !== null);
                         <td><?= e($c['payment_voucher_no'] ?? '—') ?></td>
                         <td class="text-right">
                             <?php if ($c['status'] === 'Submitted'): ?>
-                                <form action="operation.php?module=accounts&page=expense_claims" method="post" class="d-inline">
+                                <form action="operation.php?module=my_office&page=expense_claims" method="post" class="d-inline">
                                     <?= csrfField() ?>
                                     <input type="hidden" name="action" value="approve_claim">
                                     <input type="hidden" name="id" value="<?= (int) $c['id'] ?>">
                                     <button class="btn btn-xs btn-outline-success confirm-submit" data-confirm="Approve claim <?= e($c['claim_no']) ?>? A Pending Payment voucher will be auto-created."><i class="fas fa-check mr-1"></i>Approve</button>
                                 </form>
-                                <form action="operation.php?module=accounts&page=expense_claims" method="post" class="d-inline">
+                                <form action="operation.php?module=my_office&page=expense_claims" method="post" class="d-inline">
                                     <?= csrfField() ?>
                                     <input type="hidden" name="action" value="reject_claim">
                                     <input type="hidden" name="id" value="<?= (int) $c['id'] ?>">
@@ -245,7 +245,7 @@ $drawerOpen = ($edit !== null);
         </button>
     </div>
     <div class="cms-drawer-body">
-        <form action="operation.php?module=accounts&page=expense_claims" method="post" enctype="multipart/form-data" id="claimForm">
+        <form action="operation.php?module=my_office&page=expense_claims" method="post" enctype="multipart/form-data" id="claimForm">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="save_claim">
             <input type="hidden" name="id" id="claimId" value="<?= $edit ? (int) $edit['id'] : 0 ?>">

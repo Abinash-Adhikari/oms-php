@@ -1,10 +1,10 @@
 <?php
 /**
- * SB-Tech — Settings → PDF/Word Setup save handler.
+ * SB-Tech — Setup → PDF/Word Setup save handler.
  * Included by admin/operation.php (CSRF + permission already verified).
  */
 $db = Database::instance();
-$back = pageUrl('settings', 'document_setup');
+$back = pageUrl('office_setup', 'document_setup');
 
 $data = [
     'paper_size'           => in_array($_POST['paper_size'] ?? 'A4', ['A4', 'Letter', 'Legal'], true) ? $_POST['paper_size'] : 'A4',
@@ -68,7 +68,7 @@ try {
         $data['id'] = 1;
         $db->insert('tbl_document_settings', $data);
     }
-    auditLog('settings', 'document_setup_updated', 'document_settings', 1, null, $data);
+    auditLog('office_setup', 'document_setup_updated', 'document_settings', 1, null, $data);
     setFlash('success', 'PDF/Word setup saved. All document generation pages now use this configuration.');
 } catch (Throwable $e) {
     setFlash('error', 'Could not save PDF/Word setup: ' . $e->getMessage());

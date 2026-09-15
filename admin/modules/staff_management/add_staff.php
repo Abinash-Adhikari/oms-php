@@ -57,7 +57,6 @@ if ($mode === 'list'):
                             <td class="text-right">
                                 <a href="<?= pageUrl('staff_management', 'detail') ?>&id=<?= (int) $r['id'] ?>" class="btn btn-xs btn-outline-dark" title="View"><i class="fas fa-eye"></i></a>
                                 <a href="<?= pageUrl('staff_management', 'add_staff') ?>&id=<?= (int) $r['id'] ?>" class="btn btn-xs btn-outline-primary" title="Edit"><i class="fas fa-edit"></i></a>
-                                <a href="<?= pageUrl('staff_management', 'permissions') ?>&id=<?= (int) $r['id'] ?>" class="btn btn-xs btn-outline-secondary" title="Permissions"><i class="fas fa-user-shield"></i></a>
                                 <a href="<?= pageUrl('staff_management', 'staff_history') ?>&id=<?= (int) $r['id'] ?>" class="btn btn-xs btn-outline-info" title="History"><i class="fas fa-history"></i></a>
                                 <a href="<?= pageUrl('staff_management', 'staff_documents') ?>&id=<?= (int) $r['id'] ?>" class="btn btn-xs btn-outline-warning" title="Files"><i class="fas fa-folder-open"></i></a>
                             </td>
@@ -214,8 +213,6 @@ if ($mode === 'list'):
                                 <div class="form-group col-md-6"><label>Termination reason</label>
                                     <input type="text" name="termination_reason" class="form-control" placeholder="Required when status = Terminated"></div>
                             </div>
-                            <p class="text-muted small mb-0">New staff start with no module access; grant it on the
-                                <a href="<?= pageUrl('staff_management', 'permissions') ?>&id=<?= $edit ? (int) $edit['id'] : 0 ?>">Permissions</a> page.</p>
                         </div>
                     </div>
                     <div class="card-footer p-0 pb-2">

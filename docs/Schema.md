@@ -19,7 +19,7 @@
 | **Money** | `DECIMAL(18,4)` everywhere. Currency in a separate `CHAR(3)` column. |
 | **FKs** | `ON DELETE RESTRICT` for fiscal/calendar links (must not orphan); `ON DELETE SET NULL` for actor/user links (history must survive). |
 
-**99 tables** total, grouped into 9 domains below. Arrows (→) denote FK
+**101 tables** total, grouped into 9 domains below. Arrows (→) denote FK
 references.
 
 ---
@@ -96,6 +96,8 @@ tbl_office_todos             → tbl_users_login (personal calendar to-dos)
 tbl_office_grievances        → tbl_users_login
 tbl_office_grievance_files   → tbl_office_grievances
 tbl_daily_tasks              → tbl_users_login (staff_id)
+tbl_office_notices           → tbl_users_login (added_by)
+tbl_staff_warnings           → tbl_users_login (staff_id, added_by)
 ```
 
 **`tbl_daily_tasks`** — end-of-day task log per staff member: `date` DATE,
@@ -121,6 +123,17 @@ Admin only.
 optional `expire_date` (DATE, NULL = never expires); once past, the item
 stops showing in the calendar/lists. Notes raised from the Office Calendar
 auto-set `expire_date` to the note's calendar date.
+
+**`tbl_office_notices`** — My Office · Notices: office-wide announcements.
+`title` (required), `description` TEXT, `is_active` TINYINT toggle
+(`1` = published, `0` = draft/archived), `added_by` → `tbl_users_login`.
+Listed newest-first in the Notices submodule.
+
+**`tbl_staff_warnings`** — My Office · Warnings: disciplinary records per
+staff member. `staff_id` → `tbl_users_login` (CASCADE), `warning_type`
+ENUM('Verbal','Written','Final') for escalation tracking, `issued_on` DATE,
+`title` (required), `description` TEXT, `is_active` TINYINT toggle. Created
+from the Warnings submodule.
 
 ### 2.4 Leave Management
 
