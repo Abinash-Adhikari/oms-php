@@ -1,8 +1,8 @@
 <?php
 include __DIR__ . '/../config/setup.php';
 
-$orgName  = defined('ORGANIZATION_NAME') && ORGANIZATION_NAME !== '' ? (string) ORGANIZATION_NAME : config('organization_name', 'Office');
-$orgShort = defined('ORGANIZATION_SHORT_NAME') && ORGANIZATION_SHORT_NAME !== '' ? (string) ORGANIZATION_SHORT_NAME : config('organization_short_name', 'Office');
+$orgName  = office_display_name();
+$orgShort = office_display_short_name();
 
 // Already logged in → dashboard.
 if (Auth::check()) {

@@ -5,7 +5,9 @@
  */
 $db = Database::instance();
 $action = $_POST['action'] ?? 'save';
-$back = pageUrl('office_setup', 'holidays');
+$back = ($_POST['redirect'] ?? '') === 'calendar'
+    ? pageUrl('my_office', 'office_calendar')
+    : pageUrl('office_setup', 'holidays');
 
 if ($action === 'delete') {
     $id = (int) ($_POST['id'] ?? 0);

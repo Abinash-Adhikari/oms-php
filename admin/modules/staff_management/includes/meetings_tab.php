@@ -51,11 +51,12 @@ $events = $db->select(
     'SELECT e.*, u.fullname AS creator_name
      FROM `tbl_office_events` e
      JOIN `tbl_users_login` u ON u.id = e.added_by
-     WHERE ' . $visSql . '
+     WHERE ' . $visSql . "
+       AND e.type <> 'Note'
        AND EXISTS (
            SELECT 1 FROM `tbl_office_event_schedules` s WHERE s.event_id = e.id AND s.date >= ?
        )
-     ORDER BY e.added_on DESC',
+     ORDER BY e.added_on DESC",
     array_merge($visParams, [date('Y-m-d')])
 );
 foreach ($events as &$ev) {
@@ -190,13 +191,23 @@ $drawerOpen = ($editEvent !== null);
                 </select>
             </div>
             <div class="form-group" id="attendee_group">
-                <label>Invite staff (Private) *</label>
-                <select name="attendees[]" class="form-control" size="4" multiple>
-                    <?php foreach ($staffs as $s): ?>
-                        <option value="<?= (int) $s['id'] ?>" <?= in_array((int) $s['id'], $editAttendees, true) ? 'selected' : '' ?>><?= e($s['fullname']) ?><?= $s['department_title'] ? ' (' . e($s['department_title']) . ')' : '' ?></option>
+                <label>Invite staff (Private)</label>
+                <select class="form-control mb-2" id="meetAttDeptFilter">
+                    <option value="">All departments</option>
+                    <?php foreach ($departments as $d): ?>
+                        <option value="<?= (int) $d['id'] ?>"><?= e($d['title']) ?></option>
                     <?php endforeach; ?>
                 </select>
-                <small class="text-muted">Staff already booked at the same slot are excluded from new bookings.</small>
+                <div class="custom-control custom-checkbox mb-2">
+                    <input type="checkbox" class="custom-control-input" id="meetAttSelectAll">
+                    <label class="custom-control-label small" for="meetAttSelectAll">Select all visible staff</label>
+                </div>
+                <select name="attendees[]" class="form-control" id="meetAttSelect" size="6" multiple>
+                    <?php foreach ($staffs as $s): ?>
+                        <option value="<?= (int) $s['id'] ?>" data-dept="<?= (int) $s['department_id'] ?>" <?= in_array((int) $s['id'], $editAttendees, true) ? 'selected' : '' ?>><?= e($s['fullname']) ?><?= $s['department_title'] ? ' (' . e($s['department_title']) . ')' : '' ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <small class="text-muted">Staff already booked at the same slot are rejected on submit.</small>
             </div>
             <div class="form-group">
                 <label>Other attendees (external)</label>
@@ -280,6 +291,14 @@ function openDrawer(editId) {
             document.getElementById('event_type').value = ev.type;
             document.getElementById('event_privacy').value = ev.privacy;
             document.getElementById('eventRemarks').value = ev.remarks || '';
+            // Repopulate the invited-staff selection on edit.
+            var invited = (ev.attendees_staffs || '').split(',').map(Number).filter(Boolean);
+            Array.prototype.forEach.call(document.getElementById('meetAttSelect').options, function (o) {
+                o.selected = invited.indexOf(Number(o.value)) !== -1;
+            });
+            document.getElementById('meetAttDeptFilter').value = '';
+            document.getElementById('meetAttSelectAll').checked = false;
+            Array.prototype.forEach.call(document.getElementById('meetAttSelect').options, function (o) { o.hidden = false; });
             // Trigger refresh for venue type etc.
             document.getElementById('event_type').dispatchEvent(new Event('change'));
             document.getElementById('event_privacy').dispatchEvent(new Event('change'));
@@ -292,6 +311,10 @@ function openDrawer(editId) {
         document.getElementById('event_type').value = 'Meeting';
         document.getElementById('event_privacy').value = 'Public';
         document.getElementById('eventRemarks').value = '';
+        // Clear the invited-staff selection.
+        Array.prototype.forEach.call(document.getElementById('meetAttSelect').options, function (o) { o.selected = false; o.hidden = false; });
+        document.getElementById('meetAttDeptFilter').value = '';
+        document.getElementById('meetAttSelectAll').checked = false;
         // Reset schedule rows to one
         var rows = document.getElementById('schedule_rows');
         rows.innerHTML = '<div class="row mb-1 schedule-row"><div class="col-4"><input type="date" name="date[]" class="form-control form-control-sm" required></div><div class="col-3"><input type="time" name="from_time[]" class="form-control form-control-sm"></div><div class="col-3"><input type="time" name="to_time[]" class="form-control form-control-sm"></div><div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger remove-schedule"><i class="fas fa-times"></i></button></div></div>';
@@ -322,6 +345,29 @@ document.addEventListener('DOMContentLoaded', function() { openDrawer(<?= (int) 
     var venueType = document.getElementById('venue_type');
     var hallGroup = document.getElementById('hall_group');
     var locGroup = document.getElementById('location_group');
+
+    // Attendee picker: department filter + select-all for the visible rows.
+    var attSelect = document.getElementById('meetAttSelect');
+    var attDeptFilter = document.getElementById('meetAttDeptFilter');
+    var attSelectAll = document.getElementById('meetAttSelectAll');
+
+    function filterAttOptions() {
+        var dept = attDeptFilter.value;
+        Array.prototype.forEach.call(attSelect.options, function (o) {
+            o.hidden = dept !== '' && o.getAttribute('data-dept') !== String(dept);
+            o.selected = false; // changing the filter clears the old selection
+        });
+        attSelectAll.checked = false;
+    }
+    attDeptFilter.addEventListener('change', filterAttOptions);
+    attSelectAll.addEventListener('change', function () {
+        var doSelect = attSelectAll.checked;
+        Array.prototype.forEach.call(attSelect.options, function (o) {
+            if (!o.hidden) {
+                o.selected = doSelect;
+            }
+        });
+    });
 
     function refresh() {
         var type = typeSel.value;

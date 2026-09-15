@@ -2,7 +2,7 @@
 
 /** @var string $sitePage set by site.php */
 $setup = siteSetup();
-$siteTitle = $setup['site_title'] ?? config('organization_name', 'Office');
+$siteTitle = $setup['site_title'] ?? office_display_name();
 $tagline = $setup['tagline'] ?? 'Your technology partner';
 $nav = [
     'home'     => siteUrl(),

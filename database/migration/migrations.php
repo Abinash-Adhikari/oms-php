@@ -146,5 +146,14 @@ $files = [
     // --- Rename business_sources back to clients ---
     'rename-tables-back-to-clients',
 
+    // --- Office calendar: profile-selected weekly off days ---
+    'alter-table-tbl_office_profiles-add-weekly_off_days',
+
+    // --- Office calendar: personal to-do items ---
+    'add-table-tbl_office_todos',
+
+    // --- Office notes: auto-expire ---
+    'alter-table-tbl_office_events-add-expire_date',
+
     // Append new migration filenames below only (do not insert in the middle).
 ];

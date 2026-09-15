@@ -11,7 +11,12 @@ $db = Database::instance();
 $me = (int) Auth::id();
 $seeAll = Auth::isSuperAdmin();
 $action = (string) ($_POST['action'] ?? '');
-$back = 'show_page.php?module=staff_management&page=hr_care&tab=meetings';
+$redirect = (string) ($_POST['redirect'] ?? '');
+$back = match ($redirect) {
+    'calendar' => pageUrl('my_office', 'office_calendar'),
+    'notes'    => 'show_page.php?module=staff_management&page=hr_care&tab=notes',
+    default    => 'show_page.php?module=staff_management&page=hr_care&tab=meetings',
+};
 
 try {
     if ($action === 'save_event') {
@@ -24,58 +29,92 @@ try {
         $venueType = (string) ($_POST['venue_type'] ?? 'In Office');
         $deptId = (int) ($_POST['attendees_department'] ?? 0);
 
-        if (!in_array($type, ['Meeting', 'Event'], true)) {
+        if (!in_array($type, ['Meeting', 'Event', 'Note'], true)) {
             $type = 'Meeting';
         }
         if ($type === 'Event') {
             $privacy = 'Public'; // events are public by design
+        }
+        if ($type === 'Note') {
+            $privacy = 'Private'; // notes are private by design
         }
         if (!in_array($privacy, ['Public', 'Private'], true)) {
             $privacy = 'Public';
         }
 
         $attendeeIds = array_values(array_unique(array_filter(array_map('intval', (array) ($_POST['attendees'] ?? [])))));
-        if ($privacy === 'Private' && count($attendeeIds) === 0) {
+        if ($privacy === 'Private' && $type !== 'Note' && count($attendeeIds) === 0) {
             setFlash('error', 'Private meetings require at least one invited staff member.');
             redirect($back);
         }
 
-        // Schedules
-        $dates = (array) ($_POST['date'] ?? []);
-        $fromTimes = (array) ($_POST['from_time'] ?? []);
-        $toTimes = (array) ($_POST['to_time'] ?? []);
-        $slots = [];
-        foreach ($dates as $i => $d) {
-            $d = trim((string) $d);
-            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) {
-                continue;
-            }
-            $from = trim((string) ($fromTimes[$i] ?? ''));
-            $to = trim((string) ($toTimes[$i] ?? ''));
-            if ($from !== '' && !preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $from)) {
-                $from = '';
-            }
-            if ($to !== '' && !preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $to)) {
-                $to = '';
-            }
-            if ($from !== '' && $to !== '' && $to <= $from) {
-                setFlash('error', 'Schedule end time must be after start time.');
+        // Notes are lightweight: personal (no attendees → only the author sees
+        // them via added_by) or assigned to other staff (they see it via the
+        // Private FIND_IN_SET clause). No venue, no hall, no schedules/times.
+        if ($type === 'Note') {
+            if ($title === '') {
+                setFlash('error', 'Title is required.');
                 redirect($back);
             }
-            $slots[] = ['date' => $d, 'from' => $from ?: null, 'to' => $to ?: null];
-        }
-        if (count($slots) === 0) {
-            setFlash('error', 'Add at least one valid schedule date.');
-            redirect($back);
-        }
-        if ($title === '') {
-            setFlash('error', 'Title is required.');
-            redirect($back);
+            $noteDate = preg_match('/^\d{4}-\d{2}-\d{2}$/', trim((string) ($_POST['note_date'] ?? '')))
+                ? trim((string) $_POST['note_date'])
+                : '';
+            if ($noteDate === '') {
+                setFlash('error', 'Notes need a valid date.');
+                redirect($back);
+            }
+            $slots = [['date' => $noteDate, 'from' => null, 'to' => null]];
+            $venueType = null;
+            $venueLocation = null;
+            $expireDate = preg_match('/^\d{4}-\d{2}-\d{2}$/', trim((string) ($_POST['expire_date'] ?? '')))
+                ? trim((string) $_POST['expire_date'])
+                : '';
+            // Added from the calendar → auto-expire on the selected date.
+            if ($redirect === 'calendar' && $expireDate === '') {
+                $expireDate = $noteDate;
+            }
+        } else {
+            // Schedules
+            $dates = (array) ($_POST['date'] ?? []);
+            $fromTimes = (array) ($_POST['from_time'] ?? []);
+            $toTimes = (array) ($_POST['to_time'] ?? []);
+            $slots = [];
+            foreach ($dates as $i => $d) {
+                $d = trim((string) $d);
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) {
+                    continue;
+                }
+                $from = trim((string) ($fromTimes[$i] ?? ''));
+                $to = trim((string) ($toTimes[$i] ?? ''));
+                if ($from !== '' && !preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $from)) {
+                    $from = '';
+                }
+                if ($to !== '' && !preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $to)) {
+                    $to = '';
+                }
+                if ($from !== '' && $to !== '' && $to <= $from) {
+                    setFlash('error', 'Schedule end time must be after start time.');
+                    redirect($back);
+                }
+                $slots[] = ['date' => $d, 'from' => $from ?: null, 'to' => $to ?: null];
+            }
+            if (count($slots) === 0) {
+                setFlash('error', 'Add at least one valid schedule date.');
+                redirect($back);
+            }
+            if ($title === '') {
+                setFlash('error', 'Title is required.');
+                redirect($back);
+            }
+            $expireDate = preg_match('/^\d{4}-\d{2}-\d{2}$/', trim((string) ($_POST['expire_date'] ?? '')))
+                ? trim((string) $_POST['expire_date'])
+                : '';
         }
 
         // Free-staff conflict check (AC-MTG-01.2): invited staff already
-        // booked at an overlapping slot cannot be added.
-        if ($privacy === 'Private') {
+        // booked at an overlapping slot cannot be added. Notes never book
+        // anyone, so they skip the check.
+        if ($privacy === 'Private' && $type !== 'Note') {
             $booked = bookedStaffIdsAtSlots($slots, $eventId);
             $conflicts = array_values(array_intersect($attendeeIds, $booked));
             if ($conflicts) {
@@ -91,7 +130,7 @@ try {
 
         if ($venueType === 'Out of Office') {
             $venueLocation = trim((string) ($_POST['venue_location_text'] ?? ''));
-        } else {
+        } elseif ($venueType === 'In Office') {
             $venueLocation = trim((string) ($_POST['venue_location'] ?? ''));
         }
 
@@ -99,11 +138,12 @@ try {
             'title'               => $title,
             'type'                => $type,
             'privacy'             => $privacy,
-            'attendees_staffs'    => $privacy === 'Private' ? implode(',', $attendeeIds) : null,
+            'attendees_staffs'    => $privacy === 'Private' && count($attendeeIds) > 0 ? implode(',', $attendeeIds) : null,
             'attendees_department'=> $privacy === 'Public' && $deptId ? $deptId : null,
             'other_attendees'     => $otherAttendees ?: null,
             'venue_type'          => $venueType,
             'venue_location'      => $venueLocation ?: null,
+            'expire_date'         => $expireDate ?: null,
             'remarks'             => $remarks ?: null,
             'updated_by'          => $me,
         ];
@@ -157,9 +197,12 @@ try {
                 $scheduleIds[] = $sid;
             }
             $db->update('tbl_office_events', ['schedules' => implode(',', $scheduleIds)], '`id` = ?', [$eventId]);
-            if ($privacy === 'Private') {
+            if ($privacy === 'Private' && count($attendeeIds) > 0) {
+                $verb = $type === 'Note'
+                    ? 'A note was assigned to you'
+                    : 'You were invited to';
                 foreach ($attendeeIds as $aid) {
-                    notifyUser($aid, 'You were invited to "' . e($title) . '" (' . e(scheduleLine($slots[0])) . ').', 'Meeting', (string) $eventId, $me);
+                    notifyUser($aid, $verb . ' "' . e($title) . '" (' . e(scheduleLine($slots[0])) . ').', $type, (string) $eventId, $me);
                 }
             }
             setFlash('success', $type . ' scheduled.');

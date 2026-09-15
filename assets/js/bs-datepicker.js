@@ -26,6 +26,19 @@
     var MONTHS = ['Baisakh', 'Jestha', 'Asar', 'Shrawan', 'Bhadra', 'Ashwin', 'Kartik', 'Mangsir', 'Poush', 'Magh', 'Falgun', 'Chaitra'];
     var WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+    /* Weekly leave / off days from the office profile (e.g. ["Saturday"]) → red. */
+    var OFF_DAYS = (function () {
+        var names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        var byName = {};
+        for (var i = 0; i < 7; i++) { byName[names[i]] = i; }
+        var src = window.APP_WEEKLY_OFF_DAYS || [];
+        var out = [];
+        for (var n = 0; n < src.length; n++) {
+            if (typeof byName[src[n]] !== 'undefined') { out.push(byName[src[n]]); }
+        }
+        return out;
+    })();
+
     var POPUP = null;      // single popup instance
     var active = null;     // { input, hidden, onchange }
     var viewY = 0, viewM = 0; // currently rendered month
@@ -145,12 +158,31 @@
         var prev = document.createElement('button');
         prev.type = 'button'; prev.className = 'bs-datepicker-popup__nav';
         prev.innerHTML = '&#8249;'; prev.setAttribute('aria-label', 'Previous month');
-        var title = document.createElement('div');
-        title.className = 'bs-datepicker-popup__title';
+
+        var monthSelect = document.createElement('select');
+        monthSelect.className = 'bs-datepicker-popup__month-select';
+        for (var mi = 0; mi < 12; mi++) {
+            var mo = document.createElement('option');
+            mo.value = mi + 1; mo.textContent = MONTHS[mi];
+            monthSelect.appendChild(mo);
+        }
+
+        var yearSelect = document.createElement('select');
+        yearSelect.className = 'bs-datepicker-popup__year-select';
+        for (var yi = MIN_YEAR; yi <= MAX_YEAR; yi++) {
+            var yo = document.createElement('option');
+            yo.value = yi; yo.textContent = yearPad(yi);
+            yearSelect.appendChild(yo);
+        }
+
         var next = document.createElement('button');
         next.type = 'button'; next.className = 'bs-datepicker-popup__nav';
         next.innerHTML = '&#8250;'; next.setAttribute('aria-label', 'Next month');
-        header.appendChild(prev); header.appendChild(title); header.appendChild(next);
+
+        header.appendChild(prev);
+        header.appendChild(monthSelect);
+        header.appendChild(yearSelect);
+        header.appendChild(next);
 
         var gridWrap = document.createElement('div');
         gridWrap.className = 'bs-datepicker-popup__grid';
@@ -179,6 +211,17 @@
 
         prev.addEventListener('click', function () { stepMonth(-1); });
         next.addEventListener('click', function () { stepMonth(1); });
+        monthSelect.addEventListener('change', function () {
+            viewM = +monthSelect.value;
+            render();
+        });
+        yearSelect.addEventListener('change', function () {
+            viewY = +yearSelect.value;
+            var maxM = monthLen(viewY, viewM) ? viewM : 12;
+            while (maxM > 1 && !monthLen(viewY, maxM)) { maxM--; }
+            viewM = maxM;
+            render();
+        });
         todayBtn.addEventListener('click', function () {
             var todayBs = adToBs(formatAd(Date.now()));
             if (!todayBs) { return; }
@@ -214,7 +257,8 @@
             pop.style.display = 'none';
             return;
         }
-        pop.querySelector('.bs-datepicker-popup__title').textContent = yearPad(viewY) + ' ' + MONTHS[viewM - 1];
+        pop.querySelector('.bs-datepicker-popup__month-select').value = viewM;
+        pop.querySelector('.bs-datepicker-popup__year-select').value = viewY;
 
         var prev = pop.querySelector('.bs-datepicker-popup__nav');
         var next = pop.querySelectorAll('.bs-datepicker-popup__nav')[1];
@@ -249,7 +293,12 @@
             } else {
                 var ad = bsToAd(viewY, viewM, day);
                 var off = (adMin && ad < adMin) || (adMax && ad > adMax);
-                cell.className = 'bs-datepicker-popup__cell' + (off ? ' is-disabled' : '');
+                var offDay = !off && OFF_DAYS.length > 0 && ad
+                    ? OFF_DAYS.indexOf(new Date(parseAdUtc(ad)).getUTCDay()) !== -1
+                    : false;
+                cell.className = 'bs-datepicker-popup__cell'
+                    + (off ? ' is-disabled' : '')
+                    + (offDay ? ' is-off' : '');
                 cell.textContent = day;
                 if (!off) {
                     cell.addEventListener('click', function (dd) {
@@ -261,9 +310,9 @@
                 }(day));
                 cell.addEventListener('mouseleave', function () { showAdHint(null); });
             }
-            if (day && todayKey === yearPad(viewY) + '-' + pad(viewM)) {
+            if (day && todayKey === yearPad(viewY) + '-' + pad(viewM) && todayBs && +todayBs.split('-')[2] === day) {
                 cell.classList.add('is-today');
-                if (todayBs && +todayBs.split('-')[2] === day) { cell.classList.add('is-today-day'); }
+                cell.classList.add('is-today-day');
             }
             if (day && selKey === yearPad(viewY) + '-' + pad(viewM) && selBs && selBs[2] === day) {
                 cell.classList.add('is-selected');

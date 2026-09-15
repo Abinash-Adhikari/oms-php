@@ -59,12 +59,15 @@ function taskBadgeClasses(array $task): array
  */
 function eventVisibilitySql(int $userId, ?array $user, bool $seeAll): array
 {
+    // Items past their expire_date stop showing everywhere (notes auto-expire).
+    $notExpired = "(e.expire_date IS NULL OR e.expire_date >= CURDATE())";
     if ($seeAll) {
-        return ['1=1', []];
+        return ['(' . $notExpired . ')', []];
     }
     $deptId = (int) ($user['department_id'] ?? 0);
     return [
-        "(e.added_by = ?
+        "(" . $notExpired . ")
+         AND (e.added_by = ?
          OR (e.privacy = 'Public' AND e.attendees_department IS NULL)
          OR (e.privacy = 'Public' AND e.attendees_department = ?)
          OR (e.privacy = 'Private' AND FIND_IN_SET(?, e.attendees_staffs)))",

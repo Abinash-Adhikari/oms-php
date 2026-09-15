@@ -14,7 +14,7 @@
     <div class="container">
         <div class="row row-sm">
             <div class="col-md-12">
-                <span><strong><?= e(config('organization_name', 'Office')) ?></strong> © <?php echo date('Y'); ?>.
+                <span><strong><?= e(office_display_name()) ?></strong> © <?php echo date('Y'); ?>.
                     All rights reserved.</span>
             </div>
         </div>

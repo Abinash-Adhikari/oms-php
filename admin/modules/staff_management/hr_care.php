@@ -11,6 +11,7 @@ $hrTabs = [
     'profile'    => ['label' => 'Profile', 'fa' => 'fa-user'],
     'tasks'      => ['label' => 'Tasks', 'fa' => 'fa-tasks'],
     'meetings'   => ['label' => 'Meetings', 'fa' => 'fa-handshake'],
+    'notes'      => ['label' => 'Notes', 'fa' => 'fa-sticky-note'],
     'speak_up'   => ['label' => 'Speak Up', 'fa' => 'fa-bullhorn'],
 ];
 

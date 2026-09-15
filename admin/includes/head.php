@@ -6,11 +6,9 @@
  * Uses local AdminLTE 3 + Bootstrap 4 + Font Awesome copies from the
  * merged theme folder (admin/assets + admin/theme2).
  */
-$pageTitle = $pageTitle ?? $navBars[$permissionModule] ?? config('organization_name', 'Office');
-$orgShort  = defined('ORGANIZATION_SHORT_NAME') && ORGANIZATION_SHORT_NAME !== ''
-    ? (string) ORGANIZATION_SHORT_NAME : config('organization_short_name', 'Office');
-$orgName   = defined('ORGANIZATION_NAME') && ORGANIZATION_NAME !== ''
-    ? (string) ORGANIZATION_NAME : config('organization_name', 'Office');
+$pageTitle = $pageTitle ?? $navBars[$permissionModule] ?? office_display_name();
+$orgShort  = office_display_short_name();
+$orgName   = office_display_name();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -30,9 +28,10 @@ $orgName   = defined('ORGANIZATION_NAME') && ORGANIZATION_NAME !== ''
     <?php
     // Favicon from the office profile logo (best-effort).
     $tabIcon = '../favicon.ico';
+    $__weeklyOff = [];
     try {
         $officeProfile = Database::instance()->selectOne(
-            'SELECT `id`, `logo` FROM `tbl_office_profiles` WHERE `id` = 1'
+            'SELECT `id`, `logo`, `weekly_off_days` FROM `tbl_office_profiles` WHERE `id` = 1'
         );
         if (!empty($officeProfile['logo'])) {
             $logoRel = ltrim((string) $officeProfile['logo'], '/');
@@ -40,6 +39,11 @@ $orgName   = defined('ORGANIZATION_NAME') && ORGANIZATION_NAME !== ''
             if ($logoRel !== '' && is_file($logoFs)) {
                 $tabIcon = '../user_uploads/' . $logoRel . '?v=' . filemtime($logoFs);
             }
+        }
+        // Weekly leave / off days picked in the office profile setup (BS picker shows them red).
+        $__offDecoded = json_decode((string) ($officeProfile['weekly_off_days'] ?? ''), true);
+        if (is_array($__offDecoded)) {
+            $__weeklyOff = array_values(array_filter($__offDecoded, 'is_string'));
         }
     } catch (Throwable $e) {
         // Icon is decorative — never break the head on a DB hiccup.
@@ -62,6 +66,7 @@ $orgName   = defined('ORGANIZATION_NAME') && ORGANIZATION_NAME !== ''
         window.APP_USE_AD_DATES = <?= $__calAd ? 'true' : 'false' ?>;
         window.APP_TODAY_PICKER = <?= json_encode($__todayPicker, JSON_UNESCAPED_UNICODE) ?>;
         window.APP_DATE_INPUT_PLACEHOLDER = 'YYYY-MM-DD';
+        window.APP_WEEKLY_OFF_DAYS = <?= json_encode($__weeklyOff, JSON_UNESCAPED_UNICODE) ?>;
     </script>
 
     <!-- Font preconnect + premium fonts (moved out of CSS @import — non-blocking) -->

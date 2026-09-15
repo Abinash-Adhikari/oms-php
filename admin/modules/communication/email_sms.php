@@ -71,7 +71,7 @@ $recentLogs = $db->select(
                     <div class="form-group"><label>SMTP Password (API Key)</label>
                         <input type="password" name="smtp_password" class="form-control" value="" placeholder="<?= $settings['smtp_password_enc'] ? '•••••••• (set)' : 'Paste your Brevo SMTP key here' ?>" autocomplete="new-password"></div>
                     <div class="form-group"><label>From Name</label>
-                        <input type="text" name="smtp_from_name" class="form-control" value="<?= e($settings['smtp_from_name'] ?? config('organization_name', 'SB-Tech')) ?>"></div>
+                        <input type="text" name="smtp_from_name" class="form-control" value="<?= e($settings['smtp_from_name'] ?? office_display_name()) ?>"></div>
                     <div class="form-group"><label>From Email</label>
                         <input type="email" name="smtp_from_email" class="form-control" value="<?= e($settings['smtp_from_email'] ?? '') ?>" placeholder="noreply@yourdomain.com"></div>
                 </div>

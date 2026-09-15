@@ -271,6 +271,66 @@ function useBsDates(): bool
 }
 
 /**
+ * Resolve the display names to use for the organization: the active office
+ * profile in `tbl_office_profiles` (id=1) when one is set up, otherwise the
+ * hardcoded `organization_name` / `organization_short_name` from setup.php.
+ * Memoized per request and DB-guarded (falls back to config on any error).
+ *
+ * The short name prefers the profile accronym, then the profile name, then
+ * the config short name — so a profile with a name but no accronym still
+ * replaces the hardcoded branding.
+ *
+ * @return array{name:string, short:string}
+ */
+function office_display_names(): array
+{
+    static $names = null;
+    if ($names === null) {
+        $name  = trim((string) config('organization_name', 'Office'));
+        $short = trim((string) config('organization_short_name', 'Office'));
+        try {
+            $profile = Database::instance()->selectOne(
+                'SELECT `name`, `accronym` FROM `tbl_office_profiles` WHERE `id` = 1'
+            );
+            if (is_array($profile)) {
+                $dbName  = trim((string) ($profile['name'] ?? ''));
+                $dbShort = trim((string) ($profile['accronym'] ?? ''));
+                if ($dbName !== '') {
+                    $name = $dbName;
+                }
+                if ($dbShort !== '') {
+                    $short = $dbShort;
+                } elseif ($dbName !== '') {
+                    $short = $dbName;
+                }
+            }
+        } catch (Throwable $e) {
+            // keep the setup.php fallback
+        }
+        if ($name === '') {
+            $name = 'Office';
+        }
+        if ($short === '') {
+            $short = $name;
+        }
+        $names = ['name' => $name, 'short' => $short];
+    }
+    return $names;
+}
+
+/** Organization display name (office profile `name`, else setup.php fallback). */
+function office_display_name(): string
+{
+    return office_display_names()['name'];
+}
+
+/** Organization short display name (profile accronym → name → config short). */
+function office_display_short_name(): string
+{
+    return office_display_names()['short'];
+}
+
+/**
  * Write-edge contract: convert a submitted date value to its canonical AD
  * (Y-m-d) form before storing. In AD mode the value passes through untouched;
  * in BS mode every form date is interpreted as BS and converted here.

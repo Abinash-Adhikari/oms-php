@@ -52,9 +52,30 @@
     cursor: default;
 }
 
-.bs-datepicker-popup__title {
+.bs-datepicker-popup__month-select,
+.bs-datepicker-popup__year-select {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background: #ffffff;
+    font-size: 13px;
     font-weight: 600;
     color: #343a40;
+    padding: 3px 4px;
+    cursor: pointer;
+    outline: none;
+}
+
+.bs-datepicker-popup__month-select {
+    min-width: 90px;
+}
+
+.bs-datepicker-popup__year-select {
+    min-width: 65px;
+}
+
+.bs-datepicker-popup__month-select:focus,
+.bs-datepicker-popup__year-select:focus {
+    border-color: #007bff;
 }
 
 .bs-datepicker-popup__week {
@@ -101,13 +122,17 @@
     cursor: default;
 }
 
-.bs-datepicker-popup__cell.is-today {
+.bs-datepicker-popup__cell.is-off {
     color: #e74c3c;
+}
+
+.bs-datepicker-popup__cell.is-today {
+    color: var(--brand-primary, #2563eb);
     font-weight: 700;
 }
 
 .bs-datepicker-popup__cell.is-today-day {
-    outline: 1px solid #e74c3c;
+    outline: 1px solid var(--brand-primary, #2563eb);
     outline-offset: -1px;
 }
 

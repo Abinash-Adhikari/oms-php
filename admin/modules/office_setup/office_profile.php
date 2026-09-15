@@ -98,6 +98,18 @@ if ($logoUrl === '' && !empty($profile['logo_extension'])) {
                                 <option value="BS" <?= $profile['leave_year_mode'] === 'BS' ? 'selected' : '' ?>>BS</option>
                             </select>
                         </div>
+                        <div class="form-group col-md-8">
+                            <label>Weekly off days (calendar)</label>
+                            <select name="weekly_off_days[]" class="form-control select2" multiple>
+                                <?php
+                                $selOffDays = is_array(json_decode((string) ($profile['weekly_off_days'] ?? ''), true)) ? array_filter(json_decode((string) $profile['weekly_off_days'], true), 'is_string') : [];
+                                foreach (['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $wd):
+                                ?>
+                                    <option value="<?= $wd ?>" <?= in_array($wd, $selOffDays, true) ? 'selected' : '' ?>><?= $wd ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <small class="form-text text-muted">Selected weekdays show red on the office calendar.</small>
+                        </div>
                         <div class="form-group col-md-4">
                             <label>Backup email</label>
                             <input type="email" name="backup_email" class="form-control" value="<?= e($profile['backup_email']) ?>">

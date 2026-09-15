@@ -97,7 +97,7 @@ function documentHeaderTitle(): string
     $s = documentSettings();
     return trim((string) ($s['header_title'] ?? '')) !== ''
         ? (string) $s['header_title']
-        : (string) config('organization_name', '');
+        : office_display_name();
 }
 
 /** Get office profile details for the letterhead. */

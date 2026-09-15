@@ -6,7 +6,7 @@
  */
 ?>
 <!-- Organization name for JS -->
-<script>var APP_ORG_NAME = <?= json_encode(config('organization_name', 'Office')) ?>;</script>
+<script>var APP_ORG_NAME = <?= json_encode(office_display_name()) ?>;</script>
 
 <!-- jQuery and jQuery UI -->
 <script src="./assets/plugins/jquery/jquery.min.js"></script>

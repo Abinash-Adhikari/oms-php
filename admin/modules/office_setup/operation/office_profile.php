@@ -19,6 +19,7 @@ $data = [
     'slogan'          => trim((string) ($_POST['slogan'] ?? '')),
     'estd'            => trim((string) ($_POST['estd'] ?? '')),
     'use_date'        => ($_POST['use_date'] ?? 'AD') === 'BS' ? 'BS' : 'AD',
+    'weekly_off_days' => json_encode(array_values(array_filter((array) ($_POST['weekly_off_days'] ?? []), static fn ($d) => in_array($d, ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], true)))),
     'leave_year_mode' => ($_POST['leave_year_mode'] ?? 'AD') === 'BS' ? 'BS' : 'AD',
     'backup_email'    => trim((string) ($_POST['backup_email'] ?? '')),
     'allow_ips'       => trim((string) ($_POST['allow_ips'] ?? 'All')),

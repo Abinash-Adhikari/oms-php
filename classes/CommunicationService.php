@@ -221,7 +221,7 @@ class CommunicationService
             '{{email}}'      => $user['email'] ?? '',
             '{{phone}}'      => $user['phone1'] ?? '',
             '{{details}}'    => $details,
-            '{{org_name}}'   => config('organization_name', 'Office'),
+            '{{org_name}}'   => office_display_name(),
             '{{date}}'       => date('Y-m-d'),
             '{{time}}'       => date('H:i:s'),
         ];
@@ -269,7 +269,7 @@ class CommunicationService
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->CharSet = 'UTF-8';
 
-            $fromName = (string) ($settings['smtp_from_name'] ?? config('organization_name', 'Office'));
+            $fromName = (string) ($settings['smtp_from_name'] ?? office_display_name());
             $fromEmail = (string) $settings['smtp_from_email'];
             $mail->setFrom($fromEmail, $fromName);
             $mail->addAddress($to);
@@ -287,7 +287,7 @@ class CommunicationService
 
     private static function sendViaBuiltinMail(string $to, string $subject, string $body, bool $isHtml, array $settings): array
     {
-        $fromName = (string) ($settings['smtp_from_name'] ?? config('organization_name', 'Office'));
+        $fromName = (string) ($settings['smtp_from_name'] ?? office_display_name());
         $fromEmail = (string) $settings['smtp_from_email'];
         $headers = "From: {$fromName} <{$fromEmail}>\r\n";
         $headers .= "Reply-To: {$fromEmail}\r\n";

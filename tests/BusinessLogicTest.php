@@ -141,6 +141,49 @@ class BusinessLogicTest extends TestCase
     }
 
     // =====================================================================
+    // Organization display name tests (functions/helpers.php)
+    // =====================================================================
+
+    public function testOfficeDisplayNamesShape()
+    {
+        $names = office_display_names();
+        $this->assertArrayHasKey('name', $names);
+        $this->assertArrayHasKey('short', $names);
+        $this->assertNotSame('', trim($names['name']));
+        $this->assertNotSame('', trim($names['short']));
+    }
+
+    public function testOfficeDisplayNamePrefersProfileThenConfig()
+    {
+        $expected = trim((string) config('organization_name', 'Office'));
+        if ($this->dbAvailable()) {
+            $profile = Database::instance()->selectOne(
+                'SELECT `name` FROM `tbl_office_profiles` WHERE `id` = 1'
+            );
+            if (!empty($profile['name'])) {
+                $expected = trim((string) $profile['name']);
+            }
+        }
+        $this->assertSame($expected, office_display_name());
+    }
+
+    public function testOfficeDisplayShortNameFallsBackToProfileNameWithoutAccronym()
+    {
+        if (!$this->dbAvailable()) {
+            $this->markTestSkipped('Database not available for office profile check.');
+        }
+        $profile = Database::instance()->selectOne(
+            'SELECT `name`, `accronym` FROM `tbl_office_profiles` WHERE `id` = 1'
+        );
+        if (empty($profile['name'])) {
+            $this->markTestSkipped('No office profile row to exercise the name fallback.');
+        }
+        $accronym = trim((string) ($profile['accronym'] ?? ''));
+        $expected = $accronym !== '' ? $accronym : trim((string) $profile['name']);
+        $this->assertSame($expected, office_display_short_name());
+    }
+
+    // =====================================================================
     // Voucher line balancing tests (functions/accounting.php)
     // =====================================================================
 

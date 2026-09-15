@@ -79,9 +79,9 @@ foreach (($navBadgeQueries ?? []) as $key => $b) {
             }
             ?>
             <?php if ($orgLogo): ?>
-                <img src="<?= e($orgLogo) ?>" alt="<?= e(config('organization_short_name', 'Office')) ?>" class="cms-brand-logo">
+                <img src="<?= e($orgLogo) ?>" alt="<?= e(office_display_short_name()) ?>" class="cms-brand-logo">
             <?php endif; ?>
-            <span class="brand-text"><?= e(config('organization_short_name', 'Office')) ?></span>
+            <span class="brand-text"><?= e(office_display_short_name()) ?></span>
         </a>
     </div>
 

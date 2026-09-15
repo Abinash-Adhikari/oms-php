@@ -11,9 +11,9 @@ $socials = ['facebook' => 'fab fa-facebook', 'instagram' => 'fab fa-instagram', 
             <div class="col-lg-5 col-md-6 mb-4 mb-lg-0">
                 <div class="d-flex align-items-center mb-3">
                     <?php if (!empty($setup['logo'])): ?>
-                        <img src="<?= e(siteUrl('user_uploads/' . $setup['logo'])) ?>" alt="<?= e($setup['site_title'] ?? config('organization_name', 'Office')) ?>" height="32" style="margin-right: 0.75rem;">
+                        <img src="<?= e(siteUrl('user_uploads/' . $setup['logo'])) ?>" alt="<?= e($setup['site_title'] ?? office_display_name()) ?>" height="32" style="margin-right: 0.75rem;">
                     <?php endif; ?>
-                    <h5 class="mb-0" style="font-family: var(--font-display); font-weight: 700; color: #fff;"><?= e($setup['site_title'] ?? config('organization_name', 'Office')) ?></h5>
+                    <h5 class="mb-0" style="font-family: var(--font-display); font-weight: 700; color: #fff;"><?= e($setup['site_title'] ?? office_display_name()) ?></h5>
                 </div>
                 <p class="mb-3" style="color: var(--text-muted); max-width: 300px;"><?= e($setup['tagline'] ?? 'Your technology partner') ?></p>
 
@@ -87,7 +87,7 @@ $socials = ['facebook' => 'fab fa-facebook', 'instagram' => 'fab fa-instagram', 
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-6 text-center text-md-left mb-2 mb-md-0">
-                    &copy; <?= date('Y') ?> <?= e($setup['site_title'] ?? config('organization_name', 'Office')) ?>. All rights reserved.
+                    &copy; <?= date('Y') ?> <?= e($setup['site_title'] ?? office_display_name()) ?>. All rights reserved.
                 </div>
                 <div class="col-md-6 text-center text-md-right">
                     <a href="<?= siteUrl('privacy.php') ?>" class="mr-3" style="color: var(--text-muted);">Privacy Policy</a>

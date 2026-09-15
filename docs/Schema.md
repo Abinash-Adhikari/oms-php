@@ -19,7 +19,7 @@
 | **Money** | `DECIMAL(18,4)` everywhere. Currency in a separate `CHAR(3)` column. |
 | **FKs** | `ON DELETE RESTRICT` for fiscal/calendar links (must not orphan); `ON DELETE SET NULL` for actor/user links (history must survive). |
 
-**98 tables** total, grouped into 9 domains below. Arrows (→) denote FK
+**99 tables** total, grouped into 9 domains below. Arrows (→) denote FK
 references.
 
 ---
@@ -74,6 +74,8 @@ tbl_office_staff_leave_allocation → tbl_users_login, tbl_office_leave_configs
 the configuration nucleus. `allow_ips` (IP allow-list), `use_date` (AD|BS),
 `leave_year_mode` (AD|BS), `plan_name`, `logo`, `payment_qr_code`, SMTP
 credentials are in `tbl_communication_settings` instead.
+`weekly_off_days` holds a JSON array of weekday names (e.g. `["Saturday"]`)
+selected to render red on the office calendar.
 
 **`tbl_office_leave_configs`** defines leave types (Casual, Sick, Earned…).
 `tbl_office_staff_leave_allocation` is the per-staff balance ledger.
@@ -90,6 +92,7 @@ tbl_office_task_assignees    → tbl_office_tasks, tbl_users_login
 tbl_office_task_files        → tbl_office_tasks
 tbl_office_events            → tbl_users_login
 tbl_office_event_schedules   → tbl_office_events
+tbl_office_todos             → tbl_users_login (personal calendar to-dos)
 tbl_office_grievances        → tbl_users_login
 tbl_office_grievance_files   → tbl_office_grievances
 tbl_daily_tasks              → tbl_users_login (staff_id)
@@ -108,6 +111,16 @@ listing. Indexed `idx_dailytask_staff_date(staff_id, date).
 **`tbl_office_tasks`** — task lifecycle `status`: `Pending|In Progress|
 Completed|Blocked|Cancelled`. `taskScopeSql()` in `functions/office.php`
 filters by ownership or `canSeeAllTasks`.
+
+**`tbl_office_todos`** — personal calendar to-do items shown on the office
+calendar date modal. `todo_date` DATE + optional `todo_time` TIME,
+`completed` TINYINT flag. Visible to the creator (`added_by`) and Super
+Admin only.
+
+**`tbl_office_events`** — meetings, events and notes (`type`). Notes carry an
+optional `expire_date` (DATE, NULL = never expires); once past, the item
+stops showing in the calendar/lists. Notes raised from the Office Calendar
+auto-set `expire_date` to the note's calendar date.
 
 ### 2.4 Leave Management
 

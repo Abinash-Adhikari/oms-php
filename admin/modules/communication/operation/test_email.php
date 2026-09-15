@@ -23,7 +23,7 @@ try {
         redirect($back);
     }
 
-    $orgName = config('organization_name', 'SB-Tech');
+    $orgName = office_display_name();
     $subject = e($orgName) . ' — SMTP Test Email';
     $body = '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">'
         . '<div style="background: #007bff; color: white; padding: 20px; text-align: center;">'
