@@ -277,7 +277,7 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                                 $dayNum = $cell + 1;
                                 $cell++;
                                 if ($dayNum < 1 || $dayNum > $daysInMonth):
-                                    echo '<td class="bg-light"></td>';
+                                    echo '<td class="bg-light" style="height:88px;border:1px solid #dee2e6"></td>';
                                     continue;
                                 endif;
                                 $dateKey = $isBs
