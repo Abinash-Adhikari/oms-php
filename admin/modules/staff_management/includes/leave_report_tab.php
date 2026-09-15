@@ -10,7 +10,7 @@ if ($year < 2000 || $year > 2100) {
     $year = currentLeaveYear();
 }
 $staffFilter = (int) ($_GET['staff_id'] ?? 0);
-$years = range(date('Y') - 1, date('Y') + 1);
+$years = range((useBsDates() ? currentLeaveYear() : (int) date('Y')) - 1, (useBsDates() ? currentLeaveYear() : (int) date('Y')) + 1);
 $staffs = $db->select("SELECT `id`, `fullname` FROM `tbl_users_login` WHERE `status` != 'Terminated' ORDER BY `fullname`");
 
 $where = 'WHERE la.year = ?';
@@ -68,6 +68,7 @@ $pending = $db->select(
                     <option value="<?= (int) $s['id'] ?>" <?= $staffFilter === (int) $s['id'] ? 'selected' : '' ?>><?= e($s['fullname']) ?></option>
                 <?php endforeach; ?>
             </select>
+            <label class="mr-1">Year <?= date_system_label() ?></label>
             <select name="year" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
                 <?php foreach ($years as $y): ?>
                     <option value="<?= $y ?>" <?= $year === $y ? 'selected' : '' ?>><?= $y ?></option>
@@ -87,7 +88,7 @@ $pending = $db->select(
 <div class="row">
     <div class="col-md-8">
         <div class="card card-outline">
-            <div class="card-header"><h3 class="card-title">Leave usage — <?= (int) $year ?></h3></div>
+            <div class="card-header"><h3 class="card-title">Leave usage — <?= (int) $year ?> <?= date_system_label() ?></h3></div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-sm table-striped table-hover mb-0">

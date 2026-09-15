@@ -271,6 +271,15 @@ function useBsDates(): bool
 }
 
 /**
+ * Short "(BS)" / "(AD)" suffix describing the active date system — use on
+ * calendar/date labels so users can tell which calendar a value belongs to.
+ */
+function date_system_label(): string
+{
+    return useBsDates() ? '(BS)' : '(AD)';
+}
+
+/**
  * Resolve the display names to use for the organization: the active office
  * profile in `tbl_office_profiles` (id=1) when one is set up, otherwise the
  * hardcoded `organization_name` / `organization_short_name` from setup.php.

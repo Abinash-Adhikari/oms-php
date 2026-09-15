@@ -492,7 +492,7 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                             <div class="cal-evtsched border-bottom mb-3 pb-2">
                                 <div class="row">
                                     <div class="col-12 form-group mb-2">
-                                        <label>Date *</label>
+                                        <label>Date <?= date_system_label() ?> *</label>
                                         <input type="date" name="date[]" class="form-control calEvtDate" required>
                                     </div>
                                     <div class="col-6 form-group mb-2">
@@ -605,11 +605,11 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                         <input type="text" name="title" class="form-control" required placeholder="e.g. Dashain holiday">
                     </div>
                     <div class="form-group">
-                        <label>From date *</label>
+                        <label>From date <?= date_system_label() ?> *</label>
                         <input type="date" name="from_date" class="form-control calHolFrom" required>
                     </div>
                     <div class="form-group">
-                        <label>To date *</label>
+                        <label>To date <?= date_system_label() ?> *</label>
                         <input type="date" name="to_date" class="form-control calHolTo" required>
                     </div>
                     <div class="form-group">
@@ -659,7 +659,7 @@ window.__calSchedTpl  = <?= json_encode(
     '<div class="cal-evtsched border-bottom mb-3 pb-2">'
     . '<div class="row">'
     . '<div class="col-12 form-group mb-2">'
-    . '<label>Date *</label>'
+    . '<label>Date <?= date_system_label() ?> *</label>'
     . '<input type="date" name="date[]" class="form-control calEvtDate" required>'
     . '</div>'
     . '<div class="col-6 form-group mb-2">'
@@ -691,7 +691,19 @@ window.__calSchedTpl  = <?= json_encode(
     }
 
     function fmtDate(iso) {
-        return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', {
+        var dt = new Date(iso + 'T00:00:00');
+        var wd = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dt.getDay()];
+        var bs = null;
+        if (window.APP_CALENDAR_MODE === 'BS' && window.BsDatepicker) {
+            bs = window.BsDatepicker.adToBs(iso);
+        }
+        if (bs) {
+            var p = bs.split('-');
+            var m = parseInt(p[1], 10);
+            var bsMonths = ['Baisakh', 'Jestha', 'Ashadh', 'Shrawan', 'Bhadra', 'Ashwin', 'Kartik', 'Mangsir', 'Poush', 'Magh', 'Falgun', 'Chaitra'];
+            return wd + ', ' + bsMonths[m - 1] + ' ' + parseInt(p[2], 10) + ', ' + p[0];
+        }
+        return dt.toLocaleDateString('en-US', {
             weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
         });
     }
@@ -731,8 +743,21 @@ window.__calSchedTpl  = <?= json_encode(
         submitBtn.hidden = (el === dayPane);
     }
 
+    function setCalDate(input, adDate) {
+        if (!input) { return; }
+        if (window.APP_CALENDAR_MODE === 'BS' && window.BsDatepicker) {
+            var hidden = input.nextElementSibling;
+            if (hidden && hidden.type === 'hidden') {
+                hidden.value = adDate;
+                input.value = window.BsDatepicker.adToBs(adDate) || adDate;
+                return;
+            }
+        }
+        input.value = adDate;
+    }
+
     function setEvtDateAll() {
-        document.querySelectorAll('.calEvtDate').forEach(function (i) { i.value = clickedDate; });
+        document.querySelectorAll('.calEvtDate').forEach(function (i) { setCalDate(i, clickedDate); });
     }
 
     function resetEvtSched() {
@@ -855,10 +880,10 @@ window.__calSchedTpl  = <?= json_encode(
         }
         clickedDate = date;
         document.getElementById('calDrawerTitle').textContent = fmtDate(date);
-        document.querySelectorAll('.calHolFrom').forEach(function (i) { i.value = date; });
-        document.querySelectorAll('.calHolTo').forEach(function (i) { i.value = date; });
+        document.querySelectorAll('.calHolFrom').forEach(function (i) { setCalDate(i, date); });
+        document.querySelectorAll('.calHolTo').forEach(function (i) { setCalDate(i, date); });
         setEvtDateAll();
-        document.querySelectorAll('.calTodoDate').forEach(function (i) { i.value = date; });
+        document.querySelectorAll('.calTodoDate').forEach(function (i) { setCalDate(i, date); });
         goDay();
         openCalDrawer();
     });
@@ -897,15 +922,15 @@ window.__calSchedTpl  = <?= json_encode(
             setEvtDateAll();
         } else if (kind === 'note') {
             showPane(document.getElementById('calNoteForm'));
-            document.querySelectorAll('.calNoteDate').forEach(function (i) { i.value = clickedDate; });
+            document.querySelectorAll('.calNoteDate').forEach(function (i) { setCalDate(i, clickedDate); });
         } else if (kind === 'todo') {
             showPane(document.getElementById('calTodoForm'));
-            document.querySelectorAll('.calTodoDate').forEach(function (i) { i.value = clickedDate; });
+            document.querySelectorAll('.calTodoDate').forEach(function (i) { setCalDate(i, clickedDate); });
         } else if (kind === 'holiday') {
             showPane(document.getElementById('calHolForm'));
             // showPane() resets the form, so re-apply the clicked date.
-            document.querySelectorAll('.calHolFrom').forEach(function (i) { i.value = clickedDate; });
-            document.querySelectorAll('.calHolTo').forEach(function (i) { i.value = clickedDate; });
+            document.querySelectorAll('.calHolFrom').forEach(function (i) { setCalDate(i, clickedDate); });
+            document.querySelectorAll('.calHolTo').forEach(function (i) { setCalDate(i, clickedDate); });
         }
     });
 
@@ -929,7 +954,7 @@ window.__calSchedTpl  = <?= json_encode(
         var wrap = document.createElement('div');
         wrap.innerHTML = window.__calSchedTpl;
         var row = wrap.firstElementChild;
-        row.querySelectorAll('.calEvtDate').forEach(function (i) { i.value = clickedDate; });
+        row.querySelectorAll('.calEvtDate').forEach(function (i) { setCalDate(i, clickedDate); });
         document.getElementById('calEvtSched').appendChild(row);
     });
     document.addEventListener('click', function (e) {

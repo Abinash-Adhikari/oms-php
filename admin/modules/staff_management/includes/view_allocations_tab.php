@@ -10,7 +10,7 @@ $year = (int) ($_GET['year'] ?? currentLeaveYear());
 if ($year < 2000 || $year > 2100) {
     $year = currentLeaveYear();
 }
-$years = range(date('Y') - 1, date('Y') + 1);
+$years = range((useBsDates() ? currentLeaveYear() : (int) date('Y')) - 1, (useBsDates() ? currentLeaveYear() : (int) date('Y')) + 1);
 
 $staffs = $db->select(
     "SELECT `id`, `fullname`, `department_id` FROM `tbl_users_login` WHERE `status` = 'Active' ORDER BY `fullname`"
@@ -32,7 +32,7 @@ foreach ($db->select(
             <input type="hidden" name="module" value="staff_management">
             <input type="hidden" name="page" value="leave_management">
             <input type="hidden" name="tab" value="view_allocations">
-            <label class="mr-2">Leave year</label>
+            <label class="mr-2">Leave year <?= date_system_label() ?></label>
             <select name="year" class="form-control form-control-sm" onchange="this.form.submit()">
                 <?php foreach ($years as $y): ?>
                     <option value="<?= $y ?>" <?= $year === $y ? 'selected' : '' ?>><?= $y ?></option>
@@ -91,7 +91,7 @@ foreach ($db->select(
         </table>
     </div>
     <?php if ($staffs && $types): ?>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Save allocations for <?= (int) $year ?></button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Save allocations for <?= (int) $year ?> (<?= date_system_label() ?>)</button>
         <small class="text-muted ml-2">Used days are synced automatically from Approved applications.</small>
     <?php endif; ?>
 </form>

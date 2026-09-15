@@ -4,7 +4,7 @@
  * Leave usage by staff/type, balance summary, pending approvals.
  */
 $db = Database::instance();
-$year = (int) ($_GET['year'] ?? date('Y'));
+$year = (int) ($_GET['year'] ?? (useBsDates() ? currentLeaveYear() : date('Y')));
 $staffFilter = (int) ($_GET['staff_id'] ?? 0);
 $staffs = $db->select("SELECT id, fullname FROM tbl_users_login WHERE status != 'Terminated' ORDER BY fullname");
 
@@ -63,7 +63,7 @@ $pending = $db->select(
 
 <div class="card">
     <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-umbrella-beach mr-1"></i>Leave Report — <?= $year ?></h3>
+        <h3 class="card-title"><i class="fas fa-umbrella-beach mr-1"></i>Leave Report — <?= $year ?> <?= date_system_label() ?></h3>
         <div class="card-tools">
             <form action="operation.php?module=reports&page=leave" method="post" style="display:inline">
                 <?= csrfField() ?>
@@ -84,9 +84,9 @@ $pending = $db->select(
                     <option value="<?= (int) $s['id'] ?>" <?= $staffFilter === (int) $s['id'] ? 'selected' : '' ?>><?= e($s['fullname']) ?></option>
                 <?php endforeach; ?>
             </select>
-            <label class="mr-2">Year:</label>
+            <label class="mr-2">Year <?= date_system_label() ?>:</label>
             <select name="year" class="form-control form-control-sm" onchange="this.form.submit()">
-                <?php for ($y = date('Y') - 2; $y <= date('Y') + 1; $y++): ?>
+                <?php for ($y = (useBsDates() ? currentLeaveYear() : (int) date('Y')) - 2; $y <= (useBsDates() ? currentLeaveYear() : (int) date('Y')) + 1; $y++): ?>
                     <option value="<?= $y ?>" <?= $year === $y ? 'selected' : '' ?>><?= $y ?></option>
                 <?php endfor; ?>
             </select>

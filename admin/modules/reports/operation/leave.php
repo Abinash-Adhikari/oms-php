@@ -7,7 +7,7 @@ $action = (string) ($_POST['action'] ?? '');
 
 try {
     if ($action === 'export_leave') {
-        $year = (int) ($_POST['year'] ?? date('Y'));
+        $year = (int) ($_POST['year'] ?? (useBsDates() ? currentLeaveYear() : date('Y')));
         $staffFilter = (int) ($_POST['staff_id'] ?? 0);
 
         $where = 'la.year = ?';
