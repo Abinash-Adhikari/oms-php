@@ -308,7 +308,11 @@ if (isset($_GET['id'])) {
                             ?>
                             <div class="d-flex align-items-center border-bottom px-3 py-2" style="gap:12px">
                                 <?php if ($isImage): ?>
-                                    <a href="<?= $fUrl ?>" target="_blank" style="flex-shrink:0;width:48px;height:48px;border-radius:6px;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center">
+                                    <a href="<?= $fUrl ?>" target="_blank" rel="noopener"
+                                       class="tms-file-preview" title="<?= e($f['file_name']) ?>"
+                                       data-src="<?= $fUrl ?>"
+                                       data-name="<?= e($f['file_name']) ?>"
+                                       style="flex-shrink:0;width:48px;height:48px;border-radius:6px;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center">
                                         <img src="<?= $fUrl ?>" alt="<?= e($f['file_name']) ?>" style="max-width:100%;max-height:100%;object-fit:cover">
                                     </a>
                                 <?php else: ?>
@@ -326,12 +330,10 @@ if (isset($_GET['id'])) {
                                     <div style="font-size:.75rem;color:#9ca3af"><?= strtoupper($fExt) ?> · <?= $fSizeStr ?><?php if (!empty($f['added_on'])): ?> · <?= date('M d, Y', strtotime($f['added_on'])) ?><?php endif; ?></div>
                                 </div>
                                 <div class="d-flex" style="gap:4px;flex-shrink:0">
-                                    <?php if ($isImage): ?>
-                                        <a href="<?= $fUrl ?>" target="_blank" class="btn btn-xs btn-outline-primary" title="Preview"><i class="fas fa-eye"></i></a>
-                                    <?php endif; ?>
-                                    <?php if ($isPdf): ?>
-                                        <a href="<?= $fUrl ?>" target="_blank" class="btn btn-xs btn-outline-primary" title="View PDF"><i class="fas fa-eye"></i></a>
-                                    <?php endif; ?>
+                                    <a href="<?= $fUrl ?>" target="_blank" rel="noopener"
+                                       class="btn btn-xs btn-outline-primary tms-file-preview" title="Preview"
+                                       data-src="<?= $fUrl ?>"
+                                       data-name="<?= e($f['file_name']) ?>"><i class="fas fa-eye"></i></a>
                                     <a href="<?= $fUrl ?>" download="<?= e($f['file_name']) ?>" class="btn btn-xs btn-outline-success" title="Download"><i class="fas fa-download"></i></a>
                                     <?php if ($canManage): ?>
                                         <form action="operation.php?module=sales&page=documents" method="post" class="d-inline" onsubmit="return confirm('Delete this file permanently?')">

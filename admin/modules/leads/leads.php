@@ -199,7 +199,12 @@ if (isset($_GET['id'])) {
                         <div class="small">
                             <strong><i class="fas fa-paperclip mr-1"></i>Files:</strong>
                             <?php foreach ($files as $f): ?>
-                                <a href="<?= assetUrl('user_uploads/' . $f['file_location']) ?>" class="badge badge-light border ml-1" target="_blank"><?= e($f['file_name']) ?></a>
+                                <a href="<?= assetUrl('user_uploads/' . $f['file_location']) ?>" target="_blank" rel="noopener"
+                                     class="badge badge-light border ml-1 tms-file-preview" title="Preview <?= e($f['file_name']) ?>"
+                                     data-src="<?= assetUrl('user_uploads/' . $f['file_location']) ?>"
+                                     data-name="<?= e($f['file_name']) ?>">
+                                    <i class="fas fa-eye mr-1"></i><?= e($f['file_name']) ?>
+                                </a>
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>

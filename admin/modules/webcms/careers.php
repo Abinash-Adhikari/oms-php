@@ -31,7 +31,17 @@ $appStatuses = ['New', 'Shortlisted', 'Interview', 'Offer', 'Rejected'];
                         <td><?= e($a['applicant_name']) ?><br><small class="text-muted"><?= e(date('M j, Y', strtotime($a['added_on']))) ?></small></td>
                         <td><?= e($a['job_title']) ?></td>
                         <td><?= e($a['email'] ?: '—') ?><br><small><?= e($a['phone'] ?: '—') ?></small></td>
-                        <td><?= $a['resume_location'] ? '<a href="' . assetUrl('user_uploads/' . $a['resume_location']) . '" target="_blank"><i class="fas fa-file mr-1"></i>' . e($a['resume_name']) . '</a>' : '—' ?></td>
+                        <td>
+                            <?php if ($a['resume_location']): ?>
+                                <?php $resumeUrl = assetUrl('user_uploads/' . $a['resume_location']); ?>
+                                <a href="<?= $resumeUrl ?>" target="_blank" rel="noopener"
+                                   class="tms-file-preview"
+                                   data-src="<?= $resumeUrl ?>"
+                                   data-name="<?= e($a['resume_name']) ?>"
+                                   title="Preview <?= e($a['resume_name']) ?>"><i class="fas fa-eye text-primary mr-1"></i></a>
+                                <a href="<?= $resumeUrl ?>" target="_blank" rel="noopener"><i class="fas fa-file mr-1"></i><?= e($a['resume_name']) ?></a>
+                            <?php else: ?>—<?php endif; ?>
+                        </td>
                         <td><span class="badge badge-<?= ['New' => 'primary', 'Shortlisted' => 'info', 'Interview' => 'warning', 'Offer' => 'success', 'Rejected' => 'danger'][$a['status']] ?? 'secondary' ?>"><?= e($a['status']) ?></span></td>
                         <td class="text-right">
                             <form action="operation.php?module=webcms&page=careers" method="post" class="d-inline">

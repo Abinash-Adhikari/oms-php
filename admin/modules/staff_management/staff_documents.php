@@ -44,7 +44,14 @@ $staff = $db->select('SELECT id, fullname, username, status FROM `tbl_users_logi
                             <tr>
                                 <td><?= e($doc['title']) ?></td>
                                 <td><?= e($doc['document_type']) ?></td>
-                                <td><a href="<?= assetUrl('user_uploads/' . $doc['file_path']) ?>" target="_blank"><i class="fas fa-file mr-1"></i><?= e($doc['document_name']) ?></a></td>
+                                <td>
+                                    <a href="<?= assetUrl('user_uploads/' . $doc['file_path']) ?>"
+                                       target="_blank" rel="noopener"
+                                       class="tms-file-preview"
+                                       data-src="<?= assetUrl('user_uploads/' . $doc['file_path']) ?>"
+                                       data-name="<?= e($doc['document_name']) ?>" title="Preview"><i class="fas fa-eye text-primary mr-1"></i></a>
+                                    <a href="<?= assetUrl('user_uploads/' . $doc['file_path']) ?>" target="_blank" rel="noopener"><i class="fas fa-file mr-1"></i><?= e($doc['document_name']) ?></a>
+                                </td>
                                 <td><?= e($doc['size']) ?></td>
                                 <td class="text-right">
                                     <form action="operation.php?module=staff_management&page=staff_documents" method="post" class="d-inline">

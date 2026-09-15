@@ -296,7 +296,14 @@ $drawerOpen = ($edit !== null);
                 <?php if ($editFiles): ?>
                     <ul class="list-unstyled mt-2 mb-0">
                         <?php foreach ($editFiles as $ef): ?>
-                            <li><a href="<?= assetUrl('user_uploads/' . $ef['file_location']) ?>" target="_blank"><i class="fas fa-file mr-1"></i><?= e($ef['file_name']) ?></a></li>
+                            <li><a href="<?= assetUrl('user_uploads/' . $ef['file_location']) ?>"
+                                           target="_blank" rel="noopener"
+                                           class="tms-file-preview"
+                                           data-src="<?= assetUrl('user_uploads/' . $ef['file_location']) ?>"
+                                           data-name="<?= e($ef['file_name']) ?>"
+                                           title="Preview <?= e($ef['file_name']) ?>"><i class="fas fa-eye text-primary mr-1"></i></a>
+                                    <a href="<?= assetUrl('user_uploads/' . $ef['file_location']) ?>" target="_blank"><i class="fas fa-file mr-1"></i><?= e($ef['file_name']) ?></a>
+                                </li>
                         <?php endforeach; ?>
                     </ul>
                 <?php endif; ?>

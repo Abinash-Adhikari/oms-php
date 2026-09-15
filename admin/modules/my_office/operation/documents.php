@@ -156,6 +156,32 @@ try {
         redirect($back);
     }
 
+    if ($action === 'delete_documents_bulk') {
+        $ids = array_values(array_unique(array_map('intval', (array) ($_POST['ids'] ?? []))));
+        $ids = array_values(array_filter($ids));
+        if ($ids) {
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $files = $db->select(
+                'SELECT `file_location` FROM `tbl_office_document_files` WHERE `document_id` IN (' . $placeholders . ')',
+                $ids
+            );
+            foreach ($files as $f) {
+                if (!empty($f['file_location'])) {
+                    $path = dirname(__DIR__, 3) . '/user_uploads/' . $f['file_location'];
+                    if (is_file($path)) {
+                        @unlink($path);
+                    }
+                }
+            }
+            $db->transaction(function () use ($db, $ids, $placeholders): void {
+                $db->delete('tbl_office_document_files', '`document_id` IN (' . $placeholders . ')', $ids);
+                $db->delete('tbl_office_documents', '`id` IN (' . $placeholders . ')', $ids);
+            });
+            setFlash('success', count($ids) . ' document(s) deleted.');
+        }
+        redirect($back);
+    }
+
     if ($action === 'export_documents') {
         $where = ['1=1'];
         $params = [];
