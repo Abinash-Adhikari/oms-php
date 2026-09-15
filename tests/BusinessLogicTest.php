@@ -381,4 +381,35 @@ class BusinessLogicTest extends TestCase
             $this->assertSame('2026-04-18', normalizeDateInput('2026-04-18'));
         }
     }
+
+    // =====================================================================
+    // Notification wiring regression (functions/hr.php + CommunicationService)
+    // =====================================================================
+
+    public function testNotifyUserDoesNotRecurseIntoWorkflow()
+    {
+        // Regression (TEST-02): notifyUser() used to call
+        // CommunicationService::sendWorkflowNotification(), which called
+        // notifyUser() back — infinite mutual recursion until PHP memory
+        // exhaustion. This surfaced as an OOM fatal at Database::insert()
+        // while adding a meeting from the calendar modal. The recursion is
+        // DB-independent (the in-app insert fails silently without a DB),
+        // so the test is meaningful with or without one.
+        if (!class_exists('CommunicationService')) {
+            require_once __DIR__ . '/../classes/CommunicationService.php';
+        }
+        $details = 'regression: notification wiring must not recurse';
+        $start = microtime(true);
+        $mem = memory_get_usage();
+        notifyUser(1, $details, 'Meeting', '0', 1);
+        $elapsed = microtime(true) - $start;
+        $grown = memory_get_usage() - $mem;
+
+        $this->assertLessThan(1.0, $elapsed, 'notifyUser must complete without infinite recursion');
+        $this->assertLessThan(5 * 1024 * 1024, $grown, 'notifyUser memory must stay bounded');
+
+        if ($this->dbAvailable()) {
+            Database::instance()->delete('tbl_notifications', '`details` = ?', [$details]);
+        }
+    }
 }

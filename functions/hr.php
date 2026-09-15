@@ -229,14 +229,10 @@ function notifyUser(?int $receiver, string $details, string $type = 'general', $
     } catch (Throwable $e) {
         // A notification failure must never break the main flow.
     }
-    // Wire email/SMS via CommunicationService (non-blocking).
-    if (class_exists('CommunicationService')) {
-        try {
-            CommunicationService::sendWorkflowNotification($type, $receiver, $details, $refId, $actor);
-        } catch (Throwable $e) {
-            // Never break the main flow.
-        }
-    }
+    // NOTE: never call CommunicationService::sendWorkflowNotification() from
+    // here — sendWorkflowNotification() calls notifyUser() first, which would
+    // recurse forever (OOM). Callers that want the full in-app + email/SMS
+    // pipeline must call sendWorkflowNotification() directly.
 }
 
 /** Notify every active user holding a special permission key.
