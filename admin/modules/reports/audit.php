@@ -73,7 +73,7 @@ $recentLogins = (int) ($db->selectOne("SELECT COUNT(*) AS c FROM tbl_audit_log W
     <div class="card-header">
         <h3 class="card-title"><i class="fas fa-history mr-1"></i>Audit Log</h3>
         <div class="card-tools">
-            <form action="operation.php?module=reports&page=audit_operation" method="post" style="display:inline">
+            <form action="operation.php?module=reports&page=audit" method="post" style="display:inline">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="export_audit">
                 <input type="hidden" name="module_filter" value="<?= e($filterModule) ?>">

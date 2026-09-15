@@ -572,19 +572,20 @@
     getNewPassword.value = "";
   }
 
-  function getNepaliDateInput(input) {
-    const englishDate = input.value;
-    const data = {
-      action: 'get_nepali_date',
-      english_date: englishDate
+function getNepaliDateInput(input) {
+    var englishDate = input.value;
+    if (!englishDate) return;
+    var data = {
+      action: 'getNepaliDate',
+      date: englishDate
     };
-    const url = 'operation.php?module=global&page=axios_operation';
+    var url = 'ajax.php';
     axios.post(url, data)
       .then(function(response) {
-        input.value = response.data.nepali_date;
+        if (response.data) input.value = response.data;
       })
       .catch(function(error) {
-        console.error('Error in Axios request:', error);
+        console.error('Error in date conversion:', error);
       });
   }
   // initialize select2 and select2-tag function

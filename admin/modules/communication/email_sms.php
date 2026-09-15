@@ -55,7 +55,7 @@ $recentLogs = $db->select(
                 <li>Fill in the fields below and save</li>
             </ol>
         </div>
-        <form action="operation.php?module=communication&page=email_sms_operation" method="post">
+        <form action="operation.php?module=communication&page=email_sms" method="post">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="save_email_settings">
             <div class="row">
@@ -77,7 +77,11 @@ $recentLogs = $db->select(
                 </div>
             </div>
             <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Save Email Settings</button>
-            <a href="operation.php?module=communication&page=test_email_operation" class="btn btn-outline-info ml-2" onclick="return confirm('Send a test email to your admin email?')"><i class="fas fa-paper-plane mr-1"></i>Send Test Email</a>
+            <button type="submit" form="testEmailForm" class="btn btn-outline-info ml-2" onclick="return confirm('Send a test email to your admin email?')"><i class="fas fa-paper-plane mr-1"></i>Send Test Email</button>
+        </form>
+        <form action="operation.php?module=communication&page=email_sms" method="post" id="testEmailForm" class="d-none">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="send_test_email">
         </form>
     </div>
 </div>
@@ -85,7 +89,7 @@ $recentLogs = $db->select(
 <div class="card">
     <div class="card-header"><h3 class="card-title"><i class="fas fa-sms mr-1"></i>SMS Settings</h3></div>
     <div class="card-body">
-        <form action="operation.php?module=communication&page=email_sms_operation" method="post">
+        <form action="operation.php?module=communication&page=email_sms" method="post">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="save_sms_settings">
             <div class="row">

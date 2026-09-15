@@ -60,7 +60,7 @@ $drawerOpen = ($editSupplier !== null);
                         <td><?= $s['is_active'] ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-secondary">Inactive</span>' ?></td>
                         <td class="text-right">
                             <button type="button" class="btn btn-xs btn-outline-primary" onclick="openDrawer(<?= (int) $s['id'] ?>)"><i class="fas fa-edit"></i></button>
-                            <form action="operation.php?module=inventory&page=suppliers_operation" method="post" class="d-inline">
+                            <form action="operation.php?module=inventory&page=suppliers" method="post" class="d-inline">
                                 <?= csrfField() ?>
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="id" value="<?= (int) $s['id'] ?>">
@@ -87,7 +87,7 @@ $drawerOpen = ($editSupplier !== null);
         </button>
     </div>
     <div class="cms-drawer-body">
-        <form action="operation.php?module=inventory&page=suppliers_operation" method="post" id="supplierForm">
+        <form action="operation.php?module=inventory&page=suppliers" method="post" id="supplierForm">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="save">
             <input type="hidden" name="id" id="formId" value="<?= $editSupplier ? (int) $editSupplier['id'] : 0 ?>">

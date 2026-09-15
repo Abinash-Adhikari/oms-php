@@ -65,7 +65,7 @@ $pending = $db->select(
     <div class="card-header">
         <h3 class="card-title"><i class="fas fa-umbrella-beach mr-1"></i>Leave Report — <?= $year ?></h3>
         <div class="card-tools">
-            <form action="operation.php?module=reports&page=leave_operation" method="post" style="display:inline">
+            <form action="operation.php?module=reports&page=leave" method="post" style="display:inline">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="export_leave">
                 <input type="hidden" name="year" value="<?= (int) $year ?>">

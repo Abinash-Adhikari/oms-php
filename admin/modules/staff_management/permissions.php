@@ -121,7 +121,7 @@ $specialPermissions = [
                         var group = sub.closest('.form-group');
                         var moduleCheck = group.querySelector('.module-check');
                         var submodules = group.querySelectorAll('input[type="checkbox"][name^="submodules"]');
-                        moduleCheck.checked = Array.from(submodules).every(function (s) { return s.checked; });
+                        moduleCheck.checked = Array.from(submodules).some(function (s) { return s.checked; });
                     });
                 });
             </script>

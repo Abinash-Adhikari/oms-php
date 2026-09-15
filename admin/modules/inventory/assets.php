@@ -147,7 +147,7 @@ if ($viewLogId):
         </button>
     </div>
     <div class="cms-drawer-body">
-        <form action="operation.php?module=inventory&page=assets_operation" method="post" id="assetForm">
+        <form action="operation.php?module=inventory&page=assets" method="post" id="assetForm">
             <?= csrfField() ?>
             <input type="hidden" name="id" id="formId" value="<?= $editAsset ? (int) $editAsset['id'] : 0 ?>">
             <div class="form-row">

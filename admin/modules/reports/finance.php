@@ -44,7 +44,7 @@ $totalPayments = $voucherSummary['payment']['total'] + $voucherSummary['purchase
     <div class="card-header">
         <h3 class="card-title"><i class="fas fa-calculator mr-1"></i>Finance Report</h3>
         <div class="card-tools">
-            <form action="operation.php?module=reports&page=finance_operation" method="post" style="display:inline">
+            <form action="operation.php?module=reports&page=finance" method="post" style="display:inline">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="export_finance">
                 <button class="btn btn-success btn-sm"><i class="fas fa-download mr-1"></i>CSV</button>

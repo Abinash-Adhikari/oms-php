@@ -47,7 +47,7 @@ $drawerOpen = ($editSpace !== null);
                         <td class="small"><?= e($s['added_by_name']) ?></td>
                         <td class="text-right">
                             <button type="button" class="btn btn-xs btn-outline-primary" onclick="openDrawer(<?= (int) $s['id'] ?>)"><i class="fas fa-edit"></i></button>
-                            <form action="operation.php?module=my_office&page=office_spaces_operation" method="post" class="d-inline">
+                            <form action="operation.php?module=my_office&page=office_spaces" method="post" class="d-inline">
                                 <?= csrfField() ?>
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="id" value="<?= (int) $s['id'] ?>">
@@ -74,7 +74,7 @@ $drawerOpen = ($editSpace !== null);
         </button>
     </div>
     <div class="cms-drawer-body">
-        <form action="operation.php?module=my_office&page=office_spaces_operation" method="post" id="spaceForm">
+        <form action="operation.php?module=my_office&page=office_spaces" method="post" id="spaceForm">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="save">
             <input type="hidden" name="id" id="formId" value="<?= $editSpace ? (int) $editSpace['id'] : 0 ?>">

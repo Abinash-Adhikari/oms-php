@@ -58,7 +58,7 @@ $staffs = $db->select("SELECT id, fullname FROM tbl_users_login WHERE status != 
         <div class="card-tools">
             <a href="?module=reports&page=attendance&month=<?= $prevMonth ?>" class="btn btn-sm btn-outline-secondary"><i class="fas fa-chevron-left"></i></a>
             <a href="?module=reports&page=attendance&month=<?= $nextMonth ?>" class="btn btn-sm btn-outline-secondary"><i class="fas fa-chevron-right"></i></a>
-            <form action="operation.php?module=reports&page=attendance_operation" method="post" style="display:inline">
+            <form action="operation.php?module=reports&page=attendance" method="post" style="display:inline">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="export_attendance">
                 <input type="hidden" name="month" value="<?= e($month) ?>">

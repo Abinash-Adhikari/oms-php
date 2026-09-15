@@ -76,7 +76,7 @@ if (!in_array($tab, ['summary', 'low_stock', 'assets', 'warranty'], true)) {
         );
     ?>
         <div class="mb-2">
-            <form action="operation.php?module=inventory&page=reports_operation" method="post" style="display:inline">
+            <form action="operation.php?module=inventory&page=reports" method="post" style="display:inline">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="export_asset_register">
                 <button class="btn btn-success btn-sm"><i class="fas fa-download mr-1"></i>Export Asset Register</button>

@@ -63,6 +63,13 @@ $oldPerms = [
     'permitted_submodules' => $user['permitted_submodules'],
     'special_permission'   => $user['special_permission'],
 ];
+// A granted submodule implies the module grant — keeps permitted_modules
+// consistent with permitted_submodules and with how Auth evaluates them.
+foreach (array_keys($subs) as $mod) {
+    if (!in_array($mod, $moduleKeys, true)) {
+        $moduleKeys[] = $mod;
+    }
+}
 $newPerms = [
     'permitted_modules'    => json_encode(array_values(array_unique($moduleKeys))),
     'permitted_submodules' => json_encode($subs),

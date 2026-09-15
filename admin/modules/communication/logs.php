@@ -43,7 +43,7 @@ $logs = $db->select(
     <div class="card-header">
         <h3 class="card-title"><i class="fas fa-list mr-1"></i>Delivery Logs (<?= number_format($total) ?>)</h3>
         <div class="card-tools">
-            <form action="operation.php?module=communication&page=logs_operation" method="post" style="display:inline">
+            <form action="operation.php?module=communication&page=logs" method="post" style="display:inline">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="export_csv">
                 <input type="hidden" name="type" value="<?= e($filterType) ?>">

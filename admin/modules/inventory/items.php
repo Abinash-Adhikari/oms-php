@@ -46,7 +46,7 @@ $drawerOpen = ($editItem !== null);
     <div class="card-header">
         <h3 class="card-title"><i class="fas fa-box mr-1"></i>Items (<?= count($items) ?>)</h3>
         <div class="card-tools">
-            <form action="operation.php?module=inventory&page=items_operation" method="post" style="display:inline">
+            <form action="operation.php?module=inventory&page=items" method="post" style="display:inline">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="export_items">
                 <button class="btn btn-success btn-sm"><i class="fas fa-download mr-1"></i>CSV</button>
@@ -116,7 +116,7 @@ $drawerOpen = ($editItem !== null);
         </button>
     </div>
     <div class="cms-drawer-body">
-        <form action="operation.php?module=inventory&page=items_operation" method="post" id="itemForm">
+        <form action="operation.php?module=inventory&page=items" method="post" id="itemForm">
             <?= csrfField() ?>
             <input type="hidden" name="id" id="formId" value="<?= $editItem ? (int) $editItem['id'] : 0 ?>">
             <div class="form-group">
@@ -170,7 +170,7 @@ $drawerOpen = ($editItem !== null);
             <?php if ($editItem): ?>
                 <hr>
                 <div class="form-group text-danger">
-                    <form action="operation.php?module=inventory&page=items_operation" method="post" class="d-inline" onsubmit="return confirm('Delete this item?')">
+                    <form action="operation.php?module=inventory&page=items" method="post" class="d-inline" onsubmit="return confirm('Delete this item?')">
                         <?= csrfField() ?>
                         <input type="hidden" name="action" value="delete_item">
                         <input type="hidden" name="id" value="<?= (int) $editItem['id'] ?>">

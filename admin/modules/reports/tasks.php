@@ -48,7 +48,7 @@ $byAssignee = $db->select(
     <div class="card-header">
         <h3 class="card-title"><i class="fas fa-tasks mr-1"></i>Task Report</h3>
         <div class="card-tools">
-            <form action="operation.php?module=reports&page=tasks_operation" method="post" style="display:inline">
+            <form action="operation.php?module=reports&page=tasks" method="post" style="display:inline">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="export_tasks">
                 <button class="btn btn-success btn-sm"><i class="fas fa-download mr-1"></i>CSV</button>

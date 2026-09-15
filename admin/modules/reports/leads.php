@@ -52,7 +52,7 @@ $conversionRate = ($wonCount + $lostCount) > 0 ? round(($wonCount / ($wonCount +
     <div class="card-header">
         <h3 class="card-title"><i class="fas fa-funnel-dollar mr-1"></i>Lead Pipeline Report</h3>
         <div class="card-tools">
-            <form action="operation.php?module=reports&page=leads_operation" method="post" style="display:inline">
+            <form action="operation.php?module=reports&page=leads" method="post" style="display:inline">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="export_leads">
                 <button class="btn btn-success btn-sm"><i class="fas fa-download mr-1"></i>CSV</button>

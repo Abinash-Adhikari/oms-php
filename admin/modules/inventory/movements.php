@@ -55,7 +55,7 @@ $typeBadges = ['Purchase' => 'success', 'Issue' => 'warning', 'Return' => 'info'
     <div class="card-header">
         <h3 class="card-title"><i class="fas fa-exchange-alt mr-1"></i>Stock Movements (<?= number_format($total) ?>)</h3>
         <div class="card-tools">
-            <form action="operation.php?module=inventory&page=movements_operation" method="post" style="display:inline">
+            <form action="operation.php?module=inventory&page=movements" method="post" style="display:inline">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="export_movements">
                 <input type="hidden" name="type" value="<?= e($filterType) ?>">

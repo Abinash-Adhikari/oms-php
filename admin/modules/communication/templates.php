@@ -53,7 +53,7 @@ $knownEvents = [
                     <td><?= $t['is_active'] ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-secondary">No</span>' ?></td>
                     <td>
                         <button class="btn btn-xs btn-info" data-toggle="modal" data-target="#templateModal" onclick="editTemplate(<?= e(json_encode($t)) ?>)"><i class="fas fa-edit"></i></button>
-                        <form action="operation.php?module=communication&page=templates_operation" method="post" style="display:inline" onsubmit="return confirm('Delete this template?')">
+                        <form action="operation.php?module=communication&page=templates" method="post" style="display:inline" onsubmit="return confirm('Delete this template?')">
                             <?= csrfField() ?>
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="id" value="<?= (int) $t['id'] ?>">
@@ -70,7 +70,7 @@ $knownEvents = [
 <div class="modal fade" id="templateModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <form action="operation.php?module=communication&page=templates_operation" method="post">
+            <form action="operation.php?module=communication&page=templates" method="post">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="save">
                 <input type="hidden" name="id" id="tpl_id" value="">

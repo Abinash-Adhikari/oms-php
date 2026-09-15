@@ -176,7 +176,21 @@ class Auth
             return (bool) $user;
         }
         $modules = self::decodePermission((string) $user['permitted_modules']);
-        return in_array($module, $modules, true);
+        if (in_array($module, $modules, true)) {
+            return true;
+        }
+        // A submodule grant implies access to its module: granting only
+        // 'office_spaces' under 'my_office' (without ticking the module box)
+        // still grants the 'my_office' module (AC-AUTH-02.4).
+        $subs = self::decodePermission((string) $user['permitted_submodules']);
+        if (is_array($subs)) {
+            foreach (array_keys($subs) as $modKey) {
+                if (strcasecmp((string) $modKey, $module) === 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Submodule-level permission within a module. */
