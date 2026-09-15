@@ -319,8 +319,16 @@ if ($userFullname !== '') {
 <!-- /.navbar -->
 
 <script>
-$(function() {
-    var $badge = $('#cmsNotifBadge');
+(function () {
+    // jQuery loads at the end of the body (footer), so this inline block runs
+    // before it exists. Defer to DOM ready + jQuery present (same guard as
+    // the shell JS) or every handler below silently fails to bind.
+    function initNavTheme() {
+        if (typeof jQuery === 'undefined') {
+            return setTimeout(initNavTheme, 50);
+        }
+        jQuery(function () {
+            var $badge = jQuery('#cmsNotifBadge');
     var $sub = $('#cmsNotifSub');
     var $markAll = $('#cmsNotifMarkAll');
     var $todoBadge = $('#cmsTodosBadge');
@@ -458,5 +466,8 @@ $(function() {
     // Poll every 60s so the badge stays fresh without a reload
     setInterval(refreshBadge, 60000);
     refreshBadge();
-});
+        });
+    }
+    initNavTheme();
+})();
 </script>
