@@ -261,7 +261,10 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                 </div>
                 <?= $bsNote ?>
                 <div class="table-responsive">
-                    <table class="table table-bordered table-sm text-center mb-0">
+                    <style>
+                    #cal-grid th, #cal-grid td { border:1px solid #dee2e6 !important; }
+                    </style>
+                    <table id="cal-grid" class="table table-sm text-center mb-0" style="border-collapse:collapse">
                         <thead>
                             <tr>
                                 <?php foreach ($weekdays as $wd): ?><th class="bg-light"><?= $wd ?></th><?php endforeach; ?>
