@@ -325,7 +325,7 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                                     ? 'Weekly off: ' . $dayName . ($isHoliday ? ' · Holiday: ' . implode(', ', array_column($hols, 'title')) : '')
                                     : ($isHoliday ? 'Holiday: ' . implode(', ', array_column($hols, 'title')) : ($isClickable ? 'View or add on ' . $dateKey : ''));
                                 ?>
-                                <td class="align-top position-relative <?= ($isOffDay || $isHoliday) ? 'table-danger' : ($isToday ? 'bg-primary-light' : '') ?><?= $isClickable ? ' cal-day-clickable' : '' ?>" data-date="<?= $dateKey !== '' ? e($dateKey) : '' ?>" role="<?= $isClickable ? 'button' : '' ?> " style="height:88px;border:1px solid #dee2e6<?= $isToday ? ';border-left:3px solid #2563eb' : '' ?>" title="<?= e($cellTooltip) ?>">
+                                <td class="align-top position-relative<?= $isClickable ? ' cal-day-clickable' : '' ?>" data-date="<?= $dateKey !== '' ? e($dateKey) : '' ?>" role="<?= $isClickable ? 'button' : '' ?> " style="height:88px;border:1px solid #dee2e6<?= $isToday ? ';border-left:3px solid #2563eb' : '' ?>" title="<?= e($cellTooltip) ?>">
                                     <span class="d-block text-center <?= ($isOffDay || $isHoliday) ? 'text-danger font-weight-bold' : ($isToday ? 'badge badge-primary' : 'text-muted') ?>" style="font-size:1.5rem;line-height:1.4"><?= $dayNum ?></span>
                                     <?php if ($isToday): ?><small class="badge badge-pill badge-primary" style="font-size:.55rem">Today</small><?php endif; ?>
                                     <?php foreach ($shownItems as $ci): ?>
