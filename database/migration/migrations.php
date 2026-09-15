@@ -155,5 +155,25 @@ $files = [
     // --- Office notes: auto-expire ---
     'alter-table-tbl_office_events-add-expire_date',
 
+    // --- Inventory: assets, stock, procurement ---
+    'create-table-inv_categories',
+    'create-table-inv_items',
+    'create-table-inv_assets',
+    'create-table-inv_asset_logs',
+    'create-table-inv_suppliers',
+    'create-table-inv_stock',
+    'create-table-inv_stock_movements',
+    'create-table-inv_purchase_requisitions',
+    'create-table-inv_purchase_requisition_items',
+
+    // --- Audit log ---
+    'create-table_audit_log',
+
+    // --- Notifications: title + url columns for SSE dropdown ---
+    'alter-table-notifications-add-title-url',
+
+    // --- Communication: seed default SMTP settings ---
+    'seed-table-communication_settings',
+
     // Append new migration filenames below only (do not insert in the middle).
 ];
