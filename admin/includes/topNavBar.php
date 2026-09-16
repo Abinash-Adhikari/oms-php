@@ -26,9 +26,13 @@ if ($userFullname !== '') {
         <li class="nav-item">
             <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
         </li>
-        <li class="nav-item d-none d-sm-inline-block">
-            <a href="<?= pageUrl('dashboard') ?>" class="nav-link"><?= e($orgShort) ?></a>
+        <li class="nav-item">
+            <a class="nav-link" href="#" role="button" title="Quick search (Ctrl+K)" aria-label="Quick search"
+               onclick="event.preventDefault();document.getElementById('cmsOmnibarInput').value='';document.getElementById('cmsOmnibarInput').focus();var ob=document.getElementById('cmsOmnibar');if(ob)ob.classList.add('open');">
+                <i class="fas fa-search"></i>
+            </a>
         </li>
+        <li class="nav-item d-none d-sm-inline-block"><a href="<?= pageUrl('dashboard') ?>" class="nav-link"><?= e($orgShort) ?></a></li>
     </ul>
 
     <!-- Right navbar links -->
