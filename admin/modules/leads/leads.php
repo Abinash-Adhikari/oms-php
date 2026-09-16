@@ -34,6 +34,11 @@ $businessSources = $db->select(
     'SELECT id, name, type, contact_person, email, phone FROM `tbl_clients` ORDER BY `name` ASC'
 );
 
+// Load catalog projects for lead form
+$catalogProjects = $db->select(
+    'SELECT id, name, code FROM `tbl_projects` WHERE `status` = \'Active\' ORDER BY `name` ASC'
+);
+
 // ── Helper: human time ago ──
 function leadTimeAgo($datetime) {
     if (!$datetime) return 'never';
@@ -65,10 +70,11 @@ if (isset($_GET['id'])) {
         'SELECT * FROM `tbl_clients` ORDER BY `name` ASC'
     );
     $lead = $db->selectOne(
-        'SELECT l.*, o.fullname AS owner_name, c.name AS client_name
+        'SELECT l.*, o.fullname AS owner_name, c.name AS client_name, p.name AS project_name
          FROM `tbl_leads` l
          LEFT JOIN `tbl_users_login` o ON o.id = l.assigned_to
          LEFT JOIN `tbl_clients` c ON c.id = l.client_id
+         LEFT JOIN `tbl_projects` p ON p.id = l.project_id
          WHERE l.id = ?',
         [(int) $_GET['id']]
     );
@@ -102,6 +108,18 @@ if (isset($_GET['id'])) {
     $sc = $stageColors[$lead['stage']] ?? $stageColors['New'];
 ?>
     <!-- ── Detail View ── -->
+    <nav aria-label="breadcrumb" class="mb-2">
+        <ol class="breadcrumb bg-transparent p-0 mb-0 small" style="margin-bottom:0">
+            <li class="breadcrumb-item"><a href="<?= pageUrl('leads', 'leads') ?>">Leads</a></li>
+            <?php if ($lead['client_name']): ?>
+                <li class="breadcrumb-item"><a href="<?= pageUrl('clients', 'detail') ?>&id=<?= (int) $lead['client_id'] ?>"><?= e($lead['client_name']) ?></a></li>
+            <?php endif; ?>
+            <?php if ($lead['project_name']): ?>
+                <li class="breadcrumb-item"><a href="<?= pageUrl('leads', 'projects') ?>"><?= e($lead['project_name']) ?></a></li>
+            <?php endif; ?>
+            <li class="breadcrumb-item active"><?= e($lead['company'] ?: $lead['contact_name']) ?></li>
+        </ol>
+    </nav>
     <div class="d-flex align-items-center mb-3">
         <a href="<?= pageUrl('leads', 'leads') ?>" class="btn btn-sm btn-outline-secondary mr-2"><i class="fas fa-arrow-left"></i></a>
         <div>
@@ -172,6 +190,7 @@ if (isset($_GET['id'])) {
                                 <tr><th class="text-muted">Email</th><td><?= $lead['email'] ? '<a href="mailto:' . e($lead['email']) . '">' . e($lead['email']) . '</a>' : '—' ?></td></tr>
                                 <tr><th class="text-muted">Phone</th><td><?= $lead['phone'] ? '<a href="tel:' . e($lead['phone']) . '">' . e($lead['phone']) . '</a>' : '—' ?></td></tr>
                                 <tr><th class="text-muted">Service Interest</th><td><?= e($lead['service_interest'] ?: '—') ?></td></tr>
+                                <tr><th class="text-muted">Project</th><td><?= $lead['project_name'] ? '<a href="' . pageUrl('leads', 'projects') . '">' . e($lead['project_name']) . '</a>' : '—' ?></td></tr>
                                 <tr><th class="text-muted">Source</th><td><span class="badge badge-light border"><?= e($lead['source']) ?></span></td></tr>
                             </table>
                         </div>
@@ -317,18 +336,12 @@ if (isset($_GET['id'])) {
 
                         <?php if ($lead['stage'] === 'Won' && !$lead['won_client_id']): ?>
                             <div class="border rounded p-3 mt-2 bg-light">
-                                <h6 class="mb-2"><i class="fas fa-handshake text-success mr-1"></i>Convert to Client</h6>
-                                <form action="operation.php?module=leads&page=leads" method="post">
-                                    <?= csrfField() ?>
-                                    <input type="hidden" name="action" value="convert_lead">
-                                    <input type="hidden" name="id" value="<?= (int) $lead['id'] ?>">
-                                    <div class="form-group mb-2"><input type="text" name="name" class="form-control form-control-sm" placeholder="Client name *" required value="<?= e($lead['company'] ?: $lead['contact_name']) ?>"></div>
-                                    <div class="form-group mb-2"><input type="text" name="contact_person" class="form-control form-control-sm" placeholder="Contact person" value="<?= e($lead['contact_name']) ?>"></div>
-                                    <div class="form-group mb-2"><input type="text" name="address" class="form-control form-control-sm" placeholder="Address"></div>
-                                    <div class="form-group mb-2"><input type="text" name="pan_num" class="form-control form-control-sm" placeholder="PAN (optional)"></div>
-                                    <button type="submit" class="btn btn-sm btn-success btn-block"><i class="fas fa-check mr-1"></i>Create Client</button>
-                                </form>
+                                <h6 class="mb-2"><i class="fas fa-handshake text-success mr-1"></i>Provision Win</h6>
+                                <p class="small text-muted mb-2">Create/link the client and record the won project in one step — no page hopping.</p>
+                                <button type="button" class="btn btn-sm btn-success btn-block" onclick="openProvisionDrawer()"><i class="fas fa-magic mr-1"></i>Provision Client + Project</button>
                             </div>
+                        <?php elseif ($lead['stage'] === 'Won' && $lead['won_client_id']): ?>
+                            <button type="button" class="btn btn-sm btn-success btn-block mb-2" onclick="openProvisionDrawer()"><i class="fas fa-plus mr-1"></i>Add Another Project</button>
                         <?php endif; ?>
 
                         <?php if ($lead['client_id']): ?>
@@ -345,6 +358,7 @@ if (isset($_GET['id'])) {
                                         <button type="submit" class="btn btn-sm btn-outline-danger confirm-submit" data-confirm="Unlink this lead from the client?"><i class="fas fa-unlink"></i></button>
                                     </form>
                                 </div>
+                                <a href="<?= pageUrl('leads', 'quotations') ?>&add=1&client_id=<?= (int) $lead['client_id'] ?>" class="btn btn-sm btn-outline-primary btn-block"><i class="fas fa-file-invoice mr-1"></i>Create Quotation</a>
                             </div>
                         <?php else: ?>
                             <div class="border rounded p-3 mt-2 bg-light">
@@ -414,6 +428,173 @@ if (isset($_GET['id'])) {
             <?php endif; ?>
         </div>
     </div>
+
+    <!-- ═══ Provision Wizard Drawer ═══ -->
+    <?php if ($canManage): ?>
+    <div class="cms-drawer-backdrop" id="drawerBackdrop" onclick="closeAllDrawers()"></div>
+    <div class="cms-drawer" id="provisionDrawer">
+        <div class="cms-drawer-header">
+            <h3><i class="fas fa-magic"></i><span id="pwTitle">Provision Client + Project</span></h3>
+            <button type="button" class="cms-drawer-close" onclick="closeProvisionDrawer()" aria-label="Close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="cms-drawer-body">
+            <div class="d-flex justify-content-between mb-3" id="pwSteps">
+                <div class="pw-step text-center flex-fill active" data-step="1"><span class="pw-step-num rounded-circle d-inline-flex align-items-center justify-content-center">1</span><br><small class="font-weight-bold">Client</small></div>
+                <div class="pw-step text-center flex-fill" data-step="2"><span class="pw-step-num rounded-circle d-inline-flex align-items-center justify-content-center">2</span><br><small class="font-weight-bold">Project</small></div>
+                <div class="pw-step text-center flex-fill" data-step="3"><span class="pw-step-num rounded-circle d-inline-flex align-items-center justify-content-center">3</span><br><small class="font-weight-bold">Confirm</small></div>
+            </div>
+            <style>.pw-step-num{width:28px;height:28px;font-size:.8rem;border:2px solid var(--secondary-color,#6c757d);color:var(--secondary-color,#6c757d);transition:all .2s}.pw-step.active .pw-step-num{background:var(--primary-color,#007bff);border-color:var(--primary-color,#007bff);color:#fff}.pw-step.done .pw-step-num{background:#28a745;border-color:#28a745;color:#fff}#pwStep1,#pwStep2,#pwStep3{display:none}#pwStep1.active,#pwStep2.active,#pwStep3.active{display:block}</style>
+
+            <form action="operation.php?module=leads&page=leads" method="post" id="pwForm">
+                <?= csrfField() ?>
+                <input type="hidden" name="action" value="provision_win">
+                <input type="hidden" name="id" value="<?= (int) $lead['id'] ?>">
+
+                <div id="pwStep1" class="active">
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Client mode</label>
+                        <div class="btn-group btn-group-sm btn-block mb-2">
+                            <button type="button" class="btn btn-outline-primary active" onclick="setClientMode('create')" id="pwModeCreate"><i class="fas fa-plus mr-1"></i>New Client</button>
+                            <button type="button" class="btn btn-outline-primary" onclick="setClientMode('existing')" id="pwModeExisting"><i class="fas fa-link mr-1"></i>Link Existing</button>
+                        </div>
+                        <input type="hidden" name="client_mode" id="pwClientMode" value="create">
+                    </div>
+                    <div id="pwExistingClientGroup" style="display:none">
+                        <div class="form-group">
+                            <select name="client_id" class="form-control form-control-sm">
+                                <option value="">— Select client —</option>
+                                <?php foreach ($businessSources as $bs): ?>
+                                    <option value="<?= (int) $bs['id'] ?>"><?= e($bs['name']) ?> (<?= e($bs['type'] === 'Individual' ? 'Person' : 'Company') ?>)</option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="pwNewClientGroup">
+                        <div class="form-group">
+                            <label class="small font-weight-bold">Name *</label>
+                            <input type="text" name="name" class="form-control form-control-sm" value="<?= e($lead['company'] ?: $lead['contact_name']) ?>">
+                        </div>
+                        <div class="form-group">
+                            <label class="small font-weight-bold">Contact person</label>
+                            <input type="text" name="contact_person" class="form-control form-control-sm" value="<?= e($lead['contact_name']) ?>">
+                        </div>
+                        <div class="row">
+                            <div class="col-6 form-group"><label class="small font-weight-bold">Address</label><input type="text" name="address" class="form-control form-control-sm"></div>
+                            <div class="col-6 form-group"><label class="small font-weight-bold">PAN</label><input type="text" name="pan_num" class="form-control form-control-sm"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pwStep2">
+                    <h6 class="text-muted text-uppercase mb-2" style="font-size:.7rem;letter-spacing:.05em">Project Details</h6>
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Catalog project</label>
+                        <select name="project_id" id="pwProject" class="form-control form-control-sm">
+                            <option value="">— None —</option>
+                            <?php foreach ($catalogProjects as $cp): ?>
+                                <option value="<?= (int) $cp['id'] ?>" <?= (int) $cp['id'] === (int) $lead['project_id'] ? 'selected' : '' ?>><?= e($cp['name']) ?><?= $cp['code'] ? ' (' . e($cp['code']) . ')' : '' ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Title *</label>
+                        <input type="text" name="title" id="pwTitleInput" class="form-control form-control-sm" required value="<?= e($lead['company'] ?: $lead['contact_name']) ?>">
+                    </div>
+                    <div class="row">
+                        <div class="col-6 form-group"><label class="small font-weight-bold">Package</label><input type="text" name="package" class="form-control form-control-sm"></div>
+                        <div class="col-6 form-group"><label class="small font-weight-bold">Database name</label><input type="text" name="db_name" class="form-control form-control-sm" placeholder="customer DB"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Value (NPR)</label>
+                        <input type="number" name="value" id="pwValue" class="form-control form-control-sm" step="0.01" min="0" value="<?= $lead['estimated_value'] !== null ? e($lead['estimated_value']) : '' ?>">
+                    </div>
+                    <div class="form-group">
+                        <label class="small font-weight-bold">Description</label>
+                        <textarea name="description" class="form-control form-control-sm" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div id="pwStep3">
+                    <div class="border rounded p-3 bg-light mb-3">
+                        <h6 class="font-weight-bold mb-2">Ready to provision</h6>
+                        <p class="small text-muted mb-0">Creates the client (if new) and the won project. You can then grant module access.</p>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="go_access" id="pwGoAccess" value="1" checked>
+                        <label class="form-check-label small" for="pwGoAccess">Open Client Access screen after saving</label>
+                    </div>
+                </div>
+
+                <input type="hidden" name="from_client_id" value="0">
+            </form>
+        </div>
+        <div class="cms-drawer-footer d-flex" style="gap:.5rem">
+            <button type="button" class="btn btn-outline-secondary" onclick="pwPrev()" id="pwPrevBtn" style="flex:0 0 100px">Back</button>
+            <button type="button" class="btn btn-primary flex-grow-1" onclick="pwNext()" id="pwNextBtn">Next</button>
+        </div>
+    </div>
+    <script>
+    var pwCurrentStep = 1;
+    function closeAllDrawers() {
+        document.querySelectorAll('.cms-drawer').forEach(function(d) { d.classList.remove('open'); });
+        var bd = document.getElementById('drawerBackdrop');
+        if (bd) bd.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    function openProvisionDrawer() {
+        closeAllDrawers();
+        document.getElementById('drawerBackdrop').classList.add('active');
+        document.getElementById('provisionDrawer').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        pwCurrentStep = 1;
+        renderPwStep();
+    }
+    function closeProvisionDrawer() {
+        document.getElementById('provisionDrawer').classList.remove('open');
+        var bd = document.getElementById('drawerBackdrop');
+        if (bd) bd.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    function setClientMode(mode) {
+        document.getElementById('pwClientMode').value = mode;
+        document.getElementById('pwModeCreate').classList.toggle('active', mode === 'create');
+        document.getElementById('pwModeExisting').classList.toggle('active', mode === 'existing');
+        document.getElementById('pwExistingClientGroup').style.display = mode === 'existing' ? '' : 'none';
+        document.getElementById('pwNewClientGroup').style.display = mode === 'create' ? '' : 'none';
+    }
+    function renderPwStep() {
+        [1,2,3].forEach(function(s) {
+            var el = document.getElementById('pwStep' + s);
+            el.classList.toggle('active', s === pwCurrentStep);
+        });
+        document.querySelectorAll('#pwSteps .pw-step').forEach(function(s) {
+            var n = parseInt(s.dataset.step);
+            s.classList.toggle('active', n === pwCurrentStep);
+            s.classList.toggle('done', n < pwCurrentStep);
+        });
+        document.getElementById('pwPrevBtn').style.visibility = pwCurrentStep > 1 ? 'visible' : 'hidden';
+        var next = document.getElementById('pwNextBtn');
+        if (pwCurrentStep === 3) {
+            next.innerHTML = '<i class="fas fa-check mr-1"></i>Provision Now';
+            next.className = 'btn btn-success flex-grow-1';
+        } else {
+            next.innerHTML = 'Next <i class="fas fa-arrow-right ml-1"></i>';
+            next.className = 'btn btn-primary flex-grow-1';
+        }
+    }
+    function pwNext() {
+        if (pwCurrentStep < 3) { pwCurrentStep++; renderPwStep(); } else {
+            document.getElementById('pwForm').submit();
+        }
+    }
+    function pwPrev() {
+        if (pwCurrentStep > 1) { pwCurrentStep--; renderPwStep(); }
+    }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') { if (document.getElementById('provisionDrawer').classList.contains('open')) closeProvisionDrawer(); }
+    });
+    </script>
+    <?php endif; ?>
 <?php
     return;
 }
@@ -449,6 +630,16 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
                             </select>
                         </div>
                         <div class="form-group"><label>Service interest</label><input type="text" name="service_interest" class="form-control" value="<?= $edit ? e($edit['service_interest']) : '' ?>"></div>
+                        <div class="form-group"><label>Catalog project</label>
+                            <select name="project_id" class="form-control">
+                                <option value="">— None —</option>
+                                <?php foreach ($catalogProjects as $cp): ?>
+                                    <option value="<?= (int) $cp['id'] ?>" <?= $edit && (int) $edit['project_id'] === (int) $cp['id'] ? 'selected' : '' ?>>
+                                        <?= e($cp['name']) ?><?= $cp['code'] ? ' (' . e($cp['code']) . ')' : '' ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                         <div class="form-group"><label>Message</label><textarea name="message" class="form-control" rows="3"><?= $edit ? e($edit['message']) : '' ?></textarea></div>
                     </div>
                     <div class="col-md-6">
@@ -834,6 +1025,15 @@ $pageUrl = pageUrl('leads', 'leads');
                 <input type="text" name="service_interest" id="leadService" class="form-control form-control-sm" placeholder="e.g. Web Development, Mobile App">
             </div>
             <div class="form-group">
+                <label class="small font-weight-bold">Catalog Project</label>
+                <select name="project_id" id="leadProject" class="form-control form-control-sm">
+                    <option value="">— None —</option>
+                    <?php foreach ($catalogProjects as $cp): ?>
+                        <option value="<?= (int) $cp['id'] ?>"><?= e($cp['name']) ?><?= $cp['code'] ? ' (' . e($cp['code']) . ')' : '' ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="form-group">
                 <label class="small font-weight-bold">Message / Notes</label>
                 <textarea name="message" id="leadMessage" class="form-control form-control-sm" rows="2" placeholder="Requirements or notes..."></textarea>
             </div>
@@ -947,6 +1147,7 @@ function openLeadDrawer(editId) {
             document.getElementById('leadEmail').value = lead.email || '';
             document.getElementById('leadPhone').value = lead.phone || '';
             document.getElementById('leadService').value = lead.service_interest || '';
+            document.getElementById('leadProject').value = lead.project_id || '';
             document.getElementById('leadMessage').value = lead.message || '';
             document.getElementById('leadSource').value = lead.source || 'Website';
             document.getElementById('leadPriority').value = lead.priority || 'Warm';
