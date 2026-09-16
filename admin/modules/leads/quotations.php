@@ -171,6 +171,12 @@ if (isset($_GET['id'])) {
 
     // Screen detail view
     ?>
+    <nav aria-label="breadcrumb" class="mb-2">
+        <ol class="breadcrumb bg-transparent p-0 mb-0 small">
+            <li class="breadcrumb-item"><a href="<?= pageUrl('leads', 'quotations') ?>">Quotations</a></li>
+            <li class="breadcrumb-item active"><?= e($quotation['quotation_number']) ?></li>
+        </ol>
+    </nav>
     <div class="row">
         <div class="col-md-8">
             <div class="card card-primary card-outline">
@@ -368,6 +374,7 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
             );
         }
     }
+    $defaultClientId = (int) ($_GET['client_id'] ?? 0);
     $defaultTerms = documentSettings()['default_terms'] ?? '';
     ?>
     <div class="card card-primary card-outline">
@@ -392,7 +399,8 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
                                         data-phone="<?= e($c['phone'] ?? '') ?>"
                                         data-address="<?= e($c['address'] ?? '') ?>"
                                         data-contact="<?= e($c['contact_person'] ?? '') ?>"
-                                        <?= $edit && (int) $edit['client_id'] === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option>
+                                        <?= $edit && (int) $edit['client_id'] === (int) $c['id'] ? 'selected' : '' ?>
+                                        <?= !$edit && $defaultClientId && (int) $c['id'] === $defaultClientId ? 'selected' : '' ?>><?= e($c['name']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -565,6 +573,7 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
                     document.getElementById('clientAddressField').value = opt.dataset.address || '';
                 }
             });
+            if (clientSelect.value) { clientSelect.dispatchEvent(new Event('change')); }
         }
 
         // Add row
@@ -681,7 +690,7 @@ $statusBadges = ['Draft' => 'secondary', 'Sent' => 'info', 'Accepted' => 'succes
             </div>
             <div class="card-body">
                 <form method="get" class="form-inline mb-3">
-                    <input type="hidden" name="module" value="office_setup">
+                    <input type="hidden" name="module" value="leads">
                     <input type="hidden" name="page" value="quotations">
                     <select name="status" class="form-control form-control-sm mr-1" onchange="this.form.submit()">
                         <option value="">All statuses</option>

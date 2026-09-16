@@ -37,6 +37,28 @@ $sourceLeads = $db->select(
      WHERE l.client_id = ? OR l.won_client_id = ? ORDER BY l.added_on DESC',
     [(int) $edit['id'], (int) $edit['id']]
 );
+$quotations = $db->select(
+    'SELECT q.*, u.fullname AS created_by_name
+     FROM `tbl_quotations` q
+     LEFT JOIN `tbl_users_login` u ON u.id = q.added_by
+     WHERE q.client_id = ? ORDER BY q.added_on DESC',
+    [(int) $edit['id']]
+);
+$leadIdsForActivity = [];
+foreach ($sourceLeads as $_l) { $leadIdsForActivity[] = (int) $_l['id']; }
+$clientActivities = [];
+if ($leadIdsForActivity) {
+    $in = rtrim(str_repeat('?,', count($leadIdsForActivity)), ',');
+    $clientActivities = $db->select(
+        'SELECT a.*, u.fullname AS actor, l.company AS lead_title
+         FROM `tbl_lead_activities` a
+         LEFT JOIN `tbl_users_login` u ON u.id = a.added_by
+         LEFT JOIN `tbl_leads` l ON l.id = a.lead_id
+         WHERE a.lead_id IN (' . $in . ')
+         ORDER BY a.added_on DESC LIMIT 25',
+        $leadIdsForActivity
+    );
+}
 
 // Snapshot for client-side drawer prefill.
 $sourcesJson = [[
@@ -105,6 +127,12 @@ if ($edit['lead_id']) {
 }
 ?>
 <!-- Page header -->
+<nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb bg-transparent p-0 mb-0 small">
+        <li class="breadcrumb-item"><a href="<?= pageUrl('clients', 'clients') ?>">Clients</a></li>
+        <li class="breadcrumb-item active"><?= e($edit['name']) ?></li>
+    </ol>
+</nav>
 <div class="d-flex align-items-center mb-3">
     <a href="<?= pageUrl('clients', 'clients') ?>" class="btn btn-sm btn-outline-secondary mr-3" aria-label="Back to clients"><i class="fas fa-arrow-left"></i></a>
     <div class="d-flex align-items-center justify-content-center font-weight-bold mr-3" style="width:52px;height:52px;border-radius:50%;background:var(--cms-accent-soft, rgba(59,130,246,.12));color:var(--cms-accent, #2563eb);font-size:1.25rem;font-family:'Poppins',sans-serif"><?= e($initials) ?></div>
@@ -323,10 +351,69 @@ if ($edit['lead_id']) {
                                 </td>
                             </tr>
                         <?php endforeach; ?>
-                        <?php if (!$sourceLeads): ?><tr><td colspan="8" class="text-center text-muted">No leads linked to this client yet.</td></tr><?php endif; ?>
+                        <!-- Quotations -->
+        <div class="card card-outline" id="client-quotations">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-file-invoice mr-1"></i>Quotations — <?= e($edit['name']) ?></h3>
+                <div class="card-tools">
+                    <a href="<?= pageUrl('leads', 'quotations') ?>&add=1&client_id=<?= (int) $edit['id'] ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-plus mr-1"></i>New Quotation</a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped mb-0">
+                        <thead><tr><th>#</th><th>Quotation #</th><th>Subject</th><th>Date</th><th class="text-right">Total</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
+                        <tbody>
+                        <?php $statusBadge = ['Draft' => 'secondary', 'Sent' => 'info', 'Accepted' => 'success', 'Rejected' => 'danger', 'Expired' => 'warning']; ?>
+                        <?php foreach ($quotations as $i => $q): ?>
+                            <tr>
+                                <td><?= $i + 1 ?></td>
+                                <td><?= e($q['quotation_number']) ?></td>
+                                <td><?= e(mb_strimwidth($q['subject'] ?: '', 0, 40, '…')) ?></td>
+                                <td><?= e($q['quotation_date']) ?></td>
+                                <td class="text-right font-weight-bold">NPR <?= e(formatMoney($q['total'])) ?></td>
+                                <td><span class="badge badge-<?= $statusBadge[$q['status']] ?? 'secondary' ?>"><?= e($q['status']) ?></span></td>
+                                <td class="text-right">
+                                    <a href="<?= pageUrl('leads', 'quotations') ?>&id=<?= (int) $q['id'] ?>" class="btn btn-xs btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
+                                    <a href="<?= pageUrl('leads', 'quotations') ?>&id=<?= (int) $q['id'] ?>&pdf=1" class="btn btn-xs btn-outline-danger" title="PDF"><i class="fas fa-download"></i></a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        <?php if (!$quotations): ?><tr><td colspan="7" class="text-center text-muted">No quotations for this client yet.</td></tr><?php endif; ?>
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <!-- Client Activity Timeline (aggregated across linked leads) -->
+        <div class="card card-outline" id="client-activity">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-stream mr-1"></i>Activity Timeline — <?= e($edit['name']) ?></h3>
+                <span class="badge badge-light"><?= count($clientActivities) ?></span>
+            </div>
+            <div class="card-body p-0">
+                <?php if ($clientActivities): ?>
+                    <div class="p-3">
+                        <?php foreach ($clientActivities as $a): ?>
+                            <div class="d-flex mb-3">
+                                <div class="mr-3">
+                                    <?php $tc = ['Call' => 'primary', 'Email' => 'info', 'Meeting' => 'warning', 'Note' => 'secondary', 'Status Change' => 'success', 'Task' => 'danger']; ?>
+                                    <span class="badge badge-<?= $tc[$a['type']] ?? 'light' ?>" style="min-width:56px;justify-content:center"><?= e($a['type']) ?></span>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="font-weight-bold small"><?= e($a['actor'] ?? '—') ?><?= $a['lead_title'] ? ' · ' . e($a['lead_title']) : '' ?></span>
+                                        <small class="text-muted"><?= e(date('M j, g:i A', strtotime($a['added_on']))) ?></small>
+                                    </div>
+                                    <?php if ($a['note']): ?><div class="text-muted small mt-1"><?= nl2br(e($a['note'])) ?></div><?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>No activity yet across this client's leads.</div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -349,6 +436,7 @@ if ($edit['lead_id']) {
                     </form>
                 <?php endif; ?>
                 <a href="<?= pageUrl('leads', 'client_projects') ?>&source=<?= (int) $edit['id'] ?>" class="btn btn-outline-secondary btn-sm btn-block mb-2"><i class="fas fa-folder-open mr-1"></i>Open Client Projects</a>
+                <a href="<?= pageUrl('leads', 'quotations') ?>&add=1&client_id=<?= (int) $edit['id'] ?>" class="btn btn-outline-secondary btn-sm btn-block mb-2"><i class="fas fa-file-invoice mr-1"></i>New Quotation</a>
                 <a href="<?= pageUrl('leads', 'leads') ?>" class="btn btn-outline-secondary btn-sm btn-block"><i class="fas fa-search mr-1"></i>Browse All Leads</a>
             </div>
         </div>
