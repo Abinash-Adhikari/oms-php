@@ -31,6 +31,33 @@ function logLeadActivity(Database $db, int $leadId, string $type, string $note, 
     $db->update('tbl_leads', ['last_activity_on' => date('Y-m-d H:i:s'), 'updated_by' => $actor], '`id` = ?', [$leadId]);
 }
 
+/**
+ * Create a won-client-project row for a lead that was just marked Won, unless
+ * one already exists for that lead. Returns the new project id (or existing).
+ */
+function autoProvisionClientProject(Database $db, array $lead, int $clientId, int $actor): ?int
+{
+    $existing = $db->selectOne('SELECT `id` FROM `tbl_client_projects` WHERE `lead_id` = ? LIMIT 1', [(int) $lead['id']]);
+    if ($existing) {
+        return (int) $existing['id'];
+    }
+    $title = trim((string) ($lead['company'] ?: $lead['contact_name']));
+    if ($title === '') {
+        return null;
+    }
+    $projectId = (int) $db->insert('tbl_client_projects', [
+        'client_id'  => $clientId,
+        'lead_id'    => (int) $lead['id'],
+        'project_id' => (int) $lead['project_id'] ?: null,
+        'title'      => $title,
+        'value'      => $lead['estimated_value'],
+        'status'     => 'Active',
+        'added_by'   => $actor,
+    ]);
+    logLeadActivity($db, (int) $lead['id'], 'Status Change', 'Client project "' . e($title) . '" auto-provisioned', $actor);
+    return $projectId;
+}
+
 try {
     if ($action === 'save_lead') {
         $id = (int) ($_POST['id'] ?? 0);
@@ -64,6 +91,7 @@ try {
             'estimated_value'   => ($_POST['estimated_value'] ?? '') !== '' ? round((float) $_POST['estimated_value'], 4) : null,
             'stage'             => $stage,
             'client_id' => (int) ($_POST['client_id'] ?? 0) ?: null,
+            'project_id'        => (int) ($_POST['project_id'] ?? 0) ?: null,
             'assigned_to'       => (int) ($_POST['assigned_to'] ?? 0) ?: null,
             'lost_reason'       => $stage === 'Lost' ? (trim((string) ($_POST['lost_reason'] ?? '')) ?: null) : null,
             'updated_by'        => $me,
@@ -88,8 +116,15 @@ try {
             $db->update('tbl_leads', $data, '`id` = ?', [$id]);
             setFlash('success', 'Lead updated.');
         } else {
-            $newId = $db->insert('tbl_leads', array_merge($data, ['added_by' => $me]));
+            $newId = (int) $db->insert('tbl_leads', array_merge($data, ['added_by' => $me]));
             logLeadActivity($db, $newId, 'Note', 'Lead created (source: ' . $source . ')', $me);
+            if ($stage === 'Won' && $data['client_id']) {
+                $db->transaction(function () use ($db, $newId, $data, $me) {
+                    $db->update('tbl_leads', ['won_client_id' => $data['client_id'], 'updated_by' => $me], '`id` = ?', [$newId]);
+                    $row = array_merge($data, ['id' => $newId, 'company' => $data['company'], 'contact_name' => $data['contact_name'], 'estimated_value' => $data['estimated_value'], 'project_id' => $data['project_id']]);
+                    autoProvisionClientProject($db, $row, (int) $data['client_id'], $me);
+                });
+            }
             setFlash('success', 'Lead created.');
         }
         redirect($back);
@@ -127,6 +162,18 @@ try {
             'stage' => $stage, 'priority' => $priority, 'assigned_to' => $assigned,
             'lost_reason' => $lostReason, 'updated_by' => $me,
         ], '`id` = ?', [$id]);
+        if ($stage === 'Won' && $lead['stage'] !== 'Won') {
+            $wonClientId = (int) ($lead['won_client_id'] ?: $lead['client_id']);
+            if ($wonClientId) {
+                $db->transaction(function () use ($db, $lead, $wonClientId, $me) {
+                    autoProvisionClientProject($db, $lead, $wonClientId, $me);
+                });
+                // Set won_client_id if not already set
+                if (!$lead['won_client_id']) {
+                    $db->update('tbl_leads', ['won_client_id' => $wonClientId, 'updated_by' => $me], '`id` = ?', [$lead['id']]);
+                }
+            }
+        }
         if ($log) {
             logLeadActivity($db, $id, 'Status Change', implode('; ', $log), $me);
         } else {
@@ -265,12 +312,15 @@ try {
         if ($existingClient) {
             // Link to existing client instead of creating duplicate
             $clientId = $existingClient['id'];
-            $db->update('tbl_leads', [
-                'won_client_id' => $clientId,
-                'client_id' => $clientId,
-                'updated_by' => $me,
-            ], '`id` = ?', [$id]);
-            logLeadActivity($db, $id, 'Status Change', 'Lead linked to existing client: ' . $existingClient['name'] . ' (ID: ' . $clientId . ')', $me);
+            $db->transaction(function () use ($db, $me, $lead, $id, $clientId, $existingClient) {
+                $db->update('tbl_leads', [
+                    'won_client_id' => $clientId,
+                    'client_id' => $clientId,
+                    'updated_by' => $me,
+                ], '`id` = ?', [$id]);
+                autoProvisionClientProject($db, $lead, $clientId, $me);
+                logLeadActivity($db, $id, 'Status Change', 'Lead linked to existing client: ' . $existingClient['name'] . ' (ID: ' . $clientId . ')', $me);
+            });
             setFlash('success', 'Lead linked to existing client: ' . $existingClient['name']);
         } else {
             // Create new client
@@ -284,13 +334,106 @@ try {
                 'lead_id'        => $id,
                 'added_by'       => $me,
             ]);
+            $db->transaction(function () use ($db, $me, $lead, $id, $clientId, $name) {
+                $db->update('tbl_leads', [
+                    'won_client_id' => $clientId,
+                    'client_id' => $clientId,
+                    'updated_by' => $me,
+                ], '`id` = ?', [$id]);
+                autoProvisionClientProject($db, $lead, $clientId, $me);
+                logLeadActivity($db, $id, 'Status Change', 'Lead converted to new client: ' . $name, $me);
+            });
+            setFlash('success', 'Client created from lead.');
+        }
+        redirect($back . '&id=' . $id);
+    }
+
+    if ($action === 'provision_win') {
+        $id = (int) ($_POST['id'] ?? 0);
+        $lead = $db->selectOne('SELECT * FROM `tbl_leads` WHERE `id` = ?', [$id]);
+        if (!$lead) {
+            setFlash('error', 'Lead not found.');
+            redirect($back);
+        }
+        if ($lead['stage'] !== 'Won') {
+            setFlash('error', 'Only Won leads can be provisioned as client projects.');
+            redirect($back . '&id=' . $id);
+        }
+        $title = trim((string) ($_POST['title'] ?? ''));
+        if ($title === '') {
+            setFlash('error', 'Project title is required.');
+            redirect($back . '&id=' . $id);
+        }
+        $leadProject = (int) ($_POST['project_id'] ?? 0) ?: (int) $lead['project_id'];
+
+        $result = $db->transaction(function () use ($db, $me, $lead, $id, $title, $leadProject) {
+            $mode = (string) ($_POST['client_mode'] ?? 'create');
+            $clientId = (int) ($_POST['client_id'] ?? 0);
+
+            if ($mode === 'existing' && $clientId) {
+                $client = $db->selectOne('SELECT * FROM `tbl_clients` WHERE `id` = ?', [$clientId]);
+                if (!$client) {
+                    throw new RuntimeException('Selected client not found.');
+                }
+            } else {
+                $name = trim((string) ($_POST['name'] ?? '')) ?: ($lead['company'] ?: $lead['contact_name']);
+                if ($name === '') {
+                    throw new RuntimeException('Client name is required.');
+                }
+                $email = trim((string) ($_POST['email'] ?? '')) ?: $lead['email'];
+                $existing = null;
+                if ($email) {
+                    $existing = $db->selectOne('SELECT * FROM `tbl_clients` WHERE `email` = ? LIMIT 1', [$email]);
+                }
+                if (!$existing && $lead['company']) {
+                    $existing = $db->selectOne(
+                        'SELECT * FROM `tbl_clients` WHERE `name` = ? OR `contact_person` = ? LIMIT 1',
+                        [$lead['company'], $lead['company']]
+                    );
+                }
+                if ($existing) {
+                    $clientId = (int) $existing['id'];
+                } else {
+                    $clientId = (int) $db->insert('tbl_clients', [
+                        'name'           => $name,
+                        'contact_person' => trim((string) ($_POST['contact_person'] ?? '')) ?: $lead['contact_name'],
+                        'email'          => $email,
+                        'phone'          => $lead['phone'],
+                        'address'        => trim((string) ($_POST['address'] ?? '')) ?: null,
+                        'pan_num'        => trim((string) ($_POST['pan_num'] ?? '')) ?: null,
+                        'lead_id'        => $id,
+                        'added_by'       => $me,
+                    ]);
+                }
+            }
+
             $db->update('tbl_leads', [
                 'won_client_id' => $clientId,
-                'client_id' => $clientId,
-                'updated_by' => $me,
+                'client_id'     => $clientId,
+                'project_id'    => $leadProject ?: null,
+                'updated_by'    => $me,
             ], '`id` = ?', [$id]);
-            logLeadActivity($db, $id, 'Status Change', 'Lead converted to new client: ' . $name, $me);
-            setFlash('success', 'Client created from lead.');
+
+            $projectId = (int) $db->insert('tbl_client_projects', [
+                'client_id'   => $clientId,
+                'lead_id'     => $id,
+                'project_id'  => $leadProject ?: null,
+                'title'       => $title,
+                'package'     => trim((string) ($_POST['package'] ?? '')) ?: null,
+                'db_name'     => trim((string) ($_POST['db_name'] ?? '')) ?: null,
+                'value'       => ($_POST['value'] ?? '') !== '' ? round((float) $_POST['value'], 4) : null,
+                'status'      => 'Active',
+                'description' => trim((string) ($_POST['description'] ?? '')) ?: null,
+                'added_by'    => $me,
+            ]);
+
+            logLeadActivity($db, $id, 'Status Change', 'Provisioned client project "' . e($title) . '" (#' . $projectId . ')', $me);
+            return ['project_id' => $projectId, 'client_id' => $clientId];
+        });
+
+        setFlash('success', 'Client project "' . e($title) . '" provisioned.');
+        if (!empty($_POST['go_access'])) {
+            redirect(pageUrl('leads', 'client_permissions') . '&id=' . $result['project_id']);
         }
         redirect($back . '&id=' . $id);
     }
