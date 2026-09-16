@@ -9,11 +9,14 @@ $db = Database::instance();
 $me = (int) Auth::id();
 $canSeeAll = Auth::isSuperAdmin() || Auth::hasSpecial('view_all_attendance');
 $today = date('Y-m-d');
-$month = (string) ($_GET['month'] ?? date('Y-m'));
-if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
-    $month = date('Y-m');
-}
+$monthInfo = resolve_calendar_month((string) ($_GET['month'] ?? ''));
+$month = $monthInfo['ym'];            // canonical YYYY-MM in the active calendar
+$monthLabel = $monthInfo['label'];    // display label ("2026-09" / "2083 Baisakh")
+$monthStart = $monthInfo['ad_start']; // AD window start
+$monthEnd = $monthInfo['ad_end'];     // AD window end
+$isBs = $monthInfo['mode'] === 'BS';
 $filterUser = $canSeeAll ? (int) ($_GET['user_id'] ?? 0) : 0;
+$tabUrl = pageUrl('staff_management', 'hr_care') . '&tab=attendance';
 
 $myRow = $db->selectOne(
     'SELECT * FROM `tbl_staff_attendances` WHERE `user_id` = ? AND `date` = ?',
@@ -36,25 +39,25 @@ if ($filterUser) {
     $records = $db->select(
         'SELECT a.*, u.fullname FROM `tbl_staff_attendances` a
          JOIN `tbl_users_login` u ON u.id = a.user_id
-         WHERE a.date LIKE ? AND a.user_id = ?
+         WHERE a.date BETWEEN ? AND ? AND a.user_id = ?
          ORDER BY a.date DESC, u.fullname',
-        [$month . '%', $filterUser]
+        [$monthStart, $monthEnd, $filterUser]
     );
 } elseif ($canSeeAll) {
     $records = $db->select(
         'SELECT a.*, u.fullname FROM `tbl_staff_attendances` a
          JOIN `tbl_users_login` u ON u.id = a.user_id
-         WHERE a.date LIKE ?
+         WHERE a.date BETWEEN ? AND ?
          ORDER BY a.date DESC, u.fullname',
-        [$month . '%']
+        [$monthStart, $monthEnd]
     );
 } else {
     $records = $db->select(
         'SELECT a.*, u.fullname FROM `tbl_staff_attendances` a
          JOIN `tbl_users_login` u ON u.id = a.user_id
-         WHERE a.date LIKE ? AND a.user_id = ?
+         WHERE a.date BETWEEN ? AND ? AND a.user_id = ?
          ORDER BY a.date DESC',
-        [$month . '%', $me]
+        [$monthStart, $monthEnd, $me]
     );
 }
 
@@ -72,11 +75,11 @@ if ($canSeeAll) {
                 COALESCE(SUM(a.working_hours), 0) AS working_hours
          FROM `tbl_users_login` u
          LEFT JOIN `tbl_staff_attendances` a
-           ON a.user_id = u.id AND a.date LIKE ?
+           ON a.user_id = u.id AND a.date BETWEEN ? AND ?
          WHERE u.status != 'Terminated'
          GROUP BY u.id, u.fullname
          ORDER BY u.fullname",
-        [$month . '%']
+        [$monthStart, $monthEnd]
     );
 } else {
     $summary = $db->select(
@@ -90,13 +93,13 @@ if ($canSeeAll) {
                 COALESCE(SUM(a.working_hours), 0) AS working_hours
          FROM `tbl_users_login` u
          LEFT JOIN `tbl_staff_attendances` a
-           ON a.user_id = u.id AND a.date LIKE ?
+           ON a.user_id = u.id AND a.date BETWEEN ? AND ?
          WHERE u.id = ?
          GROUP BY u.id, u.fullname",
-        [$month . '%', $me]
+        [$monthStart, $monthEnd, $me]
     );
 }
-$daysInMonth = (int) date('t', strtotime($month . '-01'));
+$daysInMonth = $monthInfo['days'];
 foreach ($summary as &$s) {
     $s['present_days'] = (int) $s['present_days'];
     $s['leave_days'] = (int) $s['leave_days'];
@@ -109,6 +112,22 @@ unset($s);
 $activeStaff = $db->select(
     "SELECT `id`, `fullname` FROM `tbl_users_login` WHERE `status` = 'Active' ORDER BY `fullname`"
 );
+
+// BS month navigation. Adjacent months wrap year boundaries; the dropdown
+// shows a 4×3 grid of the 12 months for the currently selected year.
+$bsPrev = $bsNext = null;
+$gridYear = 0;
+if ($isBs) {
+    $monthParts = explode('-', $month);
+    $year  = (int) $monthParts[0];
+    $mon   = (int) $monthParts[1];
+    $gridYear = $year;
+    $bsPrev = [$mon === 1 ? $year - 1 : $year, $mon === 1 ? 12 : $mon - 1];
+    $bsNext = [$mon === 12 ? $year + 1 : $year, $mon === 12 ? 1 : $mon + 1];
+}
+$monthYmFor = static function (int $y, int $m): string {
+    return sprintf('%04d-%02d', $y, $m);
+};
 
 // Adjustment form data
 $adjUser = (int) ($_GET['adjust_user'] ?? 0);
@@ -262,7 +281,7 @@ $adjustDrawerOpen = ($adjUser > 0);
 <!-- Monthly Report (full width) -->
 <div class="card card-outline mb-3">
     <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-chart-bar mr-1"></i>Monthly Report — <?= e($month) ?></h3>
+        <h3 class="card-title"><i class="fas fa-chart-bar mr-1"></i>Monthly Report — <?= e($monthLabel) ?></h3>
         <div class="card-tools">
             <form action="operation.php?module=staff_management&page=hr_care" method="post" class="d-inline">
                 <?= csrfField() ?>
@@ -270,12 +289,39 @@ $adjustDrawerOpen = ($adjUser > 0);
                 <input type="hidden" name="month" value="<?= e($month) ?>">
                 <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="fas fa-file-csv mr-1"></i>CSV</button>
             </form>
-            <form action="<?= pageUrl('staff_management', 'hr_care') ?>&tab=attendance" method="get" class="d-inline ml-1">
-                <input type="hidden" name="module" value="my_office">
-                <input type="hidden" name="page" value="hr_care">
-                <input type="hidden" name="tab" value="attendance">
-                <input type="month" name="month" value="<?= e($month) ?>" class="form-control form-control-sm d-inline" style="width:150px" onchange="this.form.submit()">
-            </form>
+            <?php if ($isBs): ?>
+                <div class="btn-group ml-1" role="group">
+                    <a href="<?= e($tabUrl) ?>&month=<?= e($monthYmFor($bsPrev[0], $bsPrev[1])) ?>" class="btn btn-sm btn-outline-secondary" title="Previous month"><i class="fas fa-chevron-left"></i></a>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                            <?= e($monthLabel) ?>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right p-2" style="min-width:280px">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <a class="btn btn-xs btn-outline-secondary" href="<?= e($tabUrl) ?>&month=<?= e($monthYmFor($gridYear - 1, $mon)) ?>" title="Previous year"><i class="fas fa-chevron-left"></i></a>
+                                <strong><?= e($gridYear) ?></strong>
+                                <a class="btn btn-xs btn-outline-secondary" href="<?= e($tabUrl) ?>&month=<?= e($monthYmFor($gridYear + 1, $mon)) ?>" title="Next year"><i class="fas fa-chevron-right"></i></a>
+                            </div>
+                            <div class="row no-gutters">
+                                <?php for ($m = 1; $m <= 12; $m++): ?>
+                                    <div class="col-4 mb-1 pr-1">
+                                        <a class="btn btn-block btn-xs <?= $m === $mon ? 'btn-primary' : 'btn-outline-secondary' ?>" href="<?= e($tabUrl) ?>&month=<?= e($monthYmFor($gridYear, $m)) ?>"><?= e(bsMonthName($m)) ?></a>
+                                    </div>
+                                <?php endfor; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="<?= e($tabUrl) ?>&month=<?= e($monthYmFor($bsNext[0], $bsNext[1])) ?>" class="btn btn-sm btn-outline-secondary" title="Next month"><i class="fas fa-chevron-right"></i></a>
+                    <a href="<?= e($tabUrl) ?>" class="btn btn-sm btn-outline-secondary" title="Jump to current month">Today</a>
+                </div>
+            <?php else: ?>
+                <form action="show_page.php" method="get" class="d-inline ml-1">
+                    <input type="hidden" name="module" value="staff_management">
+                    <input type="hidden" name="page" value="hr_care">
+                    <input type="hidden" name="tab" value="attendance">
+                    <input type="month" name="month" value="<?= e($month) ?>" class="form-control form-control-sm d-inline" style="width:150px" onchange="this.form.submit()">
+                </form>
+            <?php endif; ?>
         </div>
     </div>
     <div class="card-body p-0">
@@ -318,11 +364,11 @@ $adjustDrawerOpen = ($adjUser > 0);
 <!-- Attendance Records (full width) -->
 <div class="card card-outline">
     <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-calendar-check mr-1"></i>Attendance Records — <?= e($month) ?></h3>
+        <h3 class="card-title"><i class="fas fa-calendar-check mr-1"></i>Attendance Records — <?= e($monthLabel) ?></h3>
         <?php if ($canSeeAll && $activeStaff): ?>
             <div class="card-tools">
                 <form method="get" class="form-inline">
-                    <input type="hidden" name="module" value="my_office">
+                    <input type="hidden" name="module" value="staff_management">
                     <input type="hidden" name="page" value="hr_care">
                     <input type="hidden" name="tab" value="attendance">
                     <input type="hidden" name="month" value="<?= e($month) ?>">

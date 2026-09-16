@@ -174,7 +174,8 @@ try {
             $db->insert('tbl_staff_attendances', $data);
         }
         setFlash('success', 'Attendance adjusted for ' . e($user['fullname']) . ' on ' . e($date) . '.');
-        redirect($back . '&month=' . urlencode(substr($date, 0, 7)));
+        $monthInfo = resolve_calendar_month('', $date);
+        redirect($back . '&month=' . urlencode($monthInfo['ym']));
     }
 
     if ($action === 'delete') {
@@ -186,18 +187,21 @@ try {
         $row = $db->selectOne('SELECT * FROM `tbl_staff_attendances` WHERE `id` = ?', [$id]);
         if (!$row) {
             setFlash('error', 'Attendance record not found.');
+            $monthInfo = resolve_calendar_month('');
         } else {
             $db->delete('tbl_staff_attendances', '`id` = ?', [$id]);
             setFlash('success', 'Attendance record deleted.');
+            $monthInfo = resolve_calendar_month('', (string) $row['date']);
         }
-        redirect($back . '&month=' . urlencode(substr((string) $row['date'], 0, 7)));
+        redirect($back . '&month=' . urlencode($monthInfo['ym']));
     }
 
     if ($action === 'export_monthly') {
-        $month = (string) ($_POST['month'] ?? date('Y-m'));
-        if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
-            $month = date('Y-m');
-        }
+        $monthInfo = resolve_calendar_month((string) ($_POST['month'] ?? ''));
+        $month = $monthInfo['ym'];
+        $monthStart = $monthInfo['ad_start'];
+        $monthEnd = $monthInfo['ad_end'];
+        $daysInMonth = $monthInfo['days'];
         $rows = $db->select(
             "SELECT u.fullname,
                     COALESCE(SUM(a.status = 'present'), 0) AS present_days,
@@ -209,10 +213,10 @@ try {
                     COALESCE(SUM(a.working_hours), 0) AS working_hours
              FROM `tbl_users_login` u
              LEFT JOIN `tbl_staff_attendances` a
-               ON a.user_id = u.id AND a.date LIKE ?
+               ON a.user_id = u.id AND a.date BETWEEN ? AND ?
              WHERE u.status != 'Terminated' AND u.id = ?
              GROUP BY u.id, u.fullname",
-            [$month . '%', $me]
+            [$monthStart, $monthEnd, $me]
         );
         if ($canSeeAll) {
             $rows = $db->select(
@@ -226,14 +230,13 @@ try {
                         COALESCE(SUM(a.working_hours), 0) AS working_hours
                  FROM `tbl_users_login` u
                  LEFT JOIN `tbl_staff_attendances` a
-                   ON a.user_id = u.id AND a.date LIKE ?
+                   ON a.user_id = u.id AND a.date BETWEEN ? AND ?
                  WHERE u.status != 'Terminated'
                  GROUP BY u.id, u.fullname
                  ORDER BY u.fullname",
-                [$month . '%']
+                [$monthStart, $monthEnd]
             );
         }
-        $daysInMonth = (int) date('t', strtotime($month . '-01'));
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="attendance_' . $month . '.csv"');
         $out = fopen('php://output', 'w');

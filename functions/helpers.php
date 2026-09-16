@@ -406,6 +406,81 @@ function bsMonthName(int $month): string
     return $names[$month] ?? '';
 }
 
+/**
+ * Resolve a "YYYY-MM" month selection into the office's active calendar.
+ *
+ * In AD mode the value passes through and covers the natural calendar month.
+ * In BS mode (office profile use_date = 'BS' + seeded tbl_calendar) the value
+ * is treated as a BS year-month; the AD window the BS month covers is computed
+ * from tbl_calendar so queries can keep filtering the AD-stored dates.
+ *
+ * Returns:
+ *   ym       canonical YYYY-MM in the active calendar (default = current month)
+ *   label    human label ("2026-09" or "2083 Baisakh")
+ *   mode     'AD' | 'BS'
+ *   ad_start AD date start of the window (Y-m-d)
+ *   ad_end   AD date end of the window (Y-m-d)
+ *   days     days in the month
+ *
+ * DB-dependent — falls back to AD on any calendar error.
+ */
+function resolve_calendar_month(string $rawYm, string $today = ''): array
+{
+    $today = $today !== '' ? $today : date('Y-m-d');
+    $ymOk = preg_match('/^\d{4}-\d{2}$/', $rawYm) === 1;
+    $bsMode = false;
+    try {
+        $bsMode = useBsDates() && bsCalendarAvailable();
+    } catch (Throwable $e) {
+        $bsMode = false;
+    }
+
+    if ($bsMode) {
+        try {
+            // Default to the current BS year-month.
+            $todayBs = adToBs($today);
+            if (!$ymOk || bsToAd($rawYm . '-01') === null) {
+                $rawYm = $todayBs ? substr($todayBs, 0, 7) : date('Y-m', strtotime($today));
+            }
+            if (preg_match('/^(\d{4})-(\d{2})$/', $rawYm, $m)) {
+                $year  = (int) $m[1];
+                $month = (int) $m[2];
+                $cal = Database::instance()->selectOne(
+                    'SELECT `no_days`, `eng_start_date` FROM `tbl_calendar`
+                     WHERE `nepali_year` = ? AND `month_code` = ? LIMIT 1',
+                    [$year, $month]
+                );
+                if ($cal) {
+                    $days   = (int) $cal['no_days'];
+                    $start  = $cal['eng_start_date'];
+                    $end    = date('Y-m-d', strtotime($start) + max(0, $days - 1) * 86400);
+                    return [
+                        'ym'       => sprintf('%04d-%02d', $year, $month),
+                        'label'    => $year . ' ' . bsMonthName($month),
+                        'mode'     => 'BS',
+                        'ad_start' => $start,
+                        'ad_end'   => $end,
+                        'days'     => $days,
+                    ];
+                }
+            }
+        } catch (Throwable $e) {
+            // fall through to AD window
+        }
+    }
+
+    $ym = $ymOk ? $rawYm : date('Y-m', strtotime($today));
+    $start = $ym . '-01';
+    return [
+        'ym'       => $ym,
+        'label'    => $ym,
+        'mode'     => 'AD',
+        'ad_start' => $start,
+        'ad_end'   => date('Y-m-t', strtotime($start)),
+        'days'     => (int) date('t', strtotime($start)),
+    ];
+}
+
 /** Nepali rupee formatting for money (X-07: DECIMAL(18,4) stored). */
 function formatMoney($amount): string
 {

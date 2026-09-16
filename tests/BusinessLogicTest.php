@@ -382,6 +382,50 @@ class BusinessLogicTest extends TestCase
         }
     }
 
+    public function testResolveCalendarMonthAdMode()
+    {
+        if (!useBsDates()) {
+            $this->requireCalendar();
+            $info = resolve_calendar_month('2026-04');
+            $this->assertSame('AD', $info['mode']);
+            $this->assertSame('2026-04', $info['ym']);
+            $this->assertSame('2026-04', $info['label']);
+            $this->assertSame('2026-04-01', $info['ad_start']);
+            $this->assertSame('2026-04-30', $info['ad_end']);
+            $this->assertSame(30, $info['days']);
+        } else {
+            $this->markTestSkipped('Office uses BS dates; AD branch not exercised.');
+        }
+    }
+
+    public function testResolveCalendarMonthBsMode()
+    {
+        $this->requireCalendar();
+        if (useBsDates()) {
+            $info = resolve_calendar_month('2083-01'); // Baisakh 2083
+            $this->assertSame('BS', $info['mode']);
+            $this->assertSame('2083-01', $info['ym']);
+            $this->assertSame('2083 Baisakh', $info['label']);
+            $this->assertSame('2026-04-14', $info['ad_start']);
+            $this->assertSame('2026-05-14', $info['ad_end']);
+            $this->assertSame(31, $info['days']);
+        } else {
+            $this->markTestSkipped('Office uses AD dates; BS branch not exercised.');
+        }
+    }
+
+    public function testResolveCalendarMonthFallsBackToCurrent()
+    {
+        $this->requireCalendar();
+        $info = resolve_calendar_month('garbage');
+        $this->assertMatchesRegularExpression('/^\d{4}-\d{2}$/', $info['ym']);
+        $this->assertGreaterThan(0, $info['days']);
+        $this->assertTrue(strtotime($info['ad_end']) >= strtotime($info['ad_start']));
+        // Empty input behaves like invalid: resolves to the current month.
+        $cur = resolve_calendar_month('');
+        $this->assertSame($cur['ym'], $info['ym']);
+    }
+
     // =====================================================================
     // Notification wiring regression (functions/hr.php + CommunicationService)
     // =====================================================================
