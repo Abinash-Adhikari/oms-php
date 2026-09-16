@@ -1041,27 +1041,429 @@ label {
     background: #334155;
 }
 
-/* ── Login page ── */
+/* ── Login page ──
+   Premium split-screen: brand showcase (left) + glass sign-in card (right).
+   Theme-aware via tokens; brand panel keeps a fixed deep gradient in both modes. */
 .login-page {
-    background: var(--gradient-hero);
+    min-height: 100vh;
+    background: var(--bg-body);
+    overflow-x: hidden;
 }
 
-.login-box .card,
-.login-box .login-card-body {
+.premium-login {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* ── Brand panel ── */
+.premium-login-brand {
+    position: relative;
+    flex: 1 1 52%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(1.75rem, 4vw, 3.5rem) clamp(1.5rem, 5vw, 4.5rem);
+    color: #fff;
+    overflow: hidden;
+    background:
+        radial-gradient(1200px 600px at 110% -10%, rgba(37, 99, 235, .45), transparent 55%),
+        radial-gradient(900px 500px at -10% 110%, rgba(5, 150, 105, .22), transparent 55%),
+        linear-gradient(135deg, #0F172A 0%, #17264A 45%, #1D3A63 100%);
+    isolation: isolate;
+}
+.premium-login-brand::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: rgba(255, 255, 255, .04);
+    -webkit-backdrop-filter: blur(1px);
+    backdrop-filter: blur(1px);
+}
+
+.pl-brand-orb {
+    position: absolute;
+    z-index: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(60px);
+    opacity: .55;
+    animation: plOrbFloat 14s ease-in-out infinite alternate;
+}
+.pl-brand-orb--a {
+    width: 340px;
+    height: 340px;
+    top: -120px;
+    right: -80px;
+    background: linear-gradient(135deg, #2563EB, #22D3EE);
+}
+.pl-brand-orb--b {
+    width: 260px;
+    height: 260px;
+    bottom: -90px;
+    left: -60px;
+    background: linear-gradient(135deg, #7C3AED, #EC4899);
+    animation-delay: -6s;
+}
+.pl-brand-grid {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+    -webkit-mask-image: radial-gradient(ellipse at 30% 30%, #000 0%, transparent 75%);
+    mask-image: radial-gradient(ellipse at 30% 30%, #000 0%, transparent 75%);
+}
+
+.pl-brand-top,
+.pl-brand-body,
+.pl-brand-foot {
+    position: relative;
+    z-index: 1;
+}
+
+.pl-brand-top {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+}
+.pl-brand-mark {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .18);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+}
+.pl-brand-mark img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.pl-brand-monogram {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.35rem;
+    color: #fff;
+}
+.pl-brand-id {
+    display: flex;
+    flex-direction: column;
+}
+.pl-brand-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.15rem;
+    line-height: 1.2;
+    color: #fff;
+}
+.pl-brand-sub {
+    font-size: .8rem;
+    color: rgba(255, 255, 255, .65);
+}
+
+.pl-brand-body {
+    max-width: 480px;
+    margin: 2rem 0;
+}
+.pl-brand-heading {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+    line-height: 1.12;
+    color: #fff;
+    margin: 0 0 .75rem;
+}
+.pl-brand-tagline {
+    font-size: 1rem;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, .78);
+    margin: 0 0 1.75rem;
+}
+.pl-features {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+}
+.pl-feature {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    font-size: .92rem;
+    color: rgba(255, 255, 255, .9);
+}
+.pl-feature i {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    font-size: .82rem;
+    background: rgba(37, 99, 235, .35);
+    border: 1px solid rgba(37, 99, 235, .55);
+    box-shadow: 0 0 18px rgba(37, 99, 235, .35);
+}
+
+.pl-brand-foot {
+    font-size: .8rem;
+    color: rgba(255, 255, 255, .5);
+}
+
+/* ── Form panel ── */
+.premium-login-form {
+    flex: 1 1 48%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    padding: 2rem 1.5rem;
+    background:
+        radial-gradient(600px 400px at 100% 0%, rgba(var(--accent-rgb, 37, 99, 235), .06), transparent 60%),
+        var(--bg-body);
+}
+
+.pl-card {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    padding: 2.25rem 2rem 1.75rem;
+    border-radius: var(--radius-2xl);
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
     box-shadow: var(--shadow-xl);
-    border: none;
 }
 
-/* login-logo sits directly on the dark gradient-hero background (not the
-   card), in both light and dark mode — so it needs fixed light text rather
-   than the theme's --text-primary token, which is near-black in light mode. */
-.login-logo a,
-.login-logo b {
-    color: #FFFFFF;
+.pl-theme-toggle {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+.pl-theme-toggle:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-glow);
 }
 
-.login-box-msg {
+.pl-card-head {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+.pl-card-mark {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto .9rem;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-light);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+.pl-card-mark img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.pl-card-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin: 0 0 .25rem;
+}
+.pl-card-sub {
+    font-size: .875rem;
     color: var(--text-muted);
+    margin: 0;
+}
+
+/* Alert */
+.pl-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: .65rem;
+    padding: .8rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: .85rem;
+    line-height: 1.45;
+    margin-bottom: 1.25rem;
+    border: 1px solid;
+}
+.pl-alert i { margin-top: .15rem; }
+.pl-alert--danger {
+    background: rgba(225, 29, 72, .08);
+    border-color: rgba(225, 29, 72, .25);
+    color: #BE123C;
+}
+.pl-alert--warn {
+    background: rgba(217, 119, 6, .1);
+    border-color: rgba(217, 119, 6, .3);
+    color: #B45309;
+}
+[data-mode="dark"] .pl-alert--danger { color: #FDA4AF; }
+[data-mode="dark"] .pl-alert--warn { color: #FDBA74; }
+
+/* Fields */
+.pl-field {
+    position: relative;
+    margin-bottom: 1rem;
+}
+.pl-field-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: .9rem;
+    pointer-events: none;
+    transition: color var(--transition-fast);
+}
+.pl-input {
+    width: 100%;
+    height: 48px;
+    padding: 0 3rem 0 2.75rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: .95rem;
+    outline: none;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.pl-input::placeholder { color: var(--text-muted); opacity: .8; }
+.pl-input:focus {
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 0 4px var(--input-focus-ring);
+}
+.pl-field:focus-within .pl-field-icon { color: var(--accent); }
+.pl-input:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.pl-eye {
+    position: absolute;
+    right: .4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: var(--radius-full);
+    transition: color var(--transition-fast);
+}
+.pl-eye:hover { color: var(--accent); }
+
+/* Submit */
+.pl-submit {
+    width: 100%;
+    height: 48px;
+    margin-top: .25rem;
+    border: none;
+    border-radius: var(--radius-lg);
+    background: var(--gradient-cta);
+    color: var(--accent-text, #fff);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: .95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, .3);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+}
+.pl-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(37, 99, 235, .4);
+}
+.pl-submit:active {
+    transform: translateY(0);
+}
+.pl-submit:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+.pl-submit-arrow { font-size: .85rem; }
+.pl-spinner { font-size: .95rem; }
+
+.pl-card-foot {
+    margin-top: 1.4rem;
+    text-align: center;
+    font-size: .78rem;
+    color: var(--text-muted);
+}
+
+.pl-back-link {
+    font-size: .85rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: color var(--transition-fast);
+}
+.pl-back-link:hover {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+@keyframes plOrbFloat {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    100% { transform: translate3d(30px, -40px, 0) scale(1.12); }
+}
+
+/* ── Responsive: brand panel collapses on small screens ── */
+@media (max-width: 991.98px) {
+    .premium-login {
+        flex-direction: column;
+    }
+    .premium-login-brand {
+        display: none;
+    }
+    .premium-login-form {
+        padding: 2rem 1.25rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pl-brand-orb,
+    .pl-brand-orb--a,
+    .pl-brand-orb--b {
+        animation: none;
+    }
 }
 
 /* ── Theme Switcher Dropdown ── */

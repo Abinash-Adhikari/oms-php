@@ -92,6 +92,7 @@ $socials = ['facebook' => 'fab fa-facebook', 'instagram' => 'fab fa-instagram', 
                 <div class="col-md-6 text-center text-md-right">
                     <a href="<?= siteUrl('privacy.php') ?>" class="mr-3" style="color: var(--text-muted);">Privacy Policy</a>
                     <a href="<?= siteUrl('terms.php') ?>" style="color: var(--text-muted);">Terms of Service</a>
+                    <a href="<?= siteUrl('admin/login.php') ?>" class="ml-3" style="color: var(--text-muted);" aria-label="Staff Login"><i class="fas fa-lock mr-1"></i>Staff Login</a>
                 </div>
             </div>
         </div>
