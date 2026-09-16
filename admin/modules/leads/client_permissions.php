@@ -34,15 +34,10 @@ $projects = $db->select(
      ORDER BY bs.name ASC, cp.title ASC'
 );
 
-if ($editProject) {
-    $grantedModules = json_decode(html_entity_decode((string) ($editProject['permitted_modules'] ?? ''), ENT_QUOTES, 'UTF-8'), true);
-    $grantedSubs = json_decode(html_entity_decode((string) ($editProject['permitted_submodules'] ?? ''), ENT_QUOTES, 'UTF-8'), true);
-    $grantedModules = is_array($grantedModules) ? $grantedModules : [];
-    $grantedSubs = is_array($grantedSubs) ? $grantedSubs : [];
-}
-
 // DB-driven module catalog (tbl_modules / tbl_submodules in the client's
-// deployment DB, default master php_smart_school_mlebs).
+// deployment DB, default master php_smart_school_mlebs). The checkbox state
+// reflects the deployment DB's is_active (on/off) flags — the store of truth
+// for what the client actually sees.
 $catalog = $editProject ? client_module_catalog($editProject) : [];
 $catalogDb = trim((string) ($editProject['db_name'] ?? '')) ?: 'php_smart_school_mlebs';
 
@@ -161,6 +156,7 @@ ksort($grouped, SORT_STRING);
                         <div class="form-group">
                             <label><i class="fas fa-shield-alt mr-1"></i>Permitted modules &amp; submodules
                                 <small class="text-muted">(catalog: <code><?= e($catalogDb) ?></code>)</small></label>
+                            <small class="form-text text-muted">Checkboxes mirror the deployment database's <code>is_active</code> flags — ticking modules here switches them on/off in the client database.</small>
                             <?php if (!$catalog): ?>
                                 <div class="callout callout-warning">
                                     <h5>No module catalog</h5>
@@ -176,7 +172,7 @@ ksort($grouped, SORT_STRING);
                                     <div class="border rounded p-2 mb-2">
                                         <div class="form-check">
                                             <input class="form-check-input module-check" type="checkbox" name="modules[]" value="<?= e($m['key']) ?>" id="mod_<?= e($m['key']) ?>"
-                                                <?= in_array($m['key'], $grantedModules, true) ? 'checked' : '' ?>
+                                                <?= !empty($m['is_active']) ? 'checked' : '' ?>
                                                 <?= $canManage ? '' : 'disabled' ?>>
                                             <label class="form-check-label font-weight-bold" for="mod_<?= e($m['key']) ?>">
                                                 <i class="<?= e($m['icon']) ?> mr-1"></i><?= e($m['name']) ?>
@@ -188,7 +184,7 @@ ksort($grouped, SORT_STRING);
                                                     <div class="form-check form-check-inline">
                                                         <input class="form-check-input" type="checkbox" name="submodules[<?= e($m['key']) ?>][]" value="<?= e($subKey) ?>"
                                                             id="sub_<?= e($m['key']) ?>_<?= e($subKey) ?>"
-                                                            <?= in_array($subKey, ($grantedSubs[$m['key']] ?? []), true) ? 'checked' : '' ?>
+                                                            <?= !empty($m['subs_active'][$subKey]) ? 'checked' : '' ?>
                                                             <?= $canManage ? '' : 'disabled' ?>>
                                                         <label class="form-check-label" for="sub_<?= e($m['key']) ?>_<?= e($subKey) ?>"><?= e($subLabel) ?></label>
                                                     </div>

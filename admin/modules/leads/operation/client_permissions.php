@@ -2,10 +2,11 @@
 /**
  * SB-Tech — save client access grants for a won client project:
  * permitted modules/submodules + the deployment database. Included by
- * admin/operation.php (CSRF verified). Mirrors staff module-permission saving:
- * module/submodule keys are validated against the nav map and stored as JSON
- * on the tbl_client_projects row (there is no longer a per-module database map;
- * every granted module uses the project's single db_name).
+ * admin/operation.php (CSRF verified). The checkbox state on the page lives
+ * in the client's deployment DB (tbl_modules/tbl_submodules is_active); this
+ * handler validates the posted keys against the DB catalog, mirrors them as
+ * JSON on the tbl_client_projects row (for audit + fallback reads), then
+ * pushes the on/off state back into the deployment DB's is_active columns.
  */
 $db = Database::instance();
 if (!(Auth::isSuperAdmin() || Auth::hasSpecial('manage_leads'))) {

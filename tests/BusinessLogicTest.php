@@ -427,6 +427,70 @@ class BusinessLogicTest extends TestCase
     }
 
     // =====================================================================
+    // Client module catalog — deployment-DB is_active drives permission checks
+    // =====================================================================
+
+    private function requireDeploymentCatalog(): void
+    {
+        if (!$this->dbAvailable()) {
+            $this->markTestSkipped('DB not available; client deployment catalog not tested.');
+        }
+        try {
+            Database::instance()->selectOne(
+                "SELECT 1 FROM `php_smart_school_mlebs`.`tbl_modules` LIMIT 1"
+            );
+        } catch (Throwable $e) {
+            $this->markTestSkipped('php_smart_school_mlebs deployment catalog not reachable.');
+        }
+    }
+
+    public function testClientModuleCatalogCarriesIsActiveFlags()
+    {
+        $this->requireDeploymentCatalog();
+        $catalog = client_module_catalog(['db_name' => 'php_smart_school_mlebs']);
+        $this->assertNotEmpty($catalog);
+        foreach ($catalog as $m) {
+            $this->assertArrayHasKey('is_active', $m);
+            $this->assertArrayHasKey('subs_active', $m);
+            $this->assertArrayHasKey('subs', $m);
+            // Every submodule must have an activation flag too.
+            foreach (array_keys($m['subs']) as $subKey) {
+                $this->assertArrayHasKey($subKey, $m['subs_active']);
+                $this->assertIsBool($m['subs_active'][$subKey]);
+            }
+        }
+    }
+
+    public function testClientModuleCatalogIsActiveReflectsDeploymentDb()
+    {
+        $this->requireDeploymentCatalog();
+        // dashboard is always left on in the deployment DB.
+        $catalog = client_module_catalog(['db_name' => 'php_smart_school_mlebs']);
+        $byKey = [];
+        foreach ($catalog as $m) {
+            $byKey[$m['key']] = $m;
+        }
+        $this->assertArrayHasKey('dashboard', $byKey);
+        $this->assertTrue($byKey['dashboard']['is_active']);
+        // The flags must match the raw is_active column read from the DB.
+        $db = Database::instance();
+        $rows = $db->select(
+            "SELECT `module_key`, `is_active` FROM `php_smart_school_mlebs`.`tbl_modules`
+             WHERE `plan` IN ('PRO','ALL')"
+        );
+        foreach ($rows as $r) {
+            if (!isset($byKey[$r['module_key']])) {
+                continue;
+            }
+            $this->assertSame(
+                (int) $r['is_active'] === 1,
+                $byKey[$r['module_key']]['is_active'],
+                'module ' . $r['module_key'] . ' is_active mismatch'
+            );
+        }
+    }
+
+    // =====================================================================
     // Notification wiring regression (functions/hr.php + CommunicationService)
     // =====================================================================
 

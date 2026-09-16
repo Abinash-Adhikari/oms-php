@@ -587,16 +587,21 @@ function client_module_catalog(array $project, ?string $preferDb = null): array
         $dbName = 'php_smart_school_mlebs';
     }
 
+    $grantedMods = json_decode((string) ($project['permitted_modules'] ?? ''), true);
+    $grantedMods = is_array($grantedMods) ? $grantedMods : [];
+    $grantedSubs = json_decode((string) ($project['permitted_submodules'] ?? ''), true);
+    $grantedSubs = is_array($grantedSubs) ? $grantedSubs : [];
+
     try {
         $db = Database::instance();
         $modules = $db->select(
-            "SELECT `id`, `module_key`, `module_name`, `icon_class`, `sidebar_section`
+            "SELECT `id`, `module_key`, `module_name`, `icon_class`, `sidebar_section`, `is_active`
              FROM `{$dbName}`.`tbl_modules`
              WHERE `plan` IN ('PRO','ALL')
              ORDER BY `sort_order` ASC, `id` ASC"
         );
         $subs = $db->select(
-            "SELECT `module_id`, `submodule_key`, `submodule_name`
+            "SELECT `module_id`, `submodule_key`, `submodule_name`, `is_active`
              FROM `{$dbName}`.`tbl_submodules`
              ORDER BY `sort_order` ASC, `id` ASC"
         );
@@ -607,25 +612,30 @@ function client_module_catalog(array $project, ?string $preferDb = null): array
 
     if (!$modules) {
         // Fallback: derive from varriables.php globals so greenfield clients
-        // without deployment tables still get a usable catalog.
+        // without deployment tables still get a usable catalog. No activation
+        // information exists there, so fall back to the project's stored grants.
         $sections = $GLOBALS['navSidebarSections'] ?? [];
         $icons = $GLOBALS['icons'] ?? [];
         foreach (($GLOBALS['modules'] ?? []) as $modKey) {
             $subsList = [];
+            $subsActive = [];
             foreach (($GLOBALS['subNavBars'][$modKey] ?? []) as $subKey => $subName) {
                 $subsList[$subKey] = $subName;
+                $subsActive[$subKey] = in_array($subKey, ($grantedSubs[$modKey] ?? []), true);
             }
             $modules[] = [
-                'id'       => 0,
-                'module_key'=> $modKey,
-                'key'      => $modKey,
-                'module_name'=> $GLOBALS['navBars'][$modKey] ?? ucfirst($modKey),
-                'name'     => $GLOBALS['navBars'][$modKey] ?? ucfirst($modKey),
-                'icon_class'=> $icons[$modKey] ?? 'nav-icon fas fa-circle',
-                'icon'     => $icons[$modKey] ?? 'nav-icon fas fa-circle',
-                'sidebar_section'=> $sections[$modKey] ?? 'MODULES',
-                'section'  => $sections[$modKey] ?? 'MODULES',
-                'subs'     => $subsList,
+                'id'          => 0,
+                'module_key'  => $modKey,
+                'key'         => $modKey,
+                'module_name' => $GLOBALS['navBars'][$modKey] ?? ucfirst($modKey),
+                'name'        => $GLOBALS['navBars'][$modKey] ?? ucfirst($modKey),
+                'icon_class'  => $icons[$modKey] ?? 'nav-icon fas fa-circle',
+                'icon'        => $icons[$modKey] ?? 'nav-icon fas fa-circle',
+                'sidebar_section' => $sections[$modKey] ?? 'MODULES',
+                'section'     => $sections[$modKey] ?? 'MODULES',
+                'is_active'   => $modKey === 'dashboard' || in_array($modKey, $grantedMods, true),
+                'subs'        => $subsList,
+                'subs_active' => $subsActive,
             ];
         }
         return $modules;
@@ -633,22 +643,30 @@ function client_module_catalog(array $project, ?string $preferDb = null): array
 
     $byModule = [];
     foreach ($subs as $s) {
-        $byModule[(int) $s['module_id']][] = ['key' => $s['submodule_key'], 'name' => $s['submodule_name']];
+        $byModule[(int) $s['module_id']][] = [
+            'key'  => $s['submodule_key'],
+            'name' => $s['submodule_name'],
+            'active' => (int) ($s['is_active'] ?? 1) === 1,
+        ];
     }
 
     $out = [];
     foreach ($modules as $m) {
         $subsList = [];
+        $subsActive = [];
         foreach (($byModule[(int) $m['id']] ?? []) as $s) {
             $subsList[$s['key']] = $s['name'];
+            $subsActive[$s['key']] = $s['active'];
         }
         $out[] = [
-            'id'       => (int) $m['id'],
-            'key'      => $m['module_key'],
-            'name'     => $m['module_name'],
-            'icon'     => $m['icon_class'] ?: 'fas fa-circle',
-            'section'  => $m['sidebar_section'] ?: 'MODULES',
-            'subs'     => $subsList,
+            'id'          => (int) $m['id'],
+            'key'         => $m['module_key'],
+            'name'        => $m['module_name'],
+            'icon'        => $m['icon_class'] ?: 'fas fa-circle',
+            'section'     => $m['sidebar_section'] ?: 'MODULES',
+            'is_active'   => (int) ($m['is_active'] ?? 1) === 1,
+            'subs'        => $subsList,
+            'subs_active' => $subsActive,
         ];
     }
     return $out;
