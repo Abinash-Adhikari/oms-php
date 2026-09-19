@@ -3,8 +3,8 @@
  * SB-Tech — Client Projects operations.
  *   save_client_project / delete_client_project
  * Manually maintains the won-deployment registry (tbl_client_projects).
- * Rows are normally auto-created when a lead reaches Won; module grants and
- * the client database are edited from the Client Access screen.
+ * Rows are normally auto-created when a lead reaches Won; the project URL
+ * is edited here.
  */
 $db = Database::instance();
 $me = (int) Auth::id();
@@ -57,18 +57,14 @@ try {
         if (!in_array($status, ['Active', 'Completed', 'On Hold', 'Cancelled'], true)) {
             $status = 'Active';
         }
-        $dbName = trim((string) ($_POST['db_name'] ?? '')) ?: null;
-        if ($dbName !== null && !preg_match('/^[A-Za-z0-9_\-]+$/', $dbName)) {
-            setFlash('error', 'Database name may only contain letters, numbers, underscores and dashes.');
-            redirect($back);
-        }
+        $projectUrl = normalize_project_url((string) ($_POST['url'] ?? ''));
         [$start, $end] = validateProjectDates($_POST);
         $data = [
             'client_id' => $businessSourceId ?: null,
             'project_id'         => $catalogProjectId ?: null,
             'title'              => $title,
             'package'            => trim((string) ($_POST['package'] ?? '')) ?: null,
-            'db_name'            => $dbName,
+            'url'                => $projectUrl,
             'description'        => trim((string) ($_POST['description'] ?? '')) ?: null,
             'value'              => ($_POST['value'] ?? '') !== '' ? round((float) $_POST['value'], 4) : null,
             'start_date'         => $start,

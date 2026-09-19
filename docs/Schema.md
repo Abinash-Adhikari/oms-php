@@ -268,13 +268,12 @@ deployments copy its key onto `tbl_client_projects.project_id`.
 **`tbl_client_projects`** — first-class won-deployment records. `client_id`
 → `tbl_clients` (settled customer, `ON DELETE SET NULL`), `lead_id` →
 `tbl_leads` (origin, `ON DELETE SET NULL`), `project_id` → `tbl_projects`
-(the catalog item). Carries the **module & database entitlements** (edited on
-Leads › Client Access, read via `ClientPermissions`): `permitted_modules`
-(JSON array of granted module keys), `permitted_submodules` (JSON map
-module → submodule keys), and `db_name` (the single deployment database handle
-for this project — the old per-module `module_databases` map was dropped).
-Extra columns: `package` (plan/edition sold), `value DECIMAL(18,4)`,
-`start_date`/`end_date`, `status` ENUM(Active, Completed, On Hold, Cancelled).
+(the catalog item). Carries the delivered project's public `url` (VARCHAR(500);
+scheme is normalised to `https://` on save) plus the legacy entitlement columns
+`permitted_modules` (JSON array of module keys) and `permitted_submodules`
+(JSON map module → submodule keys), which are no longer written. Extra columns:
+`package` (plan/edition sold), `value DECIMAL(18,4)`, `start_date`/`end_date`,
+`status` ENUM(Active, Completed, On Hold, Cancelled).
 
 ### 2.7 Inventory
 

@@ -182,5 +182,8 @@ $files = [
     'create-table-office_notices',
     'create-table-staff_warnings',
 
+    // --- Client projects: replace deployment db_name with a public url ---
+    'alter-table-client_projects-swap-db_name-for-url',
+
     // Append new migration filenames below only (do not insert in the middle).
 ];

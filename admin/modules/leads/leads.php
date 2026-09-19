@@ -502,7 +502,7 @@ if (isset($_GET['id'])) {
                     </div>
                     <div class="row">
                         <div class="col-6 form-group"><label class="small font-weight-bold">Package</label><input type="text" name="package" class="form-control form-control-sm"></div>
-                        <div class="col-6 form-group"><label class="small font-weight-bold">Database name</label><input type="text" name="db_name" class="form-control form-control-sm" placeholder="customer DB"></div>
+                        <div class="col-6 form-group"><label class="small font-weight-bold">URL</label><input type="text" name="url" class="form-control form-control-sm" placeholder="https://project.example.com"></div>
                     </div>
                     <div class="form-group">
                         <label class="small font-weight-bold">Value (NPR)</label>
@@ -517,11 +517,7 @@ if (isset($_GET['id'])) {
                 <div id="pwStep3">
                     <div class="border rounded p-3 bg-light mb-3">
                         <h6 class="font-weight-bold mb-2">Ready to provision</h6>
-                        <p class="small text-muted mb-0">Creates the client (if new) and the won project. You can then grant module access.</p>
-                    </div>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" name="go_access" id="pwGoAccess" value="1" checked>
-                        <label class="form-check-label small" for="pwGoAccess">Open Client Access screen after saving</label>
+                        <p class="small text-muted mb-0">Creates the client (if new) and the won project.</p>
                     </div>
                 </div>
 

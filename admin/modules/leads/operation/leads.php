@@ -366,7 +366,14 @@ try {
         }
         $leadProject = (int) ($_POST['project_id'] ?? 0) ?: (int) $lead['project_id'];
 
-        $result = $db->transaction(function () use ($db, $me, $lead, $id, $title, $leadProject) {
+        try {
+            $projectUrl = normalize_project_url((string) ($_POST['url'] ?? ''));
+        } catch (InvalidArgumentException $e) {
+            setFlash('error', $e->getMessage());
+            redirect($back . '&id=' . $id);
+        }
+
+        $result = $db->transaction(function () use ($db, $me, $lead, $id, $title, $leadProject, $projectUrl) {
             $mode = (string) ($_POST['client_mode'] ?? 'create');
             $clientId = (int) ($_POST['client_id'] ?? 0);
 
@@ -420,7 +427,7 @@ try {
                 'project_id'  => $leadProject ?: null,
                 'title'       => $title,
                 'package'     => trim((string) ($_POST['package'] ?? '')) ?: null,
-                'db_name'     => trim((string) ($_POST['db_name'] ?? '')) ?: null,
+                'url'         => $projectUrl,
                 'value'       => ($_POST['value'] ?? '') !== '' ? round((float) $_POST['value'], 4) : null,
                 'status'      => 'Active',
                 'description' => trim((string) ($_POST['description'] ?? '')) ?: null,
@@ -432,9 +439,6 @@ try {
         });
 
         setFlash('success', 'Client project "' . e($title) . '" provisioned.');
-        if (!empty($_POST['go_access'])) {
-            redirect(pageUrl('leads', 'client_permissions') . '&id=' . $result['project_id']);
-        }
         redirect($back . '&id=' . $id);
     }
 

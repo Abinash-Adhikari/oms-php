@@ -518,6 +518,31 @@ function validateUpload(array $file, array $allowedTypes = ['jpg', 'jpeg', 'png'
     return ['ok' => true, 'extension' => $ext];
 }
 
+/**
+ * Normalise a client-project URL for storage.
+ *
+ * Trims the input, prepends `https://` when no scheme is present, and
+ * validates the result. Pure function (no globals/DB) so it is unit-testable.
+ *
+ * @param string $raw Raw user input.
+ * @return string|null Normalised URL, or null when the input is empty.
+ * @throws InvalidArgumentException when the value is not a usable http(s) URL.
+ */
+function normalize_project_url(string $raw): ?string
+{
+    $url = trim($raw);
+    if ($url === '') {
+        return null;
+    }
+    if (!preg_match('~^[a-z][a-z0-9+.-]*://~i', $url)) {
+        $url = 'https://' . $url;
+    }
+    if (mb_strlen($url) > 500 || !preg_match('~^https?://~i', $url) || filter_var($url, FILTER_VALIDATE_URL) === false) {
+        throw new InvalidArgumentException('Enter a valid URL (e.g. https://project.example.com).');
+    }
+    return $url;
+}
+
 /** Move an uploaded file into user_uploads/<module>/ with a safe name. */
 function storeUpload(array $file, string $module, string $ext): ?string
 {
@@ -563,160 +588,6 @@ function auditLog(string $module, string $action, ?string $entityType = null, ?i
         ]);
     } catch (Throwable $e) {
         // Never let logging failure break the workflow.
-    }
-}
-
-/**
- * Per-client module catalog, read from the client's deployment database
- * (php_smart_school_mlebs-style tbl_modules / tbl_submodules tables, chosen
- * by the project's db_name). IS-active PRO/ALL plan modules are returned with
- * their active submodules, names, icons and sidebar sections.
- *
- * When the deployment DB is unset or the tables are missing (Excel/greenfield
- * client), it falls back to the hardcoded nav map in varriables.php so the
- * page keeps working. Returns a list of modules:
- *   [ ['key'=>.., 'name'=>.., 'icon'=>.., 'section'=>.., 'subs'=>[key=>name,..]], ... ]
- *
- * @param array      $project  tbl_client_projects row (uses db_name)
- * @param string|null $preferDb Optional override for db_name (POST-time)
- */
-function client_module_catalog(array $project, ?string $preferDb = null): array
-{
-    $dbName = trim((string) ($preferDb !== null ? $preferDb : ($project['db_name'] ?? '')));
-    if ($dbName === '' || !preg_match('/^[A-Za-z0-9_\-]+$/', $dbName)) {
-        $dbName = 'php_smart_school_mlebs';
-    }
-
-    $grantedMods = json_decode((string) ($project['permitted_modules'] ?? ''), true);
-    $grantedMods = is_array($grantedMods) ? $grantedMods : [];
-    $grantedSubs = json_decode((string) ($project['permitted_submodules'] ?? ''), true);
-    $grantedSubs = is_array($grantedSubs) ? $grantedSubs : [];
-
-    try {
-        $db = Database::instance();
-        $modules = $db->select(
-            "SELECT `id`, `module_key`, `module_name`, `icon_class`, `sidebar_section`, `is_active`
-             FROM `{$dbName}`.`tbl_modules`
-             WHERE `plan` IN ('PRO','ALL')
-             ORDER BY `sort_order` ASC, `id` ASC"
-        );
-        $subs = $db->select(
-            "SELECT `module_id`, `submodule_key`, `submodule_name`, `is_active`
-             FROM `{$dbName}`.`tbl_submodules`
-             ORDER BY `sort_order` ASC, `id` ASC"
-        );
-    } catch (Throwable $e) {
-        // Master catalog DB unavailable → fall back to the hardcoded nav map.
-        $modules = $subs = [];
-    }
-
-    if (!$modules) {
-        // Fallback: derive from varriables.php globals so greenfield clients
-        // without deployment tables still get a usable catalog. No activation
-        // information exists there, so fall back to the project's stored grants.
-        $sections = $GLOBALS['navSidebarSections'] ?? [];
-        $icons = $GLOBALS['icons'] ?? [];
-        foreach (($GLOBALS['modules'] ?? []) as $modKey) {
-            $subsList = [];
-            $subsActive = [];
-            foreach (($GLOBALS['subNavBars'][$modKey] ?? []) as $subKey => $subName) {
-                $subsList[$subKey] = $subName;
-                $subsActive[$subKey] = in_array($subKey, ($grantedSubs[$modKey] ?? []), true);
-            }
-            $modules[] = [
-                'id'          => 0,
-                'module_key'  => $modKey,
-                'key'         => $modKey,
-                'module_name' => $GLOBALS['navBars'][$modKey] ?? ucfirst($modKey),
-                'name'        => $GLOBALS['navBars'][$modKey] ?? ucfirst($modKey),
-                'icon_class'  => $icons[$modKey] ?? 'nav-icon fas fa-circle',
-                'icon'        => $icons[$modKey] ?? 'nav-icon fas fa-circle',
-                'sidebar_section' => $sections[$modKey] ?? 'MODULES',
-                'section'     => $sections[$modKey] ?? 'MODULES',
-                'is_active'   => $modKey === 'dashboard' || in_array($modKey, $grantedMods, true),
-                'subs'        => $subsList,
-                'subs_active' => $subsActive,
-            ];
-        }
-        return $modules;
-    }
-
-    $byModule = [];
-    foreach ($subs as $s) {
-        $byModule[(int) $s['module_id']][] = [
-            'key'  => $s['submodule_key'],
-            'name' => $s['submodule_name'],
-            'active' => (int) ($s['is_active'] ?? 1) === 1,
-        ];
-    }
-
-    $out = [];
-    foreach ($modules as $m) {
-        $subsList = [];
-        $subsActive = [];
-        foreach (($byModule[(int) $m['id']] ?? []) as $s) {
-            $subsList[$s['key']] = $s['name'];
-            $subsActive[$s['key']] = $s['active'];
-        }
-        $out[] = [
-            'id'          => (int) $m['id'],
-            'key'         => $m['module_key'],
-            'name'        => $m['module_name'],
-            'icon'        => $m['icon_class'] ?: 'fas fa-circle',
-            'section'     => $m['sidebar_section'] ?: 'MODULES',
-            'is_active'   => (int) ($m['is_active'] ?? 1) === 1,
-            'subs'        => $subsList,
-            'subs_active' => $subsActive,
-        ];
-    }
-    return $out;
-}
-
-/**
- * Push client_permissions grants into the client's deployment DB so the
- * smart-school sidebar actually reflects them.
- *
- * Syncs `is_active` on tbl_modules/tbl_submodules (plan PRO/ALL only):
- *   - granted module keys  → is_active = 1
- *   - non-granted modules  → is_active = 0  (hidden from that deployment)
- *   - dashboard            → always kept on
- *   - submodules of granted modules → enabled only for granted sub-keys
- *   - WEBSITE-plan rows    → never touched
- *
- * @param string $dbName        Deployment database (validated [A-Za-z0-9_-])
- * @param array  $grantedModules List of granted module keys
- * @param array  $grantedSubs    Map module_key => list of granted submodule keys
- * @throws RuntimeException when the deployment DB is missing or unreadable.
- */
-function sync_deployment_module_visibility(string $dbName, array $grantedModules, array $grantedSubs): void
-{
-    if ($dbName === '' || !preg_match('/^[A-Za-z0-9_\-]+$/', $dbName)) {
-        throw new RuntimeException('Invalid deployment database name.');
-    }
-    $db = Database::instance();
-
-    $modules = $db->select(
-        "SELECT `id`, `module_key` FROM `{$dbName}`.`tbl_modules`
-         WHERE `plan` IN ('PRO','ALL')"
-    );
-    foreach ($modules as $m) {
-        $isActive = ($m['module_key'] === 'dashboard' || in_array($m['module_key'], $grantedModules, true)) ? 1 : 0;
-        $db->execute("UPDATE `{$dbName}`.`tbl_modules` SET `is_active` = ? WHERE `id` = ?", [$isActive, (int) $m['id']]);
-    }
-
-    $subs = $db->select(
-        "SELECT s.`id`, s.`module_id`, s.`submodule_key`, m.`module_key`, m.`module_name`
-         FROM `{$dbName}`.`tbl_submodules` s
-         JOIN `{$dbName}`.`tbl_modules` m ON m.`id` = s.`module_id`
-         WHERE m.`plan` IN ('PRO','ALL')"
-    );
-    foreach ($subs as $s) {
-        $modKey = $s['module_key'];
-        $allowed = (in_array($modKey, $grantedModules, true) && !empty($grantedSubs[$modKey]) && is_array($grantedSubs[$modKey]))
-            ? $grantedSubs[$modKey]
-            : [];
-        $isActive = ($modKey === 'dashboard' || in_array($s['submodule_key'], $allowed, true)) ? 1 : 0;
-        $db->execute("UPDATE `{$dbName}`.`tbl_submodules` SET `is_active` = ? WHERE `id` = ?", [$isActive, (int) $s['id']]);
     }
 }
 

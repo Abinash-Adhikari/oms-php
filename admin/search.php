@@ -93,10 +93,10 @@ foreach ($db->select(
 }
 
 foreach ($db->select(
-    'SELECT cp.id, cp.title, cp.db_name, cp.status, c.name AS client_name
+    'SELECT cp.id, cp.title, cp.url, cp.status, c.name AS client_name
      FROM `tbl_client_projects` cp
      LEFT JOIN `tbl_clients` c ON c.id = cp.client_id
-     WHERE cp.title LIKE ? OR cp.db_name LIKE ? OR cp.package LIKE ? OR c.name LIKE ?
+     WHERE cp.title LIKE ? OR cp.url LIKE ? OR cp.package LIKE ? OR c.name LIKE ?
      ORDER BY cp.id DESC LIMIT 8',
     [$kw, $kw, $kw, $kw]
 ) as $r) {
@@ -105,8 +105,8 @@ foreach ($db->select(
         'group' => 'Client Projects',
         'icon'  => 'fas fa-handshake text-success',
         'title' => $r['title'],
-        'sub'   => ($r['client_name'] ? $r['client_name'] . ' · ' : '') . ($r['db_name'] ?: '') . ' · ' . $r['status'],
-        'url'   => pageUrl('leads', 'client_permissions') . '&id=' . (int) $r['id'],
+        'sub'   => ($r['client_name'] ? $r['client_name'] . ' · ' : '') . ($r['url'] ?: '') . ' · ' . $r['status'],
+        'url'   => pageUrl('leads', 'client_projects') . '&id=' . (int) $r['id'],
     ];
 }
 

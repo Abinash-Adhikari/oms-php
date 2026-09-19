@@ -2,9 +2,8 @@
 /**
  * SB-Tech — Client Projects (won deployments registry).
  * Records created automatically when a pipeline deal reaches Won. Each row
- * provisions a business source + a catalog project: title, package, deployment
- * database (db_name), value, period and status — plus the module/module
- * grants edited from the Client Access screen.
+ * provisions a business source + a catalog project: title, package, project
+ * url, value, period and status.
  */
 $db = Database::instance();
 $canManage = Auth::isSuperAdmin() || Auth::hasSpecial('manage_leads');
@@ -37,7 +36,7 @@ if ($catalogFilter === -1) {
     $params[] = $catalogFilter;
 }
 if ($keyword !== '') {
-    $where[] = '(cp.title LIKE ? OR cp.package LIKE ? OR cp.db_name LIKE ? OR bs.name LIKE ? OR bs.contact_person LIKE ? OR p.name LIKE ?)';
+    $where[] = '(cp.title LIKE ? OR cp.package LIKE ? OR cp.url LIKE ? OR bs.name LIKE ? OR bs.contact_person LIKE ? OR p.name LIKE ?)';
     $kw = '%' . $db->escapeLike($keyword) . '%';
     array_push($params, $kw, $kw, $kw, $kw, $kw, $kw);
 }
@@ -66,7 +65,7 @@ foreach ($rows as $p) {
         'project_id'         => (int) $p['project_id'],
         'title'              => $p['title'],
         'package'            => $p['package'],
-        'db_name'            => $p['db_name'],
+        'url'                => $p['url'],
         'value'              => $p['value'],
         'start_date'         => $p['start_date'],
         'end_date'           => $p['end_date'],
@@ -131,7 +130,7 @@ foreach ($rows as $p) {
                         <th>#</th>
                         <th>Project</th>
                         <th>Business Source</th>
-                        <th>DB Name</th>
+                        <th>URL</th>
                         <th class="text-right">Value</th>
                         <th>Start / End</th>
                         <th>Status</th>
@@ -155,7 +154,7 @@ foreach ($rows as $p) {
                                 <span class="text-muted">—</span>
                             <?php endif; ?>
                         </td>
-                        <td><?= $p['db_name'] ? '<code>' . e($p['db_name']) . '</code>' : '—' ?></td>
+                        <td><?= $p['url'] ? '<a href="' . e($p['url']) . '" target="_blank" rel="noopener noreferrer">' . e($p['url']) . '</a>' : '—' ?></td>
                         <td class="text-right font-weight-bold"><?= $p['value'] !== null ? 'NPR ' . e(formatMoney($p['value'])) : '—' ?></td>
                         <td>
                             <small><?= $p['start_date'] ? e(formatDateView($p['start_date'])) : '—' ?> → <?= $p['end_date'] ? e(formatDateView($p['end_date'])) : '—' ?></small>
@@ -164,7 +163,6 @@ foreach ($rows as $p) {
                             <?php if ($p['owner_name']): ?><br><small class="text-muted"><?= e($p['owner_name']) ?></small><?php endif; ?>
                         </td>
                         <td class="text-right">
-                            <a href="<?= pageUrl('leads', 'client_permissions') ?>&id=<?= (int) $p['id'] ?>" class="btn btn-xs btn-outline-secondary" title="Client Access / Modules & DB"><i class="fas fa-user-lock"></i></a>
                             <?php if ($canManage): ?>
                                 <button type="button" class="btn btn-xs btn-outline-secondary" title="Edit" onclick="openClientProjectDrawer(<?= (int) $p['id'] ?>)"><i class="fas fa-edit"></i></button>
                                 <form action="operation.php?module=leads&page=client_projects" method="post" class="d-inline">
@@ -226,8 +224,8 @@ foreach ($rows as $p) {
                     <input type="text" name="package" id="cpPackage" class="form-control" placeholder="e.g. Smart School Pro">
                 </div>
                 <div class="col-6 form-group">
-                    <label>Database</label>
-                    <input type="text" name="db_name" id="cpDb" class="form-control" placeholder="customer DB (Client Access)">
+                    <label>URL</label>
+                    <input type="text" name="url" id="cpUrl" class="form-control" placeholder="https://project.example.com">
                 </div>
             </div>
             <div class="row">
@@ -274,7 +272,7 @@ function fillCpForm(p) {
     document.getElementById('cpCatalog').value = p ? (p.project_id || '') : '';
     document.getElementById('cpTitle').value = p ? (p.title || '') : '';
     document.getElementById('cpPackage').value = p ? (p.package || '') : '';
-    document.getElementById('cpDb').value = p ? (p.db_name || '') : '';
+    document.getElementById('cpUrl').value = p ? (p.url || '') : '';
     document.getElementById('cpValue').value = p ? (p.value || '') : '';
     document.getElementById('cpStatus').value = p ? (p.status || 'Active') : 'Active';
     document.getElementById('cpStart').value = p ? (p.start_date || '') : '';
