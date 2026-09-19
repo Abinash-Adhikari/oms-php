@@ -185,5 +185,8 @@ $files = [
     // --- Client projects: replace deployment db_name with a public url ---
     'alter-table-client_projects-swap-db_name-for-url',
 
+    // --- Document engine: show_items flag (was hand-added, never migrated) ---
+    'alter-table-documents-add-show_items',
+
     // Append new migration filenames below only (do not insert in the middle).
 ];

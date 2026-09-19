@@ -225,6 +225,8 @@ Client snapshot columns (`client_id`, `client_name`, `client_email`,
 client edits; money columns are `DECIMAL(18,4)` with percentage/fixed
 `discount_type`/`tax_type`. `reference_id` links child → parent docs
 (e.g. invoice → quotation), `lead_id` links back to the originating lead.
+`show_items` TINYINT(1) toggles whether line items render on the printed
+document.
 
 **`tbl_document_items`** / **`tbl_document_files`** — shared line items and
 attachments for every document type: `document_id`, `item_name`,

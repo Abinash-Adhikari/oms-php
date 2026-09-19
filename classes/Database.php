@@ -22,6 +22,8 @@
  * float → d, everything else → s.
  */
 
+require_once __DIR__ . '/QueryException.php';
+
 class Database
 {
     /** @var mysqli */
@@ -76,9 +78,7 @@ class Database
     {
         $stmt = $this->prepare($sql, $params);
         if (!$stmt->execute()) {
-            $err = $stmt->error !== '' ? $stmt->error : $this->mysqli->error;
-            $stmt->close();
-            throw new RuntimeException('Query failed: ' . $err . ' | SQL: ' . $sql);
+            $this->failQuery($sql, $stmt);
         }
         $rows   = [];
         $result = $stmt->get_result();
@@ -97,9 +97,7 @@ class Database
     {
         $stmt = $this->prepare($sql, $params);
         if (!$stmt->execute()) {
-            $err = $stmt->error !== '' ? $stmt->error : $this->mysqli->error;
-            $stmt->close();
-            throw new RuntimeException('Query failed: ' . $err . ' | SQL: ' . $sql);
+            $this->failQuery($sql, $stmt);
         }
         $result = $stmt->get_result();
         $row    = $result ? $result->fetch_assoc() : null;
@@ -116,9 +114,7 @@ class Database
         $stmt = $this->prepare($sql, $params);
         $ok   = $stmt->execute();
         if (!$ok) {
-            $err = $stmt->error !== '' ? $stmt->error : $this->mysqli->error;
-            $stmt->close();
-            throw new RuntimeException('Query failed: ' . $err . ' | SQL: ' . $sql);
+            $this->failQuery($sql, $stmt);
         }
         $stmt->close();
         return true;
@@ -136,9 +132,7 @@ class Database
         $stmt         = $this->prepare($sql, array_values($data));
         $ok           = $stmt->execute();
         if (!$ok) {
-            $err = $stmt->error !== '' ? $stmt->error : $this->mysqli->error;
-            $stmt->close();
-            throw new RuntimeException('Query failed: ' . $err . ' | SQL: ' . $sql);
+            $this->failQuery($sql, $stmt);
         }
         $id = (int) $this->mysqli->insert_id;
         $stmt->close();
@@ -159,9 +153,7 @@ class Database
         $stmt = $this->prepare($sql, array_merge(array_values($data), $whereParams));
         $ok   = $stmt->execute();
         if (!$ok) {
-            $err = $stmt->error !== '' ? $stmt->error : $this->mysqli->error;
-            $stmt->close();
-            throw new RuntimeException('Query failed: ' . $err . ' | SQL: ' . $sql);
+            $this->failQuery($sql, $stmt);
         }
         $affected = $stmt->affected_rows;
         $stmt->close();
@@ -175,9 +167,7 @@ class Database
         $stmt = $this->prepare($sql, $whereParams);
         $ok   = $stmt->execute();
         if (!$ok) {
-            $err = $stmt->error !== '' ? $stmt->error : $this->mysqli->error;
-            $stmt->close();
-            throw new RuntimeException('Query failed: ' . $err . ' | SQL: ' . $sql);
+            $this->failQuery($sql, $stmt);
         }
         $affected = $stmt->affected_rows;
         $stmt->close();
@@ -223,11 +213,30 @@ class Database
         return (string) $this->mysqli->error;
     }
 
+    /**
+     * Log the full failure detail and throw a QueryException whose message is
+     * safe to display. Raw SQL stays out of getMessage() (handlers flash it).
+     */
+    private function failQuery(string $sql, mysqli_stmt $stmt): never
+    {
+        $err = $stmt->error !== '' ? $stmt->error : $this->mysqli->error;
+        $stmt->close();
+        error_log('Database query error: ' . $err . ' | SQL: ' . $sql);
+        throw new QueryException('Database query failed: ' . $err, $sql);
+    }
+
+    private function failPrepare(string $sql): never
+    {
+        $err = $this->mysqli->error;
+        error_log('Database prepare error: ' . $err . ' | SQL: ' . $sql);
+        throw new QueryException('Database query failed: ' . $err, $sql);
+    }
+
     private function prepare(string $sql, array $params = []): mysqli_stmt
     {
         $stmt = $this->mysqli->prepare($sql);
         if (!$stmt) {
-            throw new RuntimeException('Query prepare failed: ' . $this->mysqli->error . ' | SQL: ' . $sql);
+            $this->failPrepare($sql);
         }
         if ($params !== []) {
             $types = '';

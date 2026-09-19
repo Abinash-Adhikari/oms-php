@@ -182,7 +182,7 @@ class DocumentEngine
             'client_phone'    => $data['client_phone'] ?? null,
             'client_address'  => $data['client_address'] ?? null,
             'subject'         => $data['subject'] ?? null,
-            'document_date'   => $data['document_date'] ?? date('Y-m-d'),
+            'document_date'   => ($data['document_date'] ?? '') ?: date('Y-m-d'),
             'valid_until'     => $data['valid_until'] ?? null,
             'due_date'        => $data['due_date'] ?? null,
             'subtotal'        => $subtotal,
