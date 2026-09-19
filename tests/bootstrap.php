@@ -47,6 +47,7 @@ if (!function_exists('config')) {
 
 // Load helpers (these don't require a DB connection).
 require_once __DIR__ . '/../functions/helpers.php';
+require_once __DIR__ . '/../functions/permissions.php';
 require_once __DIR__ . '/../functions/hr.php';
 require_once __DIR__ . '/../functions/office.php';
 require_once __DIR__ . '/../functions/accounting.php';

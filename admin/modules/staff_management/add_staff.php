@@ -33,6 +33,9 @@ if ($mode === 'list'):
         <div class="card-header">
             <h3 class="card-title">Staff (<?= count($rows) ?>)</h3>
             <div class="card-tools">
+                <?php if (Auth::isSuperAdmin()): ?>
+                    <a href="<?= pageUrl('staff_management', 'permissions') ?>" class="btn btn-secondary btn-sm"><i class="fas fa-user-lock mr-1"></i>Permissions</a>
+                <?php endif; ?>
                 <form action="operation.php?module=staff_management&page=export_staff" method="post" style="display:inline">
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="export_staff">

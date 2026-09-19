@@ -566,6 +566,9 @@ $badge = static function (string $status): string {
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-user-shield mr-1"></i>Module permissions <span class="badge badge-light ml-1"><?= $moduleCount ?></span></h3>
                     <div class="card-tools">
+                        <?php if (Auth::isSuperAdmin()): ?>
+                            <a href="<?= pageUrl('staff_management', 'permissions') ?>&id=<?= (int) $view['id'] ?>" class="btn btn-xs btn-secondary mr-1"><i class="fas fa-user-lock mr-1"></i>Edit permissions</a>
+                        <?php endif; ?>
                         <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-plus"></i></button>
                     </div>
                 </div>

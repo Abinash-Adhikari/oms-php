@@ -85,6 +85,7 @@ $subNavBars = [
     ],
     'staff_management' => [
         'add_staff'          => 'Employees',
+        'permissions'        => 'Permissions',
         'staff_daily_tasks'  => 'Daily Tasks',
         'leave_management'   => 'Leave Management',
         'staff_history'      => 'Staff History',
@@ -146,6 +147,23 @@ $subNavBars = [
 ];
 
 /**
+ * Special (granular-action) permissions — the single catalog used by the
+ * staff permissions editor (view + operation) and normalized against by
+ * functions/permissions.php. Each value is what Auth::hasSpecial() checks
+ * against the user's `special_permission` JSON list (PRD US-AUTH-02).
+ */
+$specialPermissions = [
+    'manage_staff_leaves'      => 'Manage staff leaves',
+    'manage_office'            => 'Manage office documents & quotations',
+    'manage_leads'             => 'Manage leads & clients',
+    'approve_vouchers'         => 'Approve vouchers',
+    'approve_expense_claims'   => 'Approve expense claims',
+    'access_private_documents' => 'Access private documents',
+    'view_all_attendance'      => 'View all attendance',
+    'audit'                    => 'Audit access',
+];
+
+/**
  * Per-submodule icons (premium sidebar: distinct icon per child instead of
  * the generic far fa-circle). Missing keys fall back to the circle icon.
  */
@@ -160,6 +178,7 @@ $subIcons = [
     'expense_claims'        => 'nav-icon fas fa-receipt',
     // staff_management
     'add_staff'             => 'nav-icon fas fa-users',
+    'permissions'           => 'nav-icon fas fa-user-lock',
     'staff_daily_tasks'     => 'nav-icon fas fa-clipboard-list',
     'leave_management'      => 'nav-icon fas fa-plane-departure',
     'staff_history'         => 'nav-icon fas fa-history',
@@ -249,7 +268,7 @@ $navBadgeQueries = [
 $pages = [
     'dashboard'        => ['home'],
     'my_office'        => ['office_calendar', 'office_spaces', 'notices', 'documents', 'warnings', 'expense_claims'],
-    'staff_management' => ['add_staff', 'staff_daily_tasks', 'leave_management', 'staff_history', 'terminated_staffs', 'hr_care'],
+    'staff_management' => ['add_staff', 'permissions', 'staff_daily_tasks', 'leave_management', 'staff_history', 'terminated_staffs', 'hr_care'],
     'webcms'           => ['cms_home', 'services', 'projects', 'news', 'notices', 'careers', 'team', 'contact', 'webcms_setup'],
     'leads'            => ['leads', 'projects'],
     'clients'          => ['clients'],

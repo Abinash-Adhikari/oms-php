@@ -89,6 +89,7 @@ require_once $appRoot . '/classes/DocumentWord.php';
 
 // --- Shared helpers ---
 require_once $appRoot . '/functions/helpers.php';
+require_once $appRoot . '/functions/permissions.php';
 require_once $appRoot . '/functions/hr.php';
 require_once $appRoot . '/functions/office.php';
 require_once $appRoot . '/functions/accounting.php';

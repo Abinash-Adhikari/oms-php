@@ -21,6 +21,11 @@ $isSuper = Auth::isSuperAdmin();
 $filteredSubs = [];
 foreach ($subNavBars as $mod => $subs) {
     foreach ($subs as $subKey => $subLabel) {
+        // The staff permissions editor is managed by the super admin only —
+        // never expose it to (or require a grant for) regular users.
+        if (!$isSuper && (string) $subKey === 'permissions') {
+            continue;
+        }
         if ($isSuper || Auth::hasSubmodule($mod, (string) $subKey)) {
             $filteredSubs[$mod][$subKey] = $subLabel;
         }
