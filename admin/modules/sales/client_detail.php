@@ -3,7 +3,7 @@
 /**
  * SB-Tech — Client detail page (separate view for a single client).
  * Shows the client's overview, contact persons, won projects and leads.
- * Rendered at ?module=clients&page=detail&id=N.
+ * Rendered at ?module=sales&page=client_detail&id=N.
  */
 $db = Database::instance();
 $canManage = Auth::isSuperAdmin() || Auth::hasSpecial('manage_leads');
@@ -24,7 +24,7 @@ $wonProjects = $db->select(
     'SELECT cp.*, p.name AS catalog_name
      FROM `tbl_client_projects` cp
      LEFT JOIN `tbl_projects` p ON p.id = cp.project_id
-     WHERE cp.client_id = ? ORDER BY cp.start_date DESC',
+     WHERE cp.client_id = ? ORDER BY cp.is_won DESC, cp.start_date DESC',
     [(int) $edit['id']]
 );
 $sourceLeads = $db->select(
@@ -35,10 +35,10 @@ $sourceLeads = $db->select(
     [(int) $edit['id'], (int) $edit['id']]
 );
 $quotations = $db->select(
-    'SELECT q.*, u.fullname AS created_by_name
-     FROM `tbl_quotations` q
-     LEFT JOIN `tbl_users_login` u ON u.id = q.added_by
-     WHERE q.client_id = ? ORDER BY q.added_on DESC',
+    "SELECT d.id, d.document_number, d.subject, d.document_date, d.total, d.status, u.fullname AS created_by_name
+     FROM `tbl_documents` d
+     LEFT JOIN `tbl_users_login` u ON u.id = d.added_by
+     WHERE d.client_id = ? AND d.document_type = 'quotation' ORDER BY d.added_on DESC",
     [(int) $edit['id']]
 );
 $leadIdsForActivity = [];
@@ -89,6 +89,7 @@ foreach ($wonProjects as $p) {
         'id'            => (int) $p['id'],
         'client_id'     => (int) $p['client_id'],
         'project_id'    => $p['project_id'] ? (int) $p['project_id'] : '',
+        'is_won'        => (int) $p['is_won'],
         'title'         => $p['title'],
         'package'       => $p['package'],
         'url'           => $p['url'],
@@ -100,14 +101,26 @@ foreach ($wonProjects as $p) {
     ];
 }
 $catalogJson = [];
-$catalogList = $db->select('SELECT `id`, `name` FROM `tbl_projects` WHERE `status` = ? ORDER BY `name` ASC', ['Active']);
+// Active products, plus inactive ones still linked to a project (so editing
+// never silently clears a project's product).
+$catalogList = $db->select(
+    "SELECT `id`, `name`, `status` FROM `tbl_projects`
+     WHERE `status` = 'Active' OR `id` IN (SELECT `project_id` FROM `tbl_client_projects` WHERE `project_id` IS NOT NULL)
+     ORDER BY `name` ASC"
+);
 foreach ($catalogList as $c) {
-    $catalogJson[] = ['id' => (int) $c['id'], 'name' => $c['name']];
+    $catalogJson[] = ['id' => (int) $c['id'], 'name' => $c['name'] . ($c['status'] !== 'Active' ? ' (inactive)' : '')];
 }
 
+// Demo/trial rows (is_won = 0) are listed but never counted as revenue.
 $totalValue = 0.0;
 $activeProjects = 0;
+$wonCount = 0;
 foreach ($wonProjects as $_p) {
+    if (!(int) $_p['is_won']) {
+        continue;
+    }
+    $wonCount++;
     if ($_p['value'] !== null) {
         $totalValue += (float) $_p['value'];
     }
@@ -135,7 +148,7 @@ if ($edit['lead_id']) {
     <!-- Page header -->
     <nav aria-label="breadcrumb" class="mb-2">
         <ol class="breadcrumb bg-transparent p-0 mb-0 small">
-            <li class="breadcrumb-item"><a href="<?= pageUrl('clients', 'clients') ?>">Clients</a></li>
+            <li class="breadcrumb-item"><a href="<?= pageUrl('sales', 'clients') ?>">Clients</a></li>
             <li class="breadcrumb-item active" aria-current="page"><?= e($edit['name']) ?></li>
         </ol>
     </nav>
@@ -145,14 +158,15 @@ if ($edit['lead_id']) {
         <div class="cl-hero-glow cl-hero-glow--a"></div>
         <div class="cl-hero-glow cl-hero-glow--b"></div>
         <div class="cl-hero-inner">
-            <a href="<?= pageUrl('clients', 'clients') ?>" class="cl-hero-back" aria-label="Back to clients"><i class="fas fa-arrow-left" aria-hidden="true"></i></a>
+            <a href="<?= pageUrl('sales', 'clients') ?>" class="cl-hero-back" aria-label="Back to clients"><i class="fas fa-arrow-left" aria-hidden="true"></i></a>
             <span class="cl-avatar" aria-hidden="true"><?= e($initials) ?></span>
             <div class="cl-hero-meta">
                 <div class="cl-hero-title-row">
                     <h2 class="cl-hero-name"><?= e($edit['name']) ?></h2>
+                    <span class="badge-soft badge-soft--light" title="Customer = has a won project"><?= e(client_lifecycle($wonCount)) ?></span>
                     <span class="badge-soft badge-soft--light"><i class="fas fa-<?= $edit['type'] === 'Individual' ? 'user' : 'building' ?> mr-1" aria-hidden="true"></i><?= e($edit['type']) ?></span>
                     <?php if ($originLead): ?>
-                        <a href="<?= pageUrl('leads', 'leads') ?>&id=<?= (int) $originLead['id'] ?>" class="badge-soft badge-soft--light text-decoration-none" title="Origin lead"><i class="fas fa-funnel-dollar mr-1" aria-hidden="true"></i><?= e($originLead['company'] ?: $originLead['contact_name']) ?></a>
+                        <a href="<?= pageUrl('sales', 'leads') ?>&id=<?= (int) $originLead['id'] ?>" class="badge-soft badge-soft--light text-decoration-none" title="Origin lead"><i class="fas fa-funnel-dollar mr-1" aria-hidden="true"></i><?= e($originLead['company'] ?: $originLead['contact_name']) ?></a>
                     <?php endif; ?>
                 </div>
                 <div class="cl-hero-contact">
@@ -167,15 +181,15 @@ if ($edit['lead_id']) {
                 <?php if ($canManage): ?>
                     <button type="button" class="btn btn-sm btn-ghost" onclick="openSourceDrawer(<?= (int) $edit['id'] ?>)"><i class="fas fa-edit mr-1" aria-hidden="true"></i>Edit Client</button>
                     <button type="button" class="btn btn-sm btn-ghost btn-soft-warn" onclick="openContactDrawer()"><i class="fas fa-user-plus mr-1" aria-hidden="true"></i>Add Contact</button>
-                    <form action="operation.php?module=clients&page=clients" method="post" class="d-inline">
+                    <form action="operation.php?module=sales&page=clients" method="post" class="d-inline">
                         <?= csrfField() ?>
                         <input type="hidden" name="action" value="delete_client">
                         <input type="hidden" name="id" value="<?= (int) $edit['id'] ?>">
                         <button type="submit" class="btn btn-sm btn-danger-ghost btn-icon-only confirm-submit" data-confirm="Delete client <?= e($edit['name']) ?> and all related data?" aria-label="Delete client"><i class="fas fa-trash" aria-hidden="true"></i></button>
                     </form>
                 <?php endif; ?>
-                <a href="<?= pageUrl('leads', 'quotations') ?>&add=1&client_id=<?= (int) $edit['id'] ?>" class="btn btn-sm btn-ghost"><i class="fas fa-file-invoice mr-1" aria-hidden="true"></i>New Quotation</a>
-                <a href="<?= pageUrl('leads', 'client_projects') ?>&source=<?= (int) $edit['id'] ?>" class="btn btn-sm btn-ghost"><i class="fas fa-folder-open mr-1" aria-hidden="true"></i>Client Projects</a>
+                <a href="<?= pageUrl('sales', 'documents') ?>&type=quotation&add=1&client_id=<?= (int) $edit['id'] ?>" class="btn btn-sm btn-ghost"><i class="fas fa-file-invoice mr-1" aria-hidden="true"></i>New Quotation</a>
+                <a href="<?= pageUrl('sales', 'client_projects') ?>&source=<?= (int) $edit['id'] ?>" class="btn btn-sm btn-ghost"><i class="fas fa-folder-open mr-1" aria-hidden="true"></i>Client Projects</a>
             </div>
         </div>
     </div>
@@ -193,7 +207,7 @@ if ($edit['lead_id']) {
             <div class="tms-kpi-icon"><i class="fas fa-project-diagram" aria-hidden="true"></i></div>
             <div class="tms-kpi-meta">
                 <p class="tms-kpi-label">Won Projects</p>
-                <p class="tms-kpi-value"><?= count($wonProjects) ?><small class="tms-kpi-sub"><?= $activeProjects ?> active</small></p>
+                <p class="tms-kpi-value"><?= $wonCount ?><small class="tms-kpi-sub"><?= $activeProjects ?> active<?= count($wonProjects) > $wonCount ? ' · ' . (count($wonProjects) - $wonCount) . ' demo/trial' : '' ?></small></p>
             </div>
         </a>
         <a href="#client-projects" class="tms-kpi-card bg-primary">
@@ -302,7 +316,7 @@ if ($edit['lead_id']) {
                                         </td>
                                         <td>
                                             <?php if ($canManage && !$t['is_primary']): ?>
-                                                <form action="operation.php?module=clients&page=clients" method="post" class="d-inline">
+                                                <form action="operation.php?module=sales&page=clients" method="post" class="d-inline">
                                                     <?= csrfField() ?>
                                                     <input type="hidden" name="action" value="set_primary_contact">
                                                     <input type="hidden" name="id" value="<?= (int) $t['id'] ?>">
@@ -316,7 +330,7 @@ if ($edit['lead_id']) {
                                         <td class="text-right">
                                             <?php if ($canManage): ?>
                                                 <button type="button" class="btn btn-xs btn-outline-secondary" title="Edit" aria-label="Edit <?= e($t['name']) ?>?" onclick="openContactDrawer(<?= (int) $t['id'] ?>)"><i class="fas fa-edit" aria-hidden="true"></i></button>
-                                                <form action="operation.php?module=clients&page=clients" method="post" class="d-inline">
+                                                <form action="operation.php?module=sales&page=clients" method="post" class="d-inline">
                                                     <?= csrfField() ?>
                                                     <input type="hidden" name="action" value="delete_contact">
                                                     <input type="hidden" name="id" value="<?= (int) $t['id'] ?>">
@@ -340,12 +354,12 @@ if ($edit['lead_id']) {
                 </div>
             </div>
 
-            <!-- Won Projects (detail) -->
+            <!-- Client Projects: won + demo/trial (detail) -->
             <div class="card card-outline mb-3" id="client-projects">
                 <div class="card-header">
-                    <h3 class="card-title"><span class="tms-chip tms-chip--primary"><i class="fas fa-project-diagram" aria-hidden="true"></i></span>Won Projects</h3>
+                    <h3 class="card-title"><span class="tms-chip tms-chip--primary"><i class="fas fa-project-diagram" aria-hidden="true"></i></span>Client Projects</h3>
                     <div class="card-tools">
-                        <a href="<?= pageUrl('leads', 'client_projects') ?>&source=<?= (int) $edit['id'] ?>" class="btn btn-sm btn-outline-secondary mb-0"><i class="fas fa-external-link-alt mr-1"></i>Open Client Projects</a>
+                        <a href="<?= pageUrl('sales', 'client_projects') ?>&source=<?= (int) $edit['id'] ?>" class="btn btn-sm btn-outline-secondary mb-0"><i class="fas fa-external-link-alt mr-1"></i>Open Client Projects</a>
                     </div>
                 </div>
                 <div class="card-body p-0">
@@ -366,6 +380,7 @@ if ($edit['lead_id']) {
                                     <tr>
                                         <td>
                                             <span class="cl-cell-main"><?= e($p['title']) ?></span>
+                                            <?php if (!(int) $p['is_won']): ?><span class="badge-soft badge-soft--info ml-1">Demo/Trial</span><?php endif; ?>
                                             <?php if ($p['catalog_name']): ?><br><span class="cl-cell-sub"><?= e($p['catalog_name']) ?></span><?php endif; ?>
                                         </td>
                                         <td><?= $p['url'] ? '<a href="' . e($p['url']) . '" target="_blank" rel="noopener noreferrer">' . e($p['url']) . '</a>' : '—' ?></td>
@@ -374,7 +389,7 @@ if ($edit['lead_id']) {
                                         <td class="text-right">
                                             <?php if ($canManage): ?>
                                                 <button type="button" class="btn btn-xs btn-outline-secondary" title="Edit" aria-label="Edit project <?= e($p['title']) ?>" onclick="openClientProjectDrawer(<?= (int) $p['id'] ?>)"><i class="fas fa-edit" aria-hidden="true"></i></button>
-                                                <form action="operation.php?module=leads&page=client_projects" method="post" class="d-inline">
+                                                <form action="operation.php?module=sales&page=client_projects" method="post" class="d-inline">
                                                     <?= csrfField() ?>
                                                     <input type="hidden" name="action" value="delete_client_project">
                                                     <input type="hidden" name="id" value="<?= (int) $p['id'] ?>">
@@ -388,7 +403,7 @@ if ($edit['lead_id']) {
                                 <?php if (!$wonProjects): ?><tr>
                                         <td colspan="5">
                                             <div class="tms-empty-state"><i class="fas fa-project-diagram" aria-hidden="true"></i>
-                                                <p>This client has no won projects yet.</p>
+                                                <p>This client has no projects yet.</p>
                                             </div>
                                         </td>
                                     </tr><?php endif; ?>
@@ -432,9 +447,9 @@ if ($edit['lead_id']) {
                                         <td><?= e($l['owner_name'] ?: '—') ?></td>
                                         <td><?= e(date('M j, Y', strtotime($l['added_on']))) ?></td>
                                         <td class="text-right">
-                                            <a href="<?= pageUrl('leads', 'leads') ?>&id=<?= (int) $l['id'] ?>" class="btn btn-xs btn-outline-primary" aria-label="View lead <?= e($l['company'] ?: $l['contact_name']) ?>"><i class="fas fa-eye" aria-hidden="true"></i></a>
+                                            <a href="<?= pageUrl('sales', 'leads') ?>&id=<?= (int) $l['id'] ?>" class="btn btn-xs btn-outline-primary" aria-label="View lead <?= e($l['company'] ?: $l['contact_name']) ?>"><i class="fas fa-eye" aria-hidden="true"></i></a>
                                             <?php if ($canManage): ?>
-                                                <form action="operation.php?module=leads&page=leads" method="post" class="d-inline">
+                                                <form action="operation.php?module=sales&page=leads" method="post" class="d-inline">
                                                     <?= csrfField() ?>
                                                     <input type="hidden" name="action" value="delete_lead">
                                                     <input type="hidden" name="id" value="<?= (int) $l['id'] ?>">
@@ -463,7 +478,7 @@ if ($edit['lead_id']) {
                 <div class="card-header">
                     <h3 class="card-title"><span class="tms-chip tms-chip--muted"><i class="fas fa-file-invoice" aria-hidden="true"></i></span>Quotations</h3>
                     <div class="card-tools">
-                        <a href="<?= pageUrl('leads', 'quotations') ?>&add=1&client_id=<?= (int) $edit['id'] ?>" class="btn btn-outline-primary btn-sm"><i class="fas fa-plus mr-1"></i>New Quotation</a>
+                        <a href="<?= pageUrl('sales', 'documents') ?>&type=quotation&add=1&client_id=<?= (int) $edit['id'] ?>" class="btn btn-outline-primary btn-sm"><i class="fas fa-plus mr-1"></i>New Quotation</a>
                     </div>
                 </div>
                 <div class="card-body p-0">
@@ -483,15 +498,15 @@ if ($edit['lead_id']) {
                                 <?php foreach ($quotations as $q): ?>
                                     <tr>
                                         <td>
-                                            <span class="cl-cell-main"><?= e($q['quotation_number']) ?></span>
+                                            <span class="cl-cell-main"><?= e($q['document_number']) ?></span>
                                             <?php if ($q['subject']): ?><br><span class="cl-cell-sub"><?= e(mb_strimwidth($q['subject'], 0, 44, '…')) ?></span><?php endif; ?>
                                         </td>
-                                        <td><?= e($q['quotation_date']) ?></td>
+                                        <td><?= e($q['document_date']) ?></td>
                                         <td class="text-right"><span class="cl-money">NPR <?= e(formatMoney($q['total'])) ?></span></td>
                                         <td><span class="badge-soft badge-soft--<?= $statusSoft[$q['status']] ?? 'muted' ?>"><?= e($q['status']) ?></span></td>
                                         <td class="text-right">
-                                            <a href="<?= pageUrl('leads', 'quotations') ?>&id=<?= (int) $q['id'] ?>" class="btn btn-xs btn-outline-primary" title="View" aria-label="View quotation <?= e($q['quotation_number']) ?>"><i class="fas fa-eye" aria-hidden="true"></i></a>
-                                            <a href="<?= pageUrl('leads', 'quotations') ?>&id=<?= (int) $q['id'] ?>&pdf=1" class="btn btn-xs btn-outline-danger" title="PDF" aria-label="Download quotation <?= e($q['quotation_number']) ?> PDF"><i class="fas fa-download" aria-hidden="true"></i></a>
+                                            <a href="<?= pageUrl('sales', 'documents') ?>&type=quotation&id=<?= (int) $q['id'] ?>" class="btn btn-xs btn-outline-primary" title="View" aria-label="View quotation <?= e($q['document_number']) ?>"><i class="fas fa-eye" aria-hidden="true"></i></a>
+                                            <a href="<?= pageUrl('sales', 'documents') ?>&type=quotation&id=<?= (int) $q['id'] ?>&pdf=1" class="btn btn-xs btn-outline-danger" title="PDF" aria-label="Download quotation <?= e($q['document_number']) ?> PDF"><i class="fas fa-download" aria-hidden="true"></i></a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -555,7 +570,7 @@ if ($edit['lead_id']) {
                                 <span class="cl-fact-icon"><i class="fas fa-route" aria-hidden="true"></i></span>
                                 <div class="cl-fact-body">
                                     <span class="cl-fact-label">Origin Lead</span>
-                                    <span class="cl-fact-value"><a href="<?= pageUrl('leads', 'leads') ?>&id=<?= (int) $originLead['id'] ?>"><?= e($originLead['company'] ?: $originLead['contact_name']) ?></a></span>
+                                    <span class="cl-fact-value"><a href="<?= pageUrl('sales', 'leads') ?>&id=<?= (int) $originLead['id'] ?>"><?= e($originLead['company'] ?: $originLead['contact_name']) ?></a></span>
                                 </div>
                             </div>
                         <?php endif; ?>
@@ -609,7 +624,7 @@ if ($edit['lead_id']) {
                                 </button>
                             </li>
                             <li>
-                                <form action="operation.php?module=clients&page=clients" method="post">
+                                <form action="operation.php?module=sales&page=clients" method="post">
                                     <?= csrfField() ?>
                                     <input type="hidden" name="action" value="delete_client">
                                     <input type="hidden" name="id" value="<?= (int) $edit['id'] ?>">
@@ -622,21 +637,21 @@ if ($edit['lead_id']) {
                             </li>
                         <?php endif; ?>
                         <li>
-                            <a class="cl-quick-item" href="<?= pageUrl('leads', 'quotations') ?>&add=1&client_id=<?= (int) $edit['id'] ?>">
+                            <a class="cl-quick-item" href="<?= pageUrl('sales', 'documents') ?>&type=quotation&add=1&client_id=<?= (int) $edit['id'] ?>">
                                 <span class="tms-chip tms-chip--warning"><i class="fas fa-file-invoice" aria-hidden="true"></i></span>
                                 <span class="cl-quick-item-text"><span class="cl-quick-item-label">New Quotation</span><br><span class="cl-quick-item-sub">Create a quotation for this client</span></span>
                                 <i class="fas fa-chevron-right cl-quick-item-chevron" aria-hidden="true"></i>
                             </a>
                         </li>
                         <li>
-                            <a class="cl-quick-item" href="<?= pageUrl('leads', 'client_projects') ?>&source=<?= (int) $edit['id'] ?>">
+                            <a class="cl-quick-item" href="<?= pageUrl('sales', 'client_projects') ?>&source=<?= (int) $edit['id'] ?>">
                                 <span class="tms-chip tms-chip--info"><i class="fas fa-folder-open" aria-hidden="true"></i></span>
                                 <span class="cl-quick-item-text"><span class="cl-quick-item-label">Client Projects</span><br><span class="cl-quick-item-sub">Modules, DB &amp; access</span></span>
                                 <i class="fas fa-chevron-right cl-quick-item-chevron" aria-hidden="true"></i>
                             </a>
                         </li>
                         <li>
-                            <a class="cl-quick-item" href="<?= pageUrl('leads', 'leads') ?>">
+                            <a class="cl-quick-item" href="<?= pageUrl('sales', 'leads') ?>">
                                 <span class="tms-chip tms-chip--muted"><i class="fas fa-search" aria-hidden="true"></i></span>
                                 <span class="cl-quick-item-text"><span class="cl-quick-item-label">Browse All Leads</span><br><span class="cl-quick-item-sub">Full lead pipeline</span></span>
                                 <i class="fas fa-chevron-right cl-quick-item-chevron" aria-hidden="true"></i>
@@ -658,7 +673,7 @@ if ($edit['lead_id']) {
             <button type="button" class="cms-drawer-close" onclick="closeAllDrawers()" aria-label="Close"><i class="fas fa-times"></i></button>
         </div>
         <div class="cms-drawer-body">
-            <form action="operation.php?module=leads&page=client_projects" method="post" id="cpDetailForm">
+            <form action="operation.php?module=sales&page=client_projects" method="post" id="cpDetailForm">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="save_client_project">
                 <input type="hidden" name="id" id="cpDetailId" value="0">
@@ -668,7 +683,7 @@ if ($edit['lead_id']) {
                 <h6 class="text-muted text-uppercase mb-2" style="font-size:.7rem;letter-spacing:.05em">Project Details</h6>
                 <div class="row">
                     <div class="col-6 form-group">
-                        <label class="small font-weight-bold">Catalog project</label>
+                        <label class="small font-weight-bold">Product</label>
                         <select name="project_id" id="cpDetailCatalog" class="form-control form-control-sm">
                             <option value="">— None —</option>
                             <?php foreach ($catalogJson as $c): ?>
@@ -678,17 +693,17 @@ if ($edit['lead_id']) {
                     </div>
                     <div class="col-6 form-group">
                         <label class="small font-weight-bold">Title *</label>
-                        <input type="text" name="title" id="cpDetailTitle" class="form-control form-control-sm" required>
+                        <input type="text" name="title" id="cpDetailTitle" class="form-control form-control-sm" required value="<?= e(old_scoped('save_client_project:0', 'title')) ?>">
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-6 form-group">
                         <label class="small font-weight-bold">Package</label>
-                        <input type="text" name="package" id="cpDetailPackage" class="form-control form-control-sm">
+                        <input type="text" name="package" id="cpDetailPackage" class="form-control form-control-sm" value="<?= e(old_scoped('save_client_project:0', 'package')) ?>">
                     </div>
                     <div class="col-6 form-group">
                         <label class="small font-weight-bold">URL</label>
-                        <input type="text" name="url" id="cpDetailUrl" class="form-control form-control-sm" placeholder="https://project.example.com">
+                        <input type="text" name="url" id="cpDetailUrl" class="form-control form-control-sm" placeholder="https://project.example.com" value="<?= e(old_scoped('save_client_project:0', 'url')) ?>">
                     </div>
                 </div>
 
@@ -697,7 +712,7 @@ if ($edit['lead_id']) {
                 <div class="row">
                     <div class="col-6 form-group">
                         <label class="small font-weight-bold">Value (NPR)</label>
-                        <input type="number" name="value" id="cpDetailValue" class="form-control form-control-sm" step="0.01" min="0" placeholder="0.00">
+                        <input type="number" name="value" id="cpDetailValue" class="form-control form-control-sm" step="0.01" min="0" placeholder="0.00" value="<?= e(old_scoped('save_client_project:0', 'value')) ?>">
                     </div>
                     <div class="col-6 form-group">
                         <label class="small font-weight-bold">Status</label>
@@ -711,16 +726,23 @@ if ($edit['lead_id']) {
                 <div class="row">
                     <div class="col-6 form-group">
                         <label class="small font-weight-bold">Start</label>
-                        <input type="date" name="start_date" id="cpDetailStart" class="form-control form-control-sm">
+                        <input type="date" name="start_date" id="cpDetailStart" class="form-control form-control-sm" value="<?= e(old_scoped('save_client_project:0', 'start_date')) ?>">
                     </div>
                     <div class="col-6 form-group">
                         <label class="small font-weight-bold">End</label>
-                        <input type="date" name="end_date" id="cpDetailEnd" class="form-control form-control-sm">
+                        <input type="date" name="end_date" id="cpDetailEnd" class="form-control form-control-sm" value="<?= e(old_scoped('save_client_project:0', 'end_date')) ?>">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <input type="hidden" name="is_won" value="0">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" name="is_won" id="cpDetailIsWon" value="1" checked>
+                        <label class="custom-control-label small" for="cpDetailIsWon">Won deal <span class="text-muted">(untick for demo/trial)</span></label>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="small font-weight-bold">Description</label>
-                    <textarea name="description" id="cpDetailDescription" class="form-control form-control-sm" rows="2"></textarea>
+                    <textarea name="description" id="cpDetailDescription" class="form-control form-control-sm" rows="2"><?= e(old_scoped('save_client_project:0', 'description')) ?></textarea>
                 </div>
             </form>
         </div>
@@ -740,34 +762,34 @@ if ($edit['lead_id']) {
         <button type="button" class="cms-drawer-close" onclick="closeAllDrawers()" aria-label="Close"><i class="fas fa-times"></i></button>
     </div>
     <div class="cms-drawer-body">
-        <form action="operation.php?module=clients&page=clients" method="post" id="sourceForm">
+        <form action="operation.php?module=sales&page=clients" method="post" id="sourceForm">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="save_client">
             <input type="hidden" name="id" id="sourceId" value="<?= (int) $edit['id'] ?>">
             <div class="form-group">
                 <label>Name *</label>
-                <input type="text" name="name" id="sourceName" class="form-control" required value="<?= e($edit['name']) ?>">
+                <input type="text" name="name" id="sourceName" class="form-control" required value="<?= e(old_scoped('save_client:' . (int) $edit['id'], 'name', $edit['name'])) ?>">
             </div>
             <div class="form-group">
                 <label>Type</label>
                 <select name="type" id="sourceType" class="form-control">
                     <?php foreach (['Company', 'Individual'] as $t): ?>
-                        <option value="<?= $t ?>" <?= $edit['type'] === $t ? 'selected' : '' ?>><?= $t ?></option>
+                        <option value="<?= $t ?>" <?= old_scoped('save_client:' . (int) $edit['id'], 'type', $edit['type'] ?? '') === $t ? 'selected' : '' ?>><?= $t ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="form-group">
                 <label>Primary contact person</label>
-                <input type="text" name="contact_person" id="sourceContact" class="form-control" value="<?= e($edit['contact_person']) ?>">
+                <input type="text" name="contact_person" id="sourceContact" class="form-control" value="<?= e(old_scoped('save_client:' . (int) $edit['id'], 'contact_person', $edit['contact_person'])) ?>">
                 <small class="form-text text-muted">Mirrors the primary Contact Person entry below.</small>
             </div>
             <div class="row">
-                <div class="col-6 form-group"><label>Email</label><input type="email" name="email" id="sourceEmail" class="form-control" value="<?= e($edit['email']) ?>"></div>
-                <div class="col-6 form-group"><label>Phone</label><input type="text" name="phone" id="sourcePhone" class="form-control" value="<?= e($edit['phone']) ?>"></div>
+                <div class="col-6 form-group"><label>Email</label><input type="email" name="email" id="sourceEmail" class="form-control" value="<?= e(old_scoped('save_client:' . (int) $edit['id'], 'email', $edit['email'])) ?>"></div>
+                <div class="col-6 form-group"><label>Phone</label><input type="text" name="phone" id="sourcePhone" class="form-control" value="<?= e(old_scoped('save_client:' . (int) $edit['id'], 'phone', $edit['phone'])) ?>"></div>
             </div>
-            <div class="form-group"><label>Address</label><input type="text" name="address" id="sourceAddress" class="form-control" value="<?= e($edit['address']) ?>"></div>
-            <div class="form-group"><label>PAN no</label><input type="text" name="pan_num" id="sourcePan" class="form-control" value="<?= e($edit['pan_num']) ?>"></div>
-            <div class="form-group"><label>Notes</label><textarea name="notes" id="sourceNotes" class="form-control" rows="2"><?= e($edit['notes']) ?></textarea></div>
+            <div class="form-group"><label>Address</label><input type="text" name="address" id="sourceAddress" class="form-control" value="<?= e(old_scoped('save_client:' . (int) $edit['id'], 'address', $edit['address'])) ?>"></div>
+            <div class="form-group"><label>PAN no</label><input type="text" name="pan_num" id="sourcePan" class="form-control" value="<?= e(old_scoped('save_client:' . (int) $edit['id'], 'pan_num', $edit['pan_num'])) ?>"></div>
+            <div class="form-group"><label>Notes</label><textarea name="notes" id="sourceNotes" class="form-control" rows="2"><?= e(old_scoped('save_client:' . (int) $edit['id'], 'notes', $edit['notes'])) ?></textarea></div>
         </form>
     </div>
     <div class="cms-drawer-footer">
@@ -783,20 +805,20 @@ if ($edit['lead_id']) {
             <button type="button" class="cms-drawer-close" onclick="closeAllDrawers()" aria-label="Close"><i class="fas fa-times"></i></button>
         </div>
         <div class="cms-drawer-body">
-            <form action="operation.php?module=clients&page=clients" method="post" id="contactForm">
+            <form action="operation.php?module=sales&page=clients" method="post" id="contactForm">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="save_contact">
                 <input type="hidden" name="id" id="contactId" value="0">
                 <input type="hidden" name="client_id" id="contactSourceId" value="<?= (int) $edit['id'] ?>">
-                <div class="form-group"><label>Name *</label><input type="text" name="name" id="contactName" class="form-control" required></div>
-                <div class="form-group"><label>Designation</label><input type="text" name="designation" id="contactDesignation" class="form-control"></div>
+                <div class="form-group"><label>Name *</label><input type="text" name="name" id="contactName" class="form-control" required value="<?= e(old_scoped('save_contact:0', 'name')) ?>"></div>
+                <div class="form-group"><label>Designation</label><input type="text" name="designation" id="contactDesignation" class="form-control" value="<?= e(old_scoped('save_contact:0', 'designation')) ?>"></div>
                 <div class="row">
-                    <div class="col-6 form-group"><label>Email</label><input type="email" name="email" id="contactEmail" class="form-control"></div>
-                    <div class="col-6 form-group"><label>Phone</label><input type="text" name="phone" id="contactPhone" class="form-control"></div>
+                    <div class="col-6 form-group"><label>Email</label><input type="email" name="email" id="contactEmail" class="form-control" value="<?= e(old_scoped('save_contact:0', 'email')) ?>"></div>
+                    <div class="col-6 form-group"><label>Phone</label><input type="text" name="phone" id="contactPhone" class="form-control" value="<?= e(old_scoped('save_contact:0', 'phone')) ?>"></div>
                 </div>
-                <div class="form-group"><label>Notes</label><textarea name="notes" id="contactNotes" class="form-control" rows="2"></textarea></div>
+                <div class="form-group"><label>Notes</label><textarea name="notes" id="contactNotes" class="form-control" rows="2"><?= e(old_scoped('save_contact:0', 'notes')) ?></textarea></div>
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="is_primary" id="contactPrimary" value="1">
+                    <input class="form-check-input" type="checkbox" name="is_primary" id="contactPrimary" value="1" <?= old_checkbox('save_contact:0', 'is_primary', false) ? 'checked' : '' ?>>
                     <label class="form-check-label" for="contactPrimary">Set as primary contact</label>
                 </div>
             </form>
@@ -901,6 +923,7 @@ if ($edit['lead_id']) {
         document.getElementById('cpDetailUrl').value = p ? (p.url || '') : '';
         document.getElementById('cpDetailValue').value = p ? (p.value || '') : '';
         document.getElementById('cpDetailStatus').value = p ? (p.status || 'Active') : 'Active';
+        document.getElementById('cpDetailIsWon').checked = p ? p.is_won === 1 : true;
         document.getElementById('cpDetailStart').value = p ? (p.start_date || '') : '';
         document.getElementById('cpDetailEnd').value = p ? (p.end_date || '') : '';
         document.getElementById('cpDetailDescription').value = p ? (p.description || '') : '';

@@ -3,18 +3,24 @@
 /**
  * SB-Tech — Clients (companies/individuals registry) list view.
  * Individual or Company rows link to the separate detail page
- * (clients/detail.php?module=clients&page=detail&id=N).
+ * (sales/client_detail.php, ?module=sales&page=client_detail&id=N).
  */
 $db = Database::instance();
 $canManage = Auth::isSuperAdmin() || Auth::hasSpecial('manage_leads');
 
 $keyword = trim((string) ($_GET['keyword'] ?? ''));
 $typeFilter = (string) ($_GET['type'] ?? '');
+$lifecycleFilter = (string) ($_GET['lifecycle'] ?? '');
 $where = ['1=1'];
 $params = [];
 if (in_array($typeFilter, ['Individual', 'Company'], true)) {
     $where[] = 'c.type = ?';
     $params[] = $typeFilter;
+}
+// Customer = has a won project; Prospect = demo/trial or nothing won yet.
+if ($lifecycleFilter === 'Customer' || $lifecycleFilter === 'Prospect') {
+    $where[] = ($lifecycleFilter === 'Customer' ? '' : 'NOT ')
+        . 'EXISTS (SELECT 1 FROM `tbl_client_projects` w WHERE w.client_id = c.id AND w.is_won = 1)';
 }
 if ($keyword !== '') {
     $where[] = '(c.name LIKE ? OR c.contact_person LIKE ? OR c.email LIKE ? OR c.phone LIKE ? OR c.pan_num LIKE ?)';
@@ -24,7 +30,8 @@ if ($keyword !== '') {
 $sources = $db->select(
     'SELECT c.*,
             (SELECT COUNT(*) FROM `tbl_client_contacts` t WHERE t.client_id = c.id) AS contact_count,
-            (SELECT COUNT(*) FROM `tbl_client_projects` p WHERE p.client_id = c.id) AS project_count,
+            (SELECT COUNT(*) FROM `tbl_client_projects` p WHERE p.client_id = c.id AND p.is_won = 1) AS project_count,
+            (SELECT COUNT(*) FROM `tbl_client_projects` p WHERE p.client_id = c.id AND p.is_won = 0) AS trial_count,
             (SELECT COUNT(*) FROM `tbl_leads` lc WHERE lc.client_id = c.id) AS lead_count
      FROM `tbl_clients` c
      WHERE ' . implode(' AND ', $where) . '
@@ -59,12 +66,18 @@ foreach ($sources as $c) {
                 </button>
             <?php endif; ?>
             <form method="get" class="form-inline d-inline ml-2">
-                <input type="hidden" name="module" value="clients">
+                <input type="hidden" name="module" value="sales">
                 <input type="hidden" name="page" value="clients">
                 <select name="type" class="form-control form-control-sm mr-1" onchange="this.form.submit()">
                     <option value="">All Types</option>
                     <?php foreach (['Individual', 'Company'] as $t): ?>
                         <option value="<?= $t ?>" <?= $typeFilter === $t ? 'selected' : '' ?>><?= $t ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <select name="lifecycle" class="form-control form-control-sm mr-1" onchange="this.form.submit()">
+                    <option value="">Customers &amp; prospects</option>
+                    <?php foreach (['Customer', 'Prospect'] as $lc): ?>
+                        <option value="<?= $lc ?>" <?= $lifecycleFilter === $lc ? 'selected' : '' ?>><?= $lc ?>s</option>
                     <?php endforeach; ?>
                 </select>
                 <input type="text" name="keyword" class="form-control form-control-sm mr-1" placeholder="Search" value="<?= e($keyword) ?>">
@@ -94,19 +107,22 @@ foreach ($sources as $c) {
                             <td><?= $i + 1 ?></td>
                             <td>
                                 <span class="font-weight-bold"><?= e($c['name']) ?></span>
-                                <br><small><span class="badge badge-<?= $c['type'] === 'Individual' ? 'info' : 'secondary' ?>"><?= e($c['type']) ?></span></small>
+                                <br><small><span class="badge badge-<?= $c['type'] === 'Individual' ? 'info' : 'secondary' ?>"><?= e($c['type']) ?></span>
+                                <?php $lc = client_lifecycle((int) $c['project_count']); ?>
+                                <span class="badge badge-<?= $lc === 'Customer' ? 'success' : 'warning' ?>"><?= $lc ?></span></small>
                             </td>
                             <td><?= e($c['contact_person'] ?: '—') ?></td>
                             <td><?= e($c['email'] ?: '—') ?><br><small><?= e($c['phone'] ?: '—') ?></small></td>
                             <td><?= e($c['pan_num'] ?: '—') ?></td>
                             <td class="text-center"><span class="badge badge-<?= (int) $c['contact_count'] > 0 ? 'info' : 'light' ?> border"><?= (int) $c['contact_count'] ?></span></td>
-                            <td class="text-center"><span class="badge badge-<?= (int) $c['project_count'] > 0 ? 'success' : 'light' ?> border"><?= (int) $c['project_count'] ?></span></td>
+                            <td class="text-center"><span class="badge badge-<?= (int) $c['project_count'] > 0 ? 'success' : 'light' ?> border"><?= (int) $c['project_count'] ?></span>
+                                <?php if ((int) $c['trial_count']): ?><br><small class="text-info"><?= (int) $c['trial_count'] ?> demo/trial</small><?php endif; ?></td>
                             <td class="text-center"><span class="badge badge-light border"><?= (int) $c['lead_count'] ?></span></td>
                             <td class="text-right">
-                                <a href="<?= pageUrl('clients', 'detail') ?>&id=<?= (int) $c['id'] ?>" class="btn btn-xs btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
+                                <a href="<?= pageUrl('sales', 'client_detail') ?>&id=<?= (int) $c['id'] ?>" class="btn btn-xs btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
                                 <?php if ($canManage): ?>
                                     <button type="button" class="btn btn-xs btn-outline-secondary" title="Edit" onclick="openSourceDrawer(<?= (int) $c['id'] ?>)"><i class="fas fa-edit"></i></button>
-                                    <form action="operation.php?module=clients&page=clients" method="post" class="d-inline">
+                                    <form action="operation.php?module=sales&page=clients" method="post" class="d-inline">
                                         <?= csrfField() ?>
                                         <input type="hidden" name="action" value="delete_client">
                                         <input type="hidden" name="id" value="<?= (int) $c['id'] ?>">
@@ -135,34 +151,34 @@ foreach ($sources as $c) {
         <button type="button" class="cms-drawer-close" onclick="closeAllDrawers()" aria-label="Close"><i class="fas fa-times"></i></button>
     </div>
     <div class="cms-drawer-body">
-        <form action="operation.php?module=clients&page=clients" method="post" id="sourceForm">
+        <form action="operation.php?module=sales&page=clients" method="post" id="sourceForm">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="save_client">
             <input type="hidden" name="id" id="sourceId" value="0">
             <div class="form-group">
                 <label>Name *</label>
-                <input type="text" name="name" id="sourceName" class="form-control" required value="">
+                <input type="text" name="name" id="sourceName" class="form-control" required value="<?= e(old('name')) ?>">
             </div>
             <div class="form-group">
                 <label>Type</label>
                 <select name="type" id="sourceType" class="form-control">
                     <?php foreach (['Company', 'Individual'] as $t): ?>
-                        <option value="<?= $t ?>"><?= $t ?></option>
+                        <option value="<?= $t ?>" <?= old('type', 'Company') === $t ? 'selected' : '' ?>><?= $t ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="form-group">
                 <label>Primary contact person</label>
-                <input type="text" name="contact_person" id="sourceContact" class="form-control" value="">
+                <input type="text" name="contact_person" id="sourceContact" class="form-control" value="<?= e(old('contact_person')) ?>">
                 <small class="form-text text-muted">Mirrors the primary Contact Person entry below.</small>
             </div>
             <div class="row">
-                <div class="col-6 form-group"><label>Email</label><input type="email" name="email" id="sourceEmail" class="form-control" value=""></div>
-                <div class="col-6 form-group"><label>Phone</label><input type="text" name="phone" id="sourcePhone" class="form-control" value=""></div>
+                <div class="col-6 form-group"><label>Email</label><input type="email" name="email" id="sourceEmail" class="form-control" value="<?= e(old('email')) ?>"></div>
+                <div class="col-6 form-group"><label>Phone</label><input type="text" name="phone" id="sourcePhone" class="form-control" value="<?= e(old('phone')) ?>"></div>
             </div>
-            <div class="form-group"><label>Address</label><input type="text" name="address" id="sourceAddress" class="form-control" value=""></div>
-            <div class="form-group"><label>PAN no</label><input type="text" name="pan_num" id="sourcePan" class="form-control" value=""></div>
-            <div class="form-group"><label>Notes</label><textarea name="notes" id="sourceNotes" class="form-control" rows="2"></textarea></div>
+            <div class="form-group"><label>Address</label><input type="text" name="address" id="sourceAddress" class="form-control" value="<?= e(old('address')) ?>"></div>
+            <div class="form-group"><label>PAN no</label><input type="text" name="pan_num" id="sourcePan" class="form-control" value="<?= e(old('pan_num')) ?>"></div>
+            <div class="form-group"><label>Notes</label><textarea name="notes" id="sourceNotes" class="form-control" rows="2"><?= e(old('notes')) ?></textarea></div>
         </form>
     </div>
     <div class="cms-drawer-footer">

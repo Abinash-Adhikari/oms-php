@@ -13,8 +13,8 @@ if (!(Auth::isSuperAdmin() || Auth::hasSpecial('manage_leads'))) {
     die('Access denied: you need the manage_leads permission.');
 }
 $action = (string) ($_POST['action'] ?? '');
-$back = pageUrl('clients', 'clients');
-$clientDetail = pageUrl('clients', 'detail');
+$back = pageUrl('sales', 'clients');
+$clientDetail = pageUrl('sales', 'client_detail');
 
 /** Mirror the primary contact (or null) onto the client's contact_person column. */
 function sync_client_primary_contact(Database $db, int $clientId): void

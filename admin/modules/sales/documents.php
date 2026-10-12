@@ -272,7 +272,7 @@ if (isset($_GET['id'])) {
                             <input type="hidden" name="doc_type" value="<?= e($docType) ?>">
                             <select name="status" class="form-control form-control-sm mb-1">
                                 <?php foreach ($typeConfig['statuses'] as $st): ?>
-                                    <option value="<?= $st ?>" <?= $doc['status'] === $st ? 'selected' : '' ?>><?= $st ?></option>
+                                    <option value="<?= $st ?>" <?= old('status', $doc['status'] ?? '') === $st ? 'selected' : '' ?>><?= $st ?></option>
                                 <?php endforeach; ?>
                             </select>
                             <button type="submit" class="btn btn-sm btn-primary btn-block">Update Status</button>
@@ -370,7 +370,7 @@ if (isset($_GET['id'])) {
                             </div>
                             <div class="file-upload-title" style="display:none">
                                 <label style="font-size:.8rem;color:#6b7280;margin-bottom:2px;display:block">File Title / Description</label>
-                                <input type="text" name="file_title" class="form-control form-control-sm" placeholder="Optional title for this file" maxlength="255">
+                                <input type="text" name="file_title" class="form-control form-control-sm" placeholder="Optional title for this file" maxlength="255" value="<?= e(old('file_title')) ?>">
                             </div>
                         </div>
                         <button type="submit" class="btn btn-sm btn-primary btn-block mt-2"><i class="fas fa-upload mr-1"></i>Upload</button>
@@ -394,6 +394,23 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
         if ($edit) $editItems = $edit['items'];
     }
     $defaultTerms = documentSettings()['default_terms'] ?? '';
+    // New document started from a lead or client page (?client_id=&lead_id=).
+    $prefillClient = null;
+    $linkLeadId = $edit ? (int) ($edit['lead_id'] ?? 0) : 0;
+    if (!$edit) {
+        $wantClient = (int) ($_GET['client_id'] ?? 0);
+        foreach ($clients as $c) {
+            if ((int) $c['id'] === $wantClient) {
+                $prefillClient = $c;
+                break;
+            }
+        }
+        $wantLead = (int) ($_GET['lead_id'] ?? 0);
+        if ($wantLead && $db->selectOne('SELECT `id` FROM `tbl_leads` WHERE `id` = ?', [$wantLead])) {
+            $linkLeadId = $wantLead;
+        }
+    }
+    $selectedClientId = $edit ? (int) ($edit['client_id'] ?? 0) : (int) ($prefillClient['id'] ?? 0);
 ?>
     <div class="d-flex align-items-center mb-3">
         <a href="<?= docUrl($docType) ?>" class="btn btn-sm btn-outline-secondary mr-2"><i class="fas fa-arrow-left"></i></a>
@@ -405,6 +422,8 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
             <input type="hidden" name="action" value="save_document">
             <input type="hidden" name="id" value="<?= $edit ? (int) $edit['id'] : 0 ?>">
             <input type="hidden" name="doc_type" value="<?= e($docType) ?>">
+            <input type="hidden" name="lead_id" value="<?= $linkLeadId ?: '' ?>">
+            <input type="hidden" name="reference_id" value="<?= $edit && !empty($edit['reference_id']) ? (int) $edit['reference_id'] : '' ?>">
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
@@ -412,38 +431,38 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
                             <select name="client_id" class="form-control" id="clientSelect">
                                 <option value="">— Select client —</option>
                                 <?php foreach ($clients as $c): ?>
-                                    <option value="<?= (int) $c['id'] ?>" data-email="<?= e($c['email'] ?? '') ?>" data-phone="<?= e($c['phone'] ?? '') ?>" data-address="<?= e($c['address'] ?? '') ?>" <?= $edit && (int) ($edit['client_id'] ?? 0) === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option>
+                                    <option value="<?= (int) $c['id'] ?>" data-email="<?= e($c['email'] ?? '') ?>" data-phone="<?= e($c['phone'] ?? '') ?>" data-address="<?= e($c['address'] ?? '') ?>" <?= $selectedClientId === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <?php $clientRequired = in_array('client_name', $typeConfig['required_fields'], true); ?>
-                        <div class="form-group"><label>Client name<?= $clientRequired ? ' *' : '' ?></label><input type="text" name="client_name" class="form-control" id="clientNameField" <?= $clientRequired ? 'required' : '' ?> value="<?= $edit ? e($edit['client_name'] ?? '') : '' ?>"></div>
+                        <div class="form-group"><label>Client name<?= $clientRequired ? ' *' : '' ?></label><input type="text" name="client_name" class="form-control" id="clientNameField" <?= $clientRequired ? 'required' : '' ?> value="<?= e(old('client_name', $edit ? $edit['client_name'] ?? '' : ($prefillClient['name'] ?? ''))) ?>"></div>
                         <div class="row">
-                            <div class="col-6 form-group"><label>Email</label><input type="email" name="client_email" class="form-control" id="clientEmailField" value="<?= $edit ? e($edit['client_email'] ?? '') : '' ?>"></div>
-                            <div class="col-6 form-group"><label>Phone</label><input type="text" name="client_phone" class="form-control" id="clientPhoneField" value="<?= $edit ? e($edit['client_phone'] ?? '') : '' ?>"></div>
+                            <div class="col-6 form-group"><label>Email</label><input type="email" name="client_email" class="form-control" id="clientEmailField" value="<?= e(old('client_email', $edit ? $edit['client_email'] ?? '' : ($prefillClient['email'] ?? ''))) ?>"></div>
+                            <div class="col-6 form-group"><label>Phone</label><input type="text" name="client_phone" class="form-control" id="clientPhoneField" value="<?= e(old('client_phone', $edit ? $edit['client_phone'] ?? '' : ($prefillClient['phone'] ?? ''))) ?>"></div>
                         </div>
-                        <div class="form-group"><label>Address</label><textarea name="client_address" class="form-control" rows="2" id="clientAddressField"><?= $edit ? e($edit['client_address'] ?? '') : '' ?></textarea></div>
+                        <div class="form-group"><label>Address</label><textarea name="client_address" class="form-control" rows="2" id="clientAddressField"><?= e(old('client_address', $edit ? $edit['client_address'] ?? '' : ($prefillClient['address'] ?? ''))) ?></textarea></div>
                     </div>
                     <div class="col-md-6">
                         <div class="row">
-                            <div class="col-6 form-group"><label>Document # *</label><input type="text" name="document_number" class="form-control" required value="<?= $edit ? e($edit['document_number']) : e($engine->nextNumber($docType)) ?>"></div>
+                            <div class="col-6 form-group"><label>Document # *</label><input type="text" name="document_number" class="form-control" required value="<?= e(old('document_number', $edit ? $edit['document_number'] : $engine->nextNumber($docType))) ?>"></div>
                             <div class="col-6 form-group"><label>Status</label>
-                                <select name="status" class="form-control"><?php foreach ($typeConfig['statuses'] as $st): ?><option value="<?= $st ?>" <?= ($edit ? ($edit['status'] ?? '') : $typeConfig['default_status']) === $st ? 'selected' : '' ?>><?= $st ?></option><?php endforeach; ?></select>
+                                <select name="status" class="form-control"><?php foreach ($typeConfig['statuses'] as $st): ?><option value="<?= $st ?>" <?= old('status', $edit ? ($edit['status'] ?? '') : $typeConfig['default_status']) === $st ? 'selected' : '' ?>><?= $st ?></option><?php endforeach; ?></select>
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-6 form-group"><label>Date *</label><input type="date" name="document_date" class="form-control" required value="<?= $edit ? e($edit['document_date']) : date('Y-m-d') ?>"></div>
-                            <?php if ($typeConfig['has_validity']): ?><div class="col-6 form-group"><label>Valid until</label><input type="date" name="valid_until" class="form-control" value="<?= $edit ? e($edit['valid_until'] ?? '') : date('Y-m-d', strtotime('+30 days')) ?>"></div><?php endif; ?>
-                            <?php if ($typeConfig['has_payment']): ?><div class="col-6 form-group"><label>Due date</label><input type="date" name="due_date" class="form-control" value="<?= $edit ? e($edit['due_date'] ?? '') : date('Y-m-d', strtotime('+30 days')) ?>"></div><?php endif; ?>
+                            <div class="col-6 form-group"><label>Date *</label><input type="date" name="document_date" class="form-control" required value="<?= e(old('document_date', $edit ? $edit['document_date'] : date('Y-m-d'))) ?>"></div>
+                            <?php if ($typeConfig['has_validity']): ?><div class="col-6 form-group"><label>Valid until</label><input type="date" name="valid_until" class="form-control" value="<?= e(old('valid_until', $edit ? $edit['valid_until'] ?? '' : date('Y-m-d', strtotime('+30 days')))) ?>"></div><?php endif; ?>
+                            <?php if ($typeConfig['has_payment']): ?><div class="col-6 form-group"><label>Due date</label><input type="date" name="due_date" class="form-control" value="<?= e(old('due_date', $edit ? $edit['due_date'] ?? '' : date('Y-m-d', strtotime('+30 days')))) ?>"></div><?php endif; ?>
                         </div>
-                        <div class="form-group"><label>Subject *</label><input type="text" name="subject" class="form-control" required maxlength="255" value="<?= $edit ? e($edit['subject'] ?? '') : '' ?>"></div>
+                        <div class="form-group"><label>Subject *</label><input type="text" name="subject" class="form-control" required maxlength="255" value="<?= e(old('subject', $edit ? $edit['subject'] ?? '' : '')) ?>"></div>
                     </div>
                 </div>
                 <?php if ($typeConfig['has_items']): ?>
                     <?php $showItemsChecked = $edit ? (int) ($edit['show_items'] ?? 1) !== 0 : true; ?>
                     <div class="d-flex align-items-center justify-content-between mb-2 mt-3">
                         <h6 class="text-muted text-uppercase mb-0" style="font-size:.75rem">Line items</h6>
-                        <label class="mb-0 text-muted" style="font-weight:normal"><input type="checkbox" name="show_items" value="1" id="showItemsToggle" <?= $showItemsChecked ? 'checked' : '' ?>> Show line items &amp; calculation</label>
+                        <label class="mb-0 text-muted" style="font-weight:normal"><input type="checkbox" name="show_items" value="1" id="showItemsToggle" <?= old('show_items', $showItemsChecked ? '1' : '') ? 'checked' : '' ?>> Show line items &amp; calculation</label>
                     </div>
                     <div id="itemTableBlock"<?= $showItemsChecked ? '' : ' style="display:none"' ?>>
                     <div class="table-responsive">
@@ -491,29 +510,29 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
                 <div class="row">
                     <div class="col-md-6">
                         <?php if ($typeConfig['has_notes'] && $docType !== 'brochure'): ?><div class="form-group"><label>Notes</label><textarea name="notes" id="notesField" class="form-control summernote-field" rows="3"><?= $edit ? ($edit['notes'] ?? '') : '' ?></textarea></div><?php endif; ?>
-                        <?php if ($typeConfig['has_terms']): ?><div class="form-group"><label>Terms &amp; conditions</label><textarea name="terms" class="form-control" rows="4"><?= $edit ? e($edit['terms'] ?? '') : e($defaultTerms) ?></textarea></div><?php endif; ?>
+                        <?php if ($typeConfig['has_terms']): ?><div class="form-group"><label>Terms &amp; conditions</label><textarea name="terms" class="form-control" rows="4"><?= e(old('terms', $edit ? $edit['terms'] ?? '' : $defaultTerms)) ?></textarea></div><?php endif; ?>
                     </div>
                     <?php if ($typeConfig['has_items']): ?>
                         <div class="col-md-6" id="calcBlock"<?= $showItemsChecked ? '' : ' style="display:none"' ?>>
                             <h6 class="text-muted text-uppercase mb-2" style="font-size:.75rem">Calculation</h6>
                             <?php if ($typeConfig['has_discount']): ?>
                                 <div class="form-group"><label>Discount</label>
-                                    <div class="input-group input-group-sm"><input type="number" name="discount_value" class="form-control" step="0.01" min="0" value="<?= $edit ? e($edit['discount_value'] ?? '') : '' ?>">
+                                    <div class="input-group input-group-sm"><input type="number" name="discount_value" class="form-control" step="0.01" min="0" value="<?= e(old('discount_value', $edit ? $edit['discount_value'] ?? '' : '')) ?>">
                                         <div class="input-group-append"><select name="discount_type" class="form-control form-control-sm" style="max-width:100px">
                                                 <option value="">None</option>
-                                                <option value="percentage" <?= ($edit ? ($edit['discount_type'] ?? '') : '') === 'percentage' ? 'selected' : '' ?>>%</option>
-                                                <option value="fixed" <?= ($edit ? ($edit['discount_type'] ?? '') : '') === 'fixed' ? 'selected' : '' ?>>Fixed</option>
+                                                <option value="percentage" <?= old('discount_type', $edit ? ($edit['discount_type'] ?? '') : '') === 'percentage' ? 'selected' : '' ?>>%</option>
+                                                <option value="fixed" <?= old('discount_type', $edit ? ($edit['discount_type'] ?? '') : '') === 'fixed' ? 'selected' : '' ?>>Fixed</option>
                                             </select></div>
                                     </div>
                                 </div>
                             <?php endif; ?>
                             <?php if ($typeConfig['has_tax']): ?>
                                 <div class="form-group"><label>Tax</label>
-                                    <div class="input-group input-group-sm"><input type="number" name="tax_value" class="form-control" step="0.01" min="0" value="<?= $edit ? e($edit['tax_value'] ?? '') : '' ?>">
+                                    <div class="input-group input-group-sm"><input type="number" name="tax_value" class="form-control" step="0.01" min="0" value="<?= e(old('tax_value', $edit ? $edit['tax_value'] ?? '' : '')) ?>">
                                         <div class="input-group-append"><select name="tax_type" class="form-control form-control-sm" style="max-width:100px">
                                                 <option value="">None</option>
-                                                <option value="percentage" <?= ($edit ? ($edit['tax_type'] ?? '') : '') === 'percentage' ? 'selected' : '' ?>>%</option>
-                                                <option value="fixed" <?= ($edit ? ($edit['tax_type'] ?? '') : '') === 'fixed' ? 'selected' : '' ?>>Fixed</option>
+                                                <option value="percentage" <?= old('tax_type', $edit ? ($edit['tax_type'] ?? '') : '') === 'percentage' ? 'selected' : '' ?>>%</option>
+                                                <option value="fixed" <?= old('tax_type', $edit ? ($edit['tax_type'] ?? '') : '') === 'fixed' ? 'selected' : '' ?>>Fixed</option>
                                             </select></div>
                                     </div>
                                 </div>

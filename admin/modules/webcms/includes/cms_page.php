@@ -62,27 +62,27 @@ $cfg = cmsSections()[$section];
                                 <div class="form-group">
                                     <label><?= e($label) ?><?= isset($f['hint']) ? ' <small class="text-muted">(' . e($f['hint']) . ')</small>' : '' ?></label>
                                     <?php if ($f['type'] === 'textarea' || $f['type'] === 'longtext'): ?>
-                                        <textarea name="<?= e($fname) ?>" class="form-control" rows="<?= $f['type'] === 'textarea' ? 3 : 5 ?>"><?= e($val) ?></textarea>
+                                        <textarea name="<?= e($fname) ?>" class="form-control" rows="<?= $f['type'] === 'textarea' ? 3 : 5 ?>"><?= e(old($fname, $val)) ?></textarea>
                                     <?php elseif ($f['type'] === 'date'): ?>
-                                        <input type="date" name="<?= e($fname) ?>" class="form-control" value="<?= e($val) ?>">
+                                        <input type="date" name="<?= e($fname) ?>" class="form-control" value="<?= e(old($fname, $val)) ?>">
                                     <?php elseif ($f['type'] === 'number'): ?>
-                                        <input type="number" name="<?= e($fname) ?>" class="form-control" value="<?= e($val) ?>">
+                                        <input type="number" name="<?= e($fname) ?>" class="form-control" value="<?= e(old($fname, $val)) ?>">
                                     <?php elseif ($f['type'] === 'select'): ?>
                                         <select name="<?= e($fname) ?>" class="form-control">
                                             <?php foreach ($f['options'] as $opt): ?>
-                                                <option value="<?= e($opt) ?>" <?= $val === $opt ? 'selected' : '' ?>><?= e($opt) ?></option>
+                                                <option value="<?= e($opt) ?>" <?= old($fname, $val) === $opt ? 'selected' : '' ?>><?= e($opt) ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     <?php elseif ($f['type'] === 'checkbox'): ?>
                                         <div class="custom-control custom-checkbox">
-                                            <input type="checkbox" class="custom-control-input" id="fld_<?= e($fname) ?>" name="<?= e($fname) ?>" value="1" <?= (!$edit && $fname === 'is_active') || $edit[$fname] ? 'checked' : '' ?>>
+                                            <input type="checkbox" class="custom-control-input" id="fld_<?= e($fname) ?>" name="<?= e($fname) ?>" value="1" <?= old($fname, (!$edit && $fname === 'is_active') ? '1' : ($edit[$fname] ?? '')) ? 'checked' : '' ?>>
                                             <label class="custom-control-label" for="fld_<?= e($fname) ?>">Active</label>
                                         </div>
                                     <?php elseif ($f['type'] === 'department'): ?>
                                         <select name="<?= e($fname) ?>" class="form-control">
                                             <option value="">—</option>
                                             <?php foreach ($db->select('SELECT * FROM `tbl_office_departments` ORDER BY title') as $d): ?>
-                                                <option value="<?= (int) $d['id'] ?>" <?= (int) $val === (int) $d['id'] ? 'selected' : '' ?>><?= e($d['title']) ?></option>
+                                                <option value="<?= (int) $d['id'] ?>" <?= old($fname, (int) $val) == (int) $d['id'] ? 'selected' : '' ?>><?= e($d['title']) ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     <?php elseif ($f['type'] === 'image'): ?>
@@ -102,7 +102,7 @@ $cfg = cmsSections()[$section];
                                             <label class="custom-file-label" for="fld_<?= e($fname) ?>"><?= $loc ? 'Replace file' : 'Choose file' ?></label>
                                         </div>
                                     <?php else: ?>
-                                        <input type="text" name="<?= e($fname) ?>" class="form-control" value="<?= e($val) ?>">
+                                        <input type="text" name="<?= e($fname) ?>" class="form-control" value="<?= e(old($fname, $val)) ?>">
                                     <?php endif; ?>
                                 </div>
                             <?php endforeach; ?>

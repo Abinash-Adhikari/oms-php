@@ -75,7 +75,7 @@ function cmsSections(): array
         ],
         'project' => [
             'table' => 'tbl_cms_projects',
-            'label' => 'Project',
+            'label' => 'Portfolio Item',
             'fa'    => 'fa-project-diagram',
             'fields' => [
                 'title'             => ['type' => 'text'],

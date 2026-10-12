@@ -43,8 +43,10 @@ $permissionPage = isset($innerPageGrants[$permissionModule][$page])
 // new home (must run before head.php emits any output).
 if (isset($routeCanonical[$permissionModule][$page]) && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
     $canonical = $routeCanonical[$permissionModule][$page];
+    // Carry the rest of the query (?id=5, &source=16 …) so deep links survive.
+    $extra = array_diff_key($_GET, ['module' => true, 'page' => true]);
     http_response_code(301);
-    redirect(pageUrl($canonical['module'], $canonical['page']));
+    redirect(pageUrl($canonical['module'], $canonical['page']) . ($extra ? '&' . http_build_query($extra) : ''));
 }
 
 $pageTitle = ($navBars[$permissionModule] ?? ucfirst($permissionModule))

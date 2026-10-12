@@ -134,7 +134,7 @@ $badge = static function (string $status): string {
                     <div class="small-box bg-<?= $leadsOpen && (int) $leadsOpen['c'] > 0 ? 'primary' : 'secondary' ?>">
                         <div class="inner"><h3><?= (int) ($leadsOpen['c'] ?? 0) ?></h3><p>Open leads assigned</p></div>
                         <div class="icon"><i class="fas fa-filter"></i></div>
-                        <a href="<?= pageUrl('leads', 'leads') ?>" class="small-box-footer">Leads pipeline <i class="fas fa-arrow-circle-right"></i></a>
+                        <a href="<?= pageUrl('sales', 'leads') ?>" class="small-box-footer">Leads pipeline <i class="fas fa-arrow-circle-right"></i></a>
                     </div>
                 </div>
                 <div class="col-md-3 col-sm-6">
@@ -319,7 +319,7 @@ $badge = static function (string $status): string {
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-filter mr-1"></i>Assigned leads <span class="badge badge-light ml-1"><?= (int) ($leadsOpen['c'] ?? 0) ?> open</span></h3>
                     <div class="card-tools">
-                        <a href="<?= pageUrl('leads', 'leads') ?>" class="btn btn-tool"><i class="fas fa-external-link-alt"></i></a>
+                        <a href="<?= pageUrl('sales', 'leads') ?>" class="btn btn-tool"><i class="fas fa-external-link-alt"></i></a>
                         <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-plus"></i></button>
                     </div>
                 </div>
@@ -329,7 +329,7 @@ $badge = static function (string $status): string {
                         <tbody>
                         <?php foreach ($leads as $lead): ?>
                             <tr>
-                                <td><a href="<?= pageUrl('leads', 'leads') ?>&lead_id=<?= (int) $lead['id'] ?>"><?= e($lead['company']) ?></a></td>
+                                <td><a href="<?= pageUrl('sales', 'leads') ?>&lead_id=<?= (int) $lead['id'] ?>"><?= e($lead['company']) ?></a></td>
                                 <td><?= e($lead['contact_name'] ?: '—') ?></td>
                                 <td><span class="badge badge-<?= $badge((string) $lead['stage']) ?>"><?= e($lead['stage'] ?: 'New') ?></span></td>
                                 <td><?= $lead['priority'] ? '<span class="badge badge-' . $badge((string) $lead['priority']) . '">' . e($lead['priority']) . '</span>' : '—' ?></td>

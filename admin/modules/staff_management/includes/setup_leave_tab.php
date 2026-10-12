@@ -73,49 +73,49 @@ $drawerOpen = ($edit !== null);
             <input type="hidden" name="id" id="formId" value="<?= $edit ? (int) $edit['id'] : 0 ?>">
             <div class="form-group">
                 <label>Title *</label>
-                <input type="text" name="title" class="form-control" id="formTitle" required value="<?= $edit ? e($edit['title']) : '' ?>">
+                <input type="text" name="title" class="form-control" id="formTitle" required value="<?= e(old('title', $edit ? $edit['title'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Max allowed days per year</label>
-                <input type="number" name="max_allowed" class="form-control" id="formMaxAllowed" min="0" value="<?= $edit ? (int) $edit['max_allowed'] : 0 ?>">
+                <input type="number" name="max_allowed" class="form-control" id="formMaxAllowed" min="0" value="<?= e(old('max_allowed', $edit ? (int) $edit['max_allowed'] : 0)) ?>">
             </div>
             <div class="form-group">
                 <label>Leave year</label>
-                <input type="text" name="leave_year" class="form-control" id="formLeaveYear" placeholder="e.g. 2026" value="<?= $edit ? e($edit['leave_year']) : '' ?>">
+                <input type="text" name="leave_year" class="form-control" id="formLeaveYear" placeholder="e.g. 2026" value="<?= e(old('leave_year', $edit ? $edit['leave_year'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Description</label>
-                <textarea name="description" class="form-control" id="formDescription" rows="3"><?= $edit ? e($edit['description']) : '' ?></textarea>
+                <textarea name="description" class="form-control" id="formDescription" rows="3"><?= e(old('description', $edit ? $edit['description'] : '')) ?></textarea>
             </div>
             <div class="form-row">
                 <div class="col-6 form-group">
                     <label>Gender specific</label>
                     <select name="gender_specific" class="form-control" id="formGender">
                         <?php foreach (['Both', 'Male', 'Female'] as $g): ?>
-                            <option value="<?= $g ?>" <?= $edit && $edit['gender_specific'] === $g ? 'selected' : '' ?>><?= $g ?></option>
+                            <option value="<?= $g ?>" <?= old('gender_specific', $edit['gender_specific'] ?? '') === $g ? 'selected' : '' ?>><?= $g ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-6 form-group">
                     <label>Carry-forward days</label>
-                    <input type="number" name="max_carry_forward" class="form-control" id="formCarryForward" min="0" value="<?= $edit ? (int) $edit['max_carry_forward'] : 0 ?>">
+                    <input type="number" name="max_carry_forward" class="form-control" id="formCarryForward" min="0" value="<?= e(old('max_carry_forward', $edit ? (int) $edit['max_carry_forward'] : 0)) ?>">
                 </div>
             </div>
             <div class="form-group">
                 <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="cfg_requires_approval" name="requires_approval" value="1" <?= !$edit || $edit['requires_approval'] ? 'checked' : '' ?>>
+                    <input type="checkbox" class="custom-control-input" id="cfg_requires_approval" name="requires_approval" value="1" <?= old('requires_approval', !$edit || $edit['requires_approval']) ? 'checked' : '' ?>>
                     <label class="custom-control-label" for="cfg_requires_approval">Requires approval</label>
                 </div>
                 <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="cfg_carry_forward" name="carry_forward" value="1" <?= $edit && $edit['carry_forward'] ? 'checked' : '' ?>>
+                    <input type="checkbox" class="custom-control-input" id="cfg_carry_forward" name="carry_forward" value="1" <?= old('carry_forward', $edit['carry_forward'] ?? '') ? 'checked' : '' ?>>
                     <label class="custom-control-label" for="cfg_carry_forward">Carry forward unused days</label>
                 </div>
                 <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="cfg_documentation" name="documentation_required" value="1" <?= $edit && $edit['documentation_required'] ? 'checked' : '' ?>>
+                    <input type="checkbox" class="custom-control-input" id="cfg_documentation" name="documentation_required" value="1" <?= old('documentation_required', $edit['documentation_required'] ?? '') ? 'checked' : '' ?>>
                     <label class="custom-control-label" for="cfg_documentation">Documentation required</label>
                 </div>
                 <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="cfg_active" name="is_active" value="1" <?= !$edit || $edit['is_active'] ? 'checked' : '' ?>>
+                    <input type="checkbox" class="custom-control-input" id="cfg_active" name="is_active" value="1" <?= old('is_active', !$edit || $edit['is_active']) ? 'checked' : '' ?>>
                     <label class="custom-control-label" for="cfg_active">Active</label>
                 </div>
             </div>

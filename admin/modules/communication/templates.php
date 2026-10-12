@@ -82,7 +82,7 @@ $knownEvents = [
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group"><label>Template Name *</label>
-                                <input type="text" name="name" id="tpl_name" class="form-control" required placeholder="e.g. leave_approved"></div>
+                                <input type="text" name="name" id="tpl_name" class="form-control" required placeholder="e.g. leave_approved" value="<?= e(old('name')) ?>"></div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group"><label>Type *</label>
@@ -100,13 +100,13 @@ $knownEvents = [
                         </div>
                     </div>
                     <div class="form-group"><label>Subject (Email only)</label>
-                        <input type="text" name="subject" id="tpl_subject" class="form-control" placeholder="e.g. Your leave application has been {{action}}"></div>
+                        <input type="text" name="subject" id="tpl_subject" class="form-control" placeholder="e.g. Your leave application has been {{action}}" value="<?= e(old('subject')) ?>"></div>
                     <div class="form-group"><label>Body *</label>
-                        <textarea name="body" id="tpl_body" class="form-control" rows="6" required placeholder="Hi {{name}}, your request has been {{action}}. Details: {{details}}"></textarea>
+                        <textarea name="body" id="tpl_body" class="form-control" rows="6" required placeholder="Hi {{name}}, your request has been {{action}}. Details: {{details}}"><?= e(old('body')) ?></textarea>
                         <small class="text-muted">Placeholders: {{name}}, {{email}}, {{phone}}, {{details}}, {{org_name}}, {{date}}, {{time}}</small>
                     </div>
                     <div class="form-group"><label>SMS Body</label>
-                        <textarea name="sms_body" id="tpl_sms_body" class="form-control" rows="3" placeholder="Hi {{name}}, {{details}}"></textarea></div>
+                        <textarea name="sms_body" id="tpl_sms_body" class="form-control" rows="3" placeholder="Hi {{name}}, {{details}}"><?= e(old('sms_body')) ?></textarea></div>
                     <div class="form-group"><label>Event (optional — for workflow wiring)</label>
                         <select name="placeholders" id="tpl_placeholders" class="form-control">
                             <option value="">— None —</option>

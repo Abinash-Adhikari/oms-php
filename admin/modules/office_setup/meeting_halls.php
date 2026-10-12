@@ -67,11 +67,11 @@ $drawerOpen = ($edit !== null);
             <input type="hidden" name="id" id="formId" value="<?= $edit ? (int) $edit['id'] : 0 ?>">
             <div class="form-group">
                 <label>Hall name *</label>
-                <input type="text" name="hall_name" class="form-control" required value="<?= $edit ? e($edit['hall_name']) : '' ?>">
+                <input type="text" name="hall_name" class="form-control" required value="<?= e(old('hall_name', $edit['hall_name'] ?? '')) ?>">
             </div>
             <div class="form-group">
                 <label>Occupancy</label>
-                <input type="number" name="occupancy" class="form-control" min="1" value="<?= $edit ? (int) $edit['occupancy'] : '' ?>">
+                <input type="number" name="occupancy" class="form-control" min="1" value="<?= e(old('occupancy', $edit ? (int) $edit['occupancy'] : '')) ?>">
             </div>
         </form>
     </div>

@@ -84,30 +84,30 @@ if ($mode === 'list'):
                         <div class="card-header"><h3 class="card-title">Personal Details</h3></div>
                         <div class="card-body">
                             <div class="form-group"><label>Full name *</label>
-                                <input type="text" name="fullname" class="form-control" required value="<?= $edit ? e($edit['fullname']) : '' ?>"></div>
+                                <input type="text" name="fullname" class="form-control" required value="<?= e(old('fullname', $edit ? $edit['fullname'] : '')) ?>"></div>
                             <div class="row">
                                 <div class="form-group col-md-6"><label>Gender</label>
                                     <select name="gender" class="form-control">
                                         <option value="">—</option>
                                         <?php foreach (['Male', 'Female', 'Other'] as $g): ?>
-                                            <option value="<?= $g ?>" <?= $edit && $edit['gender'] === $g ? 'selected' : '' ?>><?= $g ?></option>
+                                            <option value="<?= $g ?>" <?= old('gender', $edit['gender'] ?? '') === $g ? 'selected' : '' ?>><?= $g ?></option>
                                         <?php endforeach; ?>
                                     </select></div>
                                 <div class="form-group col-md-6"><label>Date of birth</label>
-                                    <input type="date" name="dob" class="form-control" value="<?= $edit ? e($edit['dob']) : '' ?>"></div>
+                                    <input type="date" name="dob" class="form-control" value="<?= e(old('dob', $edit ? $edit['dob'] : '')) ?>"></div>
                             </div>
                             <div class="form-group"><label>Phone</label>
-                                <input type="text" name="phone1" class="form-control" value="<?= $edit ? e($edit['phone1']) : '' ?>"></div>
+                                <input type="text" name="phone1" class="form-control" value="<?= e(old('phone1', $edit ? $edit['phone1'] : '')) ?>"></div>
                             <div class="form-group"><label>Address</label>
-                                <input type="text" name="address" class="form-control" value="<?= $edit ? e($edit['address']) : '' ?>"></div>
+                                <input type="text" name="address" class="form-control" value="<?= e(old('address', $edit ? $edit['address'] : '')) ?>"></div>
                             <div class="row">
                                 <div class="form-group col-md-6"><label>Citizenship</label>
-                                    <input type="text" name="citizenship" class="form-control" value="<?= $edit ? e($edit['citizenship']) : '' ?>"></div>
+                                    <input type="text" name="citizenship" class="form-control" value="<?= e(old('citizenship', $edit ? $edit['citizenship'] : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>Marital status</label>
                                     <select name="marital_status" class="form-control">
                                         <option value="">—</option>
                                         <?php foreach (['Married', 'Unmarried', 'Divorced'] as $m): ?>
-                                            <option value="<?= $m ?>" <?= $edit && $edit['marital_status'] === $m ? 'selected' : '' ?>><?= $m ?></option>
+                                            <option value="<?= $m ?>" <?= old('marital_status', $edit['marital_status'] ?? '') === $m ? 'selected' : '' ?>><?= $m ?></option>
                                         <?php endforeach; ?>
                                     </select></div>
                             </div>
@@ -118,17 +118,17 @@ if ($mode === 'list'):
                         <div class="card-body">
                             <div class="row">
                                 <div class="form-group col-md-6"><label>Blood group</label>
-                                    <input type="text" name="blood_group" class="form-control" value="<?= $profile ? e($profile['blood_group']) : '' ?>"></div>
+                                    <input type="text" name="blood_group" class="form-control" value="<?= e(old('blood_group', $profile ? $profile['blood_group'] : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>Emergency contact</label>
-                                    <input type="text" name="emergency_contact_name" class="form-control" value="<?= $profile ? e($profile['emergency_contact_name']) : '' ?>"></div>
+                                    <input type="text" name="emergency_contact_name" class="form-control" value="<?= e(old('emergency_contact_name', $profile ? $profile['emergency_contact_name'] : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>Emergency mobile</label>
-                                    <input type="text" name="emergency_contact_mobile" class="form-control" value="<?= $profile ? e($profile['emergency_contact_mobile']) : '' ?>"></div>
+                                    <input type="text" name="emergency_contact_mobile" class="form-control" value="<?= e(old('emergency_contact_mobile', $profile ? $profile['emergency_contact_mobile'] : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>Relation</label>
-                                    <input type="text" name="emergency_contact_relation" class="form-control" value="<?= $profile ? e($profile['emergency_contact_relation']) : '' ?>"></div>
+                                    <input type="text" name="emergency_contact_relation" class="form-control" value="<?= e(old('emergency_contact_relation', $profile ? $profile['emergency_contact_relation'] : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>Work experience</label>
-                                    <input type="text" name="work_experience" class="form-control" value="<?= $profile ? e($profile['work_experience']) : '' ?>"></div>
+                                    <input type="text" name="work_experience" class="form-control" value="<?= e(old('work_experience', $profile ? $profile['work_experience'] : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>Skills</label>
-                                    <input type="text" name="skill" class="form-control" value="<?= $profile ? e($profile['skill']) : '' ?>"></div>
+                                    <input type="text" name="skill" class="form-control" value="<?= e(old('skill', $profile ? $profile['skill'] : '')) ?>"></div>
                             </div>
                         </div>
                     </div>
@@ -140,53 +140,56 @@ if ($mode === 'list'):
                             <div class="row">
                                 <div class="form-group col-md-6"><label>Staff type</label>
                                     <select name="staff_type" class="form-control">
-                                        <option value="Admin" <?= $edit && $edit['staff_type'] === 'Admin' ? 'selected' : '' ?>>Admin</option>
-                                        <option value="Service" <?= $edit && $edit['staff_type'] === 'Service' ? 'selected' : '' ?>>Service</option>
+                                        <option value="Admin" <?= old('staff_type', $edit['staff_type'] ?? '') === 'Admin' ? 'selected' : '' ?>>Admin</option>
+                                        <option value="Service" <?= old('staff_type', $edit['staff_type'] ?? '') === 'Service' ? 'selected' : '' ?>>Service</option>
                                     </select></div>
                                 <div class="form-group col-md-6"><label>Join date</label>
-                                    <input type="date" name="join_date" class="form-control" value="<?= $edit ? e($edit['join_date']) : '' ?>"></div>
+                                    <input type="date" name="join_date" class="form-control" value="<?= e(old('join_date', $edit ? $edit['join_date'] : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>Department</label>
                                     <select name="department_id" class="form-control">
                                         <option value="">—</option>
                                         <?php foreach ($db->select('SELECT * FROM `tbl_office_departments` ORDER BY position, title') as $d): ?>
-                                            <option value="<?= (int) $d['id'] ?>" <?= $edit && (int) $edit['department_id'] === (int) $d['id'] ? 'selected' : '' ?>><?= e($d['title']) ?></option>
+                                            <option value="<?= (int) $d['id'] ?>" <?= (int) old('department_id', $edit['department_id'] ?? '') === (int) $d['id'] ? 'selected' : '' ?>><?= e($d['title']) ?></option>
                                         <?php endforeach; ?>
                                     </select></div>
                                 <div class="form-group col-md-6"><label>Designation</label>
                                     <select name="designation_id" class="form-control">
                                         <option value="">—</option>
                                         <?php foreach ($db->select('SELECT * FROM `tbl_office_designation` ORDER BY position, title') as $g): ?>
-                                            <option value="<?= (int) $g['id'] ?>" <?= $edit && (int) $edit['designation_id'] === (int) $g['id'] ? 'selected' : '' ?>><?= e($g['title']) ?></option>
+                                            <option value="<?= (int) $g['id'] ?>" <?= (int) old('designation_id', $edit['designation_id'] ?? '') === (int) $g['id'] ? 'selected' : '' ?>><?= e($g['title']) ?></option>
                                         <?php endforeach; ?>
                                     </select></div>
                                 <div class="form-group col-md-6"><label>Daily working hours</label>
-                                    <input type="number" name="daily_working_hour" class="form-control" value="<?= $edit && $edit['daily_working_hour'] !== null ? (int) $edit['daily_working_hour'] : '' ?>"></div>
+                                    <input type="number" name="daily_working_hour" class="form-control" value="<?= e(old('daily_working_hour', $edit && $edit['daily_working_hour'] !== null ? (int) $edit['daily_working_hour'] : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>Off day(s)</label>
                                     <select name="off_day[]" class="form-control select2" multiple>
                                         <?php $offDays = $edit ? array_map('trim', explode(',', (string) $edit['off_day'])) : []; ?>
+                                        <?php if (($offOld = old('off_day')) !== '' && is_array($offOld)): ?>
+                                            <?php $offDays = array_map('strval', $offOld); ?>
+                                        <?php endif; ?>
                                         <?php foreach (['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as $wd): ?>
                                             <option value="<?= $wd ?>" <?= in_array($wd, $offDays, true) ? 'selected' : '' ?>><?= $wd ?></option>
                                         <?php endforeach; ?>
                                     </select>
                                     <small class="text-muted">Hold Ctrl to select multiple days.</small></div>
                                 <div class="form-group col-md-3"><label>Work start (check-in)</label>
-                                    <input type="time" name="checkin" class="form-control" value="<?= $edit && $edit['checkin'] ? e(substr($edit['checkin'], 0, 5)) : '' ?>"></div>
+                                    <input type="time" name="checkin" class="form-control" value="<?= e(old('checkin', $edit && $edit['checkin'] ? substr($edit['checkin'], 0, 5) : '')) ?>"></div>
                                 <div class="form-group col-md-3"><label>Work end (check-out)</label>
-                                    <input type="time" name="checkout" class="form-control" value="<?= $edit && $edit['checkout'] ? e(substr($edit['checkout'], 0, 5)) : '' ?>"></div>
+                                    <input type="time" name="checkout" class="form-control" value="<?= e(old('checkout', $edit && $edit['checkout'] ? substr($edit['checkout'], 0, 5) : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>PAN no</label>
-                                    <input type="text" name="pan_num" class="form-control" value="<?= $edit ? e($edit['pan_num']) : '' ?>"></div>
+                                    <input type="text" name="pan_num" class="form-control" value="<?= e(old('pan_num', $edit ? $edit['pan_num'] : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>Bank</label>
-                                    <input type="text" name="bank" class="form-control" value="<?= $edit ? e($edit['bank']) : '' ?>"></div>
+                                    <input type="text" name="bank" class="form-control" value="<?= e(old('bank', $edit ? $edit['bank'] : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>Bank account no</label>
-                                    <input type="text" name="bank_account_num" class="form-control" value="<?= $edit ? e($edit['bank_account_num']) : '' ?>"></div>
+                                    <input type="text" name="bank_account_num" class="form-control" value="<?= e(old('bank_account_num', $edit ? $edit['bank_account_num'] : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>Bank account name</label>
-                                    <input type="text" name="bank_account_name" class="form-control" value="<?= $edit ? e($edit['bank_account_name']) : '' ?>"></div>
+                                    <input type="text" name="bank_account_name" class="form-control" value="<?= e(old('bank_account_name', $edit ? $edit['bank_account_name'] : '')) ?>"></div>
                                 <div class="form-group col-md-4"><label>SSF no</label>
-                                    <input type="text" name="ssf_number" class="form-control" value="<?= $edit ? e($edit['ssf_number']) : '' ?>"></div>
+                                    <input type="text" name="ssf_number" class="form-control" value="<?= e(old('ssf_number', $edit ? $edit['ssf_number'] : '')) ?>"></div>
                                 <div class="form-group col-md-4"><label>PF no</label>
-                                    <input type="text" name="pf_number" class="form-control" value="<?= $edit ? e($edit['pf_number']) : '' ?>"></div>
+                                    <input type="text" name="pf_number" class="form-control" value="<?= e(old('pf_number', $edit ? $edit['pf_number'] : '')) ?>"></div>
                                 <div class="form-group col-md-4"><label>CIT no</label>
-                                    <input type="text" name="cit_number" class="form-control" value="<?= $edit ? e($edit['cit_number']) : '' ?>"></div>
+                                    <input type="text" name="cit_number" class="form-control" value="<?= e(old('cit_number', $edit ? $edit['cit_number'] : '')) ?>"></div>
                             </div>
                         </div>
                     </div>
@@ -195,9 +198,9 @@ if ($mode === 'list'):
                         <div class="card-body">
                             <div class="row">
                                 <div class="form-group col-md-6"><label>Username *</label>
-                                    <input type="text" name="username" class="form-control" required value="<?= $edit ? e($edit['username']) : '' ?>"></div>
+                                    <input type="text" name="username" class="form-control" required value="<?= e(old('username', $edit ? $edit['username'] : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>Email</label>
-                                    <input type="email" name="email" class="form-control" value="<?= $edit ? e($edit['email']) : '' ?>"></div>
+                                    <input type="email" name="email" class="form-control" value="<?= e(old('email', $edit ? $edit['email'] : '')) ?>"></div>
                                 <?php if (!$edit): ?>
                                     <div class="form-group col-md-6"><label>Password *</label>
                                         <input type="password" name="password" class="form-control" required></div>
@@ -208,13 +211,13 @@ if ($mode === 'list'):
                                 <div class="form-group col-md-6"><label>Status</label>
                                     <select name="status" class="form-control">
                                         <?php foreach (['Active', 'Block', 'Terminated'] as $s): ?>
-                                            <option value="<?= $s ?>" <?= $edit && $edit['status'] === $s ? 'selected' : '' ?>><?= $s ?></option>
+                                            <option value="<?= $s ?>" <?= old('status', $edit['status'] ?? '') === $s ? 'selected' : '' ?>><?= $s ?></option>
                                         <?php endforeach; ?>
                                     </select></div>
                                 <div class="form-group col-md-6"><label>Termination date</label>
-                                    <input type="date" name="termination_date" class="form-control" value="<?= $edit ? e($edit['termination_date']) : '' ?>"></div>
+                                    <input type="date" name="termination_date" class="form-control" value="<?= e(old('termination_date', $edit ? $edit['termination_date'] : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>Termination reason</label>
-                                    <input type="text" name="termination_reason" class="form-control" placeholder="Required when status = Terminated"></div>
+                                    <input type="text" name="termination_reason" class="form-control" placeholder="Required when status = Terminated" value="<?= e(old('termination_reason')) ?>"></div>
                             </div>
                         </div>
                     </div>

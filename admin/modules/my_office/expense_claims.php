@@ -382,7 +382,7 @@ $pageUrl = pageUrl('my_office', 'expense_claims');
                                             <?= csrfField() ?>
                                             <input type="hidden" name="action" value="reject_claim">
                                             <input type="hidden" name="id" value="<?= $rid ?>">
-                                            <input type="text" name="reject_reason" class="form-control form-control-sm d-inline" style="max-width:120px" placeholder="Reason" required title="Reject reason">
+                                            <input type="text" name="reject_reason" class="form-control form-control-sm d-inline" style="max-width:120px" placeholder="Reason" required title="Reject reason" value="<?= e(old_scoped('reject_claim:' . (int) $rid, 'reject_reason')) ?>">
                                             <button type="submit" class="btn btn-xs btn-outline-danger" title="Reject"><i class="fas fa-times"></i></button>
                                         </form>
                                     <?php endif; ?>
@@ -416,7 +416,7 @@ $pageUrl = pageUrl('my_office', 'expense_claims');
             <input type="hidden" name="id" id="claimId" value="<?= $edit ? (int) $edit['id'] : 0 ?>">
             <div class="form-group">
                 <label>Category *</label>
-                <input type="text" name="category" class="form-control" list="claimCategories" id="claimCategory" required value="<?= $edit ? e($edit['category'] ?? '') : '' ?>" placeholder="e.g. Travel, Stationery">
+                <input type="text" name="category" class="form-control" list="claimCategories" id="claimCategory" required value="<?= e(old('category', $edit ? $edit['category'] ?? '' : '')) ?>" placeholder="e.g. Travel, Stationery">
                 <datalist id="claimCategories">
                     <?php foreach ($categories as $cat): ?><option value="<?= e($cat['category']) ?>"><?php endforeach; ?>
                 </datalist>
@@ -424,16 +424,16 @@ $pageUrl = pageUrl('my_office', 'expense_claims');
             <div class="form-row">
                 <div class="form-group col-6">
                     <label>Expense date *</label>
-                    <input type="date" name="expense_date" class="form-control" id="claimDate" required value="<?= $edit ? e($edit['expense_date']) : date('Y-m-d') ?>">
+                    <input type="date" name="expense_date" class="form-control" id="claimDate" required value="<?= e(old('expense_date', $edit ? $edit['expense_date'] : date('Y-m-d'))) ?>">
                 </div>
                 <div class="form-group col-6">
                     <label>Amount (NPR) *</label>
-                    <input type="number" name="amount" step="0.01" min="0.01" class="form-control" id="claimAmount" required value="<?= $edit ? e(number_format((float) $edit['amount'], 2, '.', '')) : '' ?>">
+                    <input type="number" name="amount" step="0.01" min="0.01" class="form-control" id="claimAmount" required value="<?= e(old('amount', $edit ? number_format((float) $edit['amount'], 2, '.', '') : '')) ?>">
                 </div>
             </div>
             <div class="form-group">
                 <label>Description *</label>
-                <textarea name="description" class="form-control" id="claimDescription" rows="3" required><?= $edit ? e($edit['description'] ?? '') : '' ?></textarea>
+                <textarea name="description" class="form-control" id="claimDescription" rows="3" required><?= e(old('description', $edit ? $edit['description'] ?? '' : '')) ?></textarea>
             </div>
             <div class="form-row">
                 <div class="form-group col-6">
@@ -441,7 +441,7 @@ $pageUrl = pageUrl('my_office', 'expense_claims');
                     <select name="project_id" class="form-control" id="claimProject">
                         <option value="">—</option>
                         <?php foreach ($projects as $p): ?>
-                            <option value="<?= (int) $p['id'] ?>" <?= $edit && (int) $edit['project_id'] === (int) $p['id'] ? 'selected' : '' ?>><?= e($p['title']) ?></option>
+                            <option value="<?= (int) $p['id'] ?>" <?= (int) old('project_id', $edit['project_id'] ?? '') === (int) $p['id'] ? 'selected' : '' ?>><?= e($p['title']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -450,7 +450,7 @@ $pageUrl = pageUrl('my_office', 'expense_claims');
                     <select name="client_id" class="form-control" id="claimClient">
                         <option value="">—</option>
                         <?php foreach ($clients as $c): ?>
-                            <option value="<?= (int) $c['id'] ?>" <?= $edit && (int) $edit['client_id'] === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option>
+                            <option value="<?= (int) $c['id'] ?>" <?= (int) old('client_id', $edit['client_id'] ?? '') === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>

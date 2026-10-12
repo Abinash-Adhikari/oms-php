@@ -29,7 +29,7 @@ $messages = $db->select('SELECT * FROM `tbl_cms_messages` ORDER BY FIELD(status,
                         <td><span class="text-truncate d-inline-block" style="max-width:220px" title="<?= e($q['message']) ?>"><?= e($q['message']) ?></span></td>
                         <td>
                             <?php if ($q['lead_id']): ?>
-                                <a href="<?= pageUrl('leads', 'leads') ?>&id=<?= (int) $q['lead_id'] ?>"><?= e($q['lead_company'] ?? ('#' . $q['lead_id'])) ?> (<?= e($q['lead_stage']) ?>)</a>
+                                <a href="<?= pageUrl('sales', 'leads') ?>&id=<?= (int) $q['lead_id'] ?>"><?= e($q['lead_company'] ?? ('#' . $q['lead_id'])) ?> (<?= e($q['lead_stage']) ?>)</a>
                             <?php else: ?>
                                 <span class="text-muted">—</span>
                             <?php endif; ?>
@@ -42,7 +42,7 @@ $messages = $db->select('SELECT * FROM `tbl_cms_messages` ORDER BY FIELD(status,
                                 <input type="hidden" name="id" value="<?= (int) $q['id'] ?>">
                                 <select name="status" class="form-control form-control-sm" onchange="this.form.submit()">
                                     <?php foreach (['New', 'Read', 'Converted'] as $st): ?>
-                                        <option value="<?= $st ?>" <?= $q['status'] === $st ? 'selected' : '' ?>><?= $st ?></option>
+                                        <option value="<?= $st ?>" <?= old('status', $q['status'] ?? '') === $st ? 'selected' : '' ?>><?= $st ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </form>
@@ -78,7 +78,7 @@ $messages = $db->select('SELECT * FROM `tbl_cms_messages` ORDER BY FIELD(status,
                                 <input type="hidden" name="id" value="<?= (int) $m['id'] ?>">
                                 <select name="status" class="form-control form-control-sm" onchange="this.form.submit()">
                                     <?php foreach (['New', 'Read', 'Replied'] as $st): ?>
-                                        <option value="<?= $st ?>" <?= $m['status'] === $st ? 'selected' : '' ?>><?= $st ?></option>
+                                        <option value="<?= $st ?>" <?= old('status', $m['status'] ?? '') === $st ? 'selected' : '' ?>><?= $st ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </form>

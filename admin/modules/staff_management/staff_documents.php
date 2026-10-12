@@ -71,8 +71,8 @@ $staff = $db->select('SELECT id, fullname, username, status FROM `tbl_users_logi
                         <?= csrfField() ?>
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="staff_id" value="<?= (int) $viewUser['id'] ?>">
-                        <div class="col-md-3"><input type="text" name="title" class="form-control form-control-sm" placeholder="Title"></div>
-                        <div class="col-md-2"><input type="text" name="document_type" class="form-control form-control-sm" placeholder="Type (e.g. CV)"></div>
+                        <div class="col-md-3"><input type="text" name="title" class="form-control form-control-sm" placeholder="Title" value="<?= e(old('title')) ?>"></div>
+                        <div class="col-md-2"><input type="text" name="document_type" class="form-control form-control-sm" placeholder="Type (e.g. CV)" value="<?= e(old('document_type')) ?>"></div>
                         <div class="col-md-4"><div class="custom-file">
                             <input type="file" class="custom-file-input" id="staff_doc_file" name="document_file" required>
                             <label class="custom-file-label" for="staff_doc_file">Choose file</label>

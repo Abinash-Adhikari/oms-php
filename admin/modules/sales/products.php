@@ -1,6 +1,6 @@
 <?php
 /**
- * SB-Tech — Project Catalog (independent entity, US-PJ).
+ * SB-Tech — Products (the catalog of what we sell; tbl_projects, US-PJ).
  * CRUD for the products/services the business sells (name, code, category,
  * description, status). Leads pursue a catalog project (tbl_leads.project_id →
  * tbl_projects); won deals provision a Client Project (tbl_client_projects).
@@ -64,8 +64,8 @@ foreach ($projects as $p) {
     <div class="card-body py-2">
         <div class="d-flex align-items-center flex-wrap" style="gap:.5rem">
             <form method="get" id="projectFilterForm" class="d-flex align-items-center flex-wrap" style="gap:.5rem;flex:1 1 auto;min-width:0">
-                <input type="hidden" name="module" value="leads">
-                <input type="hidden" name="page" value="projects">
+                <input type="hidden" name="module" value="sales">
+                <input type="hidden" name="page" value="products">
                 <div class="input-group input-group-sm" style="width:220px">
                     <div class="input-group-prepend"><span class="input-group-text bg-transparent border-right-0"><i class="fas fa-search text-muted"></i></span></div>
                     <input type="text" name="keyword" class="form-control border-left-0" placeholder="Search projects..." value="<?= e($keyword) ?>">
@@ -86,7 +86,7 @@ foreach ($projects as $p) {
             </form>
 
             <?php if ($canManage): ?>
-                <button type="button" class="btn btn-sm btn-primary" onclick="openProjectDrawer()"><i class="fas fa-plus mr-1"></i>Add Project</button>
+                <button type="button" class="btn btn-sm btn-primary" onclick="openProjectDrawer()"><i class="fas fa-plus mr-1"></i>Add Product</button>
             <?php endif; ?>
         </div>
     </div>
@@ -95,8 +95,8 @@ foreach ($projects as $p) {
 <!-- Projects table -->
 <div class="card card-outline">
     <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-project-diagram mr-1"></i>Project Catalog</h3>
-        <div class="card-tools text-muted small"><?= count($projects) ?> project<?= count($projects) === 1 ? '' : 's' ?></div>
+        <h3 class="card-title"><i class="fas fa-box mr-1"></i>Products</h3>
+        <div class="card-tools text-muted small"><?= count($projects) ?> product<?= count($projects) === 1 ? '' : 's' ?></div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -104,7 +104,7 @@ foreach ($projects as $p) {
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Project</th>
+                        <th>Product</th>
                         <th>Code</th>
                         <th>Category</th>
                         <th class="text-center">Leads</th>
@@ -117,7 +117,7 @@ foreach ($projects as $p) {
                     <tr>
                         <td class="text-muted"><?= $i + 1 ?></td>
                         <td>
-                            <a href="<?= pageUrl('leads', 'projects') ?>&edit=<?= (int) $p['id'] ?>" class="font-weight-bold text-decoration-none"><?= e($p['name']) ?></a>
+                            <a href="<?= pageUrl('sales', 'products') ?>&edit=<?= (int) $p['id'] ?>" class="font-weight-bold text-decoration-none"><?= e($p['name']) ?></a>
                             <?php if ($p['description']): ?><br><small class="text-muted"><?= e(mb_strimwidth($p['description'], 0, 90, '…')) ?></small><?php endif; ?>
                         </td>
                         <td><?= $p['code'] ? '<code>' . e($p['code']) . '</code>' : '—' ?></td>
@@ -127,18 +127,18 @@ foreach ($projects as $p) {
                         <td class="text-right">
                             <?php if ($canManage): ?>
                                 <button type="button" class="btn btn-xs btn-outline-secondary" title="Edit" onclick="openProjectDrawer(<?= (int) $p['id'] ?>)"><i class="fas fa-edit"></i></button>
-                                <form action="operation.php?module=leads&page=projects" method="post" class="d-inline">
+                                <form action="operation.php?module=sales&page=products" method="post" class="d-inline">
                                     <?= csrfField() ?>
                                     <input type="hidden" name="action" value="delete_project">
                                     <input type="hidden" name="id" value="<?= (int) $p['id'] ?>">
-                                    <button type="submit" class="btn btn-xs btn-outline-danger confirm-submit" data-confirm="Delete project '<?= e($p['name']) ?>'? Leads & client projects will keep their history (the links are cleared)."><i class="fas fa-trash"></i></button>
+                                    <button type="submit" class="btn btn-xs btn-outline-danger confirm-submit" data-confirm="Delete product '<?= e($p['name']) ?>'? Leads & client projects will keep their history (the links are cleared)."><i class="fas fa-trash"></i></button>
                                 </form>
                             <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
                 <?php if (!$projects): ?>
-                    <tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>No projects in the catalog yet.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>No products yet.</td></tr>
                 <?php endif; ?>
                 </tbody>
             </table>
@@ -150,26 +150,26 @@ foreach ($projects as $p) {
 <div class="cms-drawer-backdrop" id="drawerBackdrop" onclick="closeProjectDrawer()"></div>
 <div class="cms-drawer" id="projectDrawer">
     <div class="cms-drawer-header">
-        <h3><i class="fas fa-project-diagram"></i><span id="projectDrawerTitle">Add Project</span></h3>
+        <h3><i class="fas fa-box"></i><span id="projectDrawerTitle">Add Product</span></h3>
         <button type="button" class="cms-drawer-close" onclick="closeProjectDrawer()" aria-label="Close"><i class="fas fa-times"></i></button>
     </div>
     <div class="cms-drawer-body">
-        <form action="operation.php?module=leads&page=projects" method="post" id="projectForm">
+        <form action="operation.php?module=sales&page=products" method="post" id="projectForm">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="save_project">
             <input type="hidden" name="id" id="projectId" value="0">
             <div class="form-group">
                 <label>Name *</label>
-                <input type="text" name="name" id="projectName" class="form-control" required placeholder="e.g. Smart School Pro">
+                <input type="text" name="name" id="projectName" class="form-control" required placeholder="e.g. Smart School Pro" value="<?= e(old('name')) ?>">
             </div>
             <div class="row">
                 <div class="col-6 form-group">
                     <label>Code</label>
-                    <input type="text" name="code" id="projectCode" class="form-control" placeholder="e.g. SS-PRO">
+                    <input type="text" name="code" id="projectCode" class="form-control" placeholder="e.g. SS-PRO" value="<?= e(old('code')) ?>">
                 </div>
                 <div class="col-6 form-group">
                     <label>Category</label>
-                    <input type="text" name="category" id="projectCategory" class="form-control" list="projectCategoryList" placeholder="e.g. Education">
+                    <input type="text" name="category" id="projectCategory" class="form-control" list="projectCategoryList" placeholder="e.g. Education" value="<?= e(old('category')) ?>">
                     <datalist id="projectCategoryList">
                         <?php foreach ($categories as $cat): ?>
                             <option value="<?= e($cat['category']) ?>"></option>
@@ -187,12 +187,12 @@ foreach ($projects as $p) {
             </div>
             <div class="form-group">
                 <label>Description</label>
-                <textarea name="description" id="projectDescription" class="form-control" rows="3"></textarea>
+                <textarea name="description" id="projectDescription" class="form-control" rows="3"><?= e(old('description')) ?></textarea>
             </div>
         </form>
     </div>
     <div class="cms-drawer-footer">
-        <button type="submit" form="projectForm" class="btn btn-primary btn-block"><i class="fas fa-save mr-1"></i><span id="projectDrawerSubmit">Add Project</span></button>
+        <button type="submit" form="projectForm" class="btn btn-primary btn-block"><i class="fas fa-save mr-1"></i><span id="projectDrawerSubmit">Add Product</span></button>
     </div>
 </div>
 
@@ -223,8 +223,8 @@ function openProjectDrawer(projectId) {
         }
     }
     fillProjectForm(project);
-    document.getElementById('projectDrawerTitle').textContent = project ? 'Edit Project' : 'Add Project';
-    document.getElementById('projectDrawerSubmit').textContent = project ? 'Update Project' : 'Add Project';
+    document.getElementById('projectDrawerTitle').textContent = project ? 'Edit Product' : 'Add Product';
+    document.getElementById('projectDrawerSubmit').textContent = project ? 'Update Product' : 'Add Product';
 }
 
 function closeProjectDrawer() {

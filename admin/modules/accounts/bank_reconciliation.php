@@ -85,26 +85,26 @@ if ($sessionId) {
                     <div class="form-row">
                         <div class="form-group col-6">
                             <label>Statement ref *</label>
-                            <input type="text" name="statement_ref" class="form-control" required placeholder="e.g. BS-2026-07">
+                            <input type="text" name="statement_ref" class="form-control" value="<?= e(old('statement_ref')) ?>" required placeholder="e.g. BS-2026-07">
                         </div>
                         <div class="form-group col-6">
                             <label>Statement date</label>
-                            <input type="date" name="statement_date" class="form-control" value="<?= date('Y-m-d') ?>">
+                            <input type="date" name="statement_date" class="form-control" value="<?= e(old('statement_date', date('Y-m-d'))) ?>">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group col-6">
                             <label>Opening balance</label>
-                            <input type="number" name="opening_balance" step="0.01" class="form-control" value="0">
+                            <input type="number" name="opening_balance" step="0.01" class="form-control" value="<?= e(old('opening_balance', '0')) ?>">
                         </div>
                         <div class="form-group col-6">
                             <label>Statement total</label>
-                            <input type="number" name="total_statement_amount" step="0.01" class="form-control" value="0">
+                            <input type="number" name="total_statement_amount" step="0.01" class="form-control" value="<?= e(old('total_statement_amount', '0')) ?>">
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Remarks</label>
-                        <textarea name="remarks" class="form-control" rows="2"></textarea>
+                        <textarea name="remarks" class="form-control" rows="2"><?= e(old('remarks')) ?></textarea>
                     </div>
                     <button class="btn btn-primary btn-block"><i class="fas fa-plus mr-1"></i>Create session</button>
                 </form>

@@ -38,7 +38,9 @@ if (!empty(config('debug'))) {
     ini_set('display_errors', '1');
 }
 
-if (session_status() === PHP_SESSION_NONE) {
+// Stateless entry points (public API) define SB_STATELESS before loading
+// setup.php: no session cookie, so responses stay publicly cacheable.
+if (session_status() === PHP_SESSION_NONE && !defined('SB_STATELESS')) {
     $sessionLifetime = (int) config('session_lifetime_seconds', 28800);
     ini_set('session.gc_maxlifetime', (string) $sessionLifetime);
     session_set_cookie_params([
@@ -90,12 +92,16 @@ require_once $appRoot . '/classes/DocumentWord.php';
 // --- Shared helpers ---
 require_once $appRoot . '/functions/helpers.php';
 require_once $appRoot . '/functions/permissions.php';
+require_once $appRoot . '/functions/api.php';
 require_once $appRoot . '/functions/hr.php';
 require_once $appRoot . '/functions/office.php';
 require_once $appRoot . '/functions/accounting.php';
 require_once $appRoot . '/functions/inventory.php';
 require_once $appRoot . '/functions/documents.php';
 require_once $appRoot . '/functions/pdf_helpers.php';
+
+// --- Preserve submitted form values across a failed POST (old input) ---
+age_old_input();
 
 // --- Database connection ---
 // CLI tools (artisan) define APP_BOOTSTRAP_SKIP_DB to connect after

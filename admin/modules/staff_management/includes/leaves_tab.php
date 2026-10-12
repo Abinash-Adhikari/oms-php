@@ -136,7 +136,7 @@ $drawerOpen = ($edit !== null);
                     <?php foreach ($allocations as $al): ?>
                         <option value="<?= (int) $al['leave_id'] ?>"
                                 data-balance="<?= (float) $al['remaining'] ?>"
-                                <?= $edit && (int) $edit['leave_type_id'] === (int) $al['leave_id'] ? 'selected' : '' ?>>
+                                <?= (int) old('leave_type_id', $edit['leave_type_id'] ?? '') === (int) $al['leave_id'] ? 'selected' : '' ?>>
                             <?= e($al['leave_title']) ?> (<?= e((float) $al['remaining']) ?> days left)
                         </option>
                     <?php endforeach; ?>
@@ -150,36 +150,36 @@ $drawerOpen = ($edit !== null);
                 <select name="absence_filler" class="form-control" id="leaveFiller" required>
                     <option value="">Select staff…</option>
                     <?php foreach ($substitutes as $s): ?>
-                        <option value="<?= (int) $s['id'] ?>" <?= $edit && (int) $edit['absence_filler'] === (int) $s['id'] ? 'selected' : '' ?>><?= e($s['fullname']) ?></option>
+                        <option value="<?= (int) $s['id'] ?>" <?= (int) old('absence_filler', $edit['absence_filler'] ?? '') === (int) $s['id'] ? 'selected' : '' ?>><?= e($s['fullname']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="form-row">
                 <div class="col-6 form-group">
                     <label>From *</label>
-                    <input type="date" name="from_date" id="from_date" class="form-control" required value="<?= $edit ? e($edit['from_date']) : '' ?>">
+                    <input type="date" name="from_date" id="from_date" class="form-control" required value="<?= e(old('from_date', $edit ? $edit['from_date'] : '')) ?>">
                 </div>
                 <div class="col-6 form-group">
                     <label>To *</label>
-                    <input type="date" name="to_date" id="to_date" class="form-control" required value="<?= $edit ? e($edit['to_date']) : '' ?>">
+                    <input type="date" name="to_date" id="to_date" class="form-control" required value="<?= e(old('to_date', $edit ? $edit['to_date'] : '')) ?>">
                 </div>
             </div>
             <div class="form-group">
                 <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="half_day" name="half_day" value="1" <?= $edit && $edit['half_day'] ? 'checked' : '' ?>>
+                    <input type="checkbox" class="custom-control-input" id="half_day" name="half_day" value="1" <?= old('half_day', $edit['half_day'] ?? '') ? 'checked' : '' ?>>
                     <label class="custom-control-label" for="half_day">Half day (0.5)</label>
                 </div>
             </div>
             <div class="form-group" id="halfGroup">
                 <label>Half</label>
                 <select name="first_half" class="form-control" id="leaveHalf">
-                    <option value="1" <?= $edit && $edit['first_half'] ? 'selected' : '' ?>>First half</option>
-                    <option value="0" <?= $edit && !$edit['first_half'] ? 'selected' : '' ?>>Second half</option>
+                    <option value="1" <?= $edit && old('first_half', $edit['first_half']) ? 'selected' : '' ?>>First half</option>
+                    <option value="0" <?= $edit && !old('first_half', $edit['first_half']) ? 'selected' : '' ?>>Second half</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Reason *</label>
-                <textarea name="reason" class="form-control" id="leaveReason" rows="3" required><?= $edit ? e($edit['reason']) : '' ?></textarea>
+                <textarea name="reason" class="form-control" id="leaveReason" rows="3" required><?= e(old('reason', $edit ? $edit['reason'] : '')) ?></textarea>
             </div>
             <div class="alert alert-light border mb-2 py-2">
                 <strong>Days:</strong> <span id="day_count" class="font-weight-bold">0</span>

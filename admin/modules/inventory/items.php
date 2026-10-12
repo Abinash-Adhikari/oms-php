@@ -121,51 +121,51 @@ $drawerOpen = ($editItem !== null);
             <input type="hidden" name="id" id="formId" value="<?= $editItem ? (int) $editItem['id'] : 0 ?>">
             <div class="form-group">
                 <label>SKU *</label>
-                <input type="text" name="sku" class="form-control" id="formSku" required value="<?= $editItem ? e($editItem['sku']) : '' ?>">
+                <input type="text" name="sku" class="form-control" id="formSku" required value="<?= e(old('sku', $editItem ? $editItem['sku'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Name *</label>
-                <input type="text" name="name" class="form-control" id="formName" required value="<?= $editItem ? e($editItem['name']) : '' ?>">
+                <input type="text" name="name" class="form-control" id="formName" required value="<?= e(old('name', $editItem ? $editItem['name'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Category</label>
                 <select name="category_id" class="form-control" id="formCategoryId">
                     <option value="0">— None —</option>
                     <?php foreach ($categories as $c): ?>
-                        <option value="<?= (int) $c['id'] ?>" <?= $editItem && (int) $editItem['category_id'] === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['title']) ?></option>
+                        <option value="<?= (int) $c['id'] ?>" <?= $editItem && (int) old('category_id', $editItem['category_id']) === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['title']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="form-group">
                 <label>Unit</label>
-                <input type="text" name="unit" class="form-control" id="formUnit" placeholder="e.g. pcs, hrs, kg" value="<?= $editItem ? e($editItem['unit'] ?? '') : '' ?>">
+                <input type="text" name="unit" class="form-control" id="formUnit" placeholder="e.g. pcs, hrs, kg" value="<?= e(old('unit', $editItem ? $editItem['unit'] ?? '' : '')) ?>">
             </div>
             <div class="form-row">
                 <div class="col-6 form-group">
                     <label>Cost Price</label>
-                    <input type="number" step="0.01" name="cost_price" class="form-control" id="formCostPrice" value="<?= $editItem ? e($editItem['cost_price']) : '' ?>">
+                    <input type="number" step="0.01" name="cost_price" class="form-control" id="formCostPrice" value="<?= e(old('cost_price', $editItem ? $editItem['cost_price'] : '')) ?>">
                 </div>
                 <div class="col-6 form-group">
                     <label>Selling Price</label>
-                    <input type="number" step="0.01" name="selling_price" class="form-control" id="formSellingPrice" value="<?= $editItem ? e($editItem['selling_price']) : '' ?>">
+                    <input type="number" step="0.01" name="selling_price" class="form-control" id="formSellingPrice" value="<?= e(old('selling_price', $editItem ? $editItem['selling_price'] : '')) ?>">
                 </div>
             </div>
             <div class="form-row">
                 <div class="col-6 form-group">
                     <label>Min Stock</label>
-                    <input type="number" name="min_stock" class="form-control" id="formMinStock" value="<?= $editItem ? e($editItem['min_stock']) : '0' ?>">
+                    <input type="number" name="min_stock" class="form-control" id="formMinStock" value="<?= e(old('min_stock', $editItem ? $editItem['min_stock'] : '0')) ?>">
                 </div>
                 <div class="col-6 form-group">
                     <label>Serialized?</label>
                     <select name="is_serialized" class="form-control" id="formIsSerialized">
-                        <option value="0" <?= $editItem && !$editItem['is_serialized'] ? 'selected' : '' ?>>No</option>
-                        <option value="1" <?= $editItem && $editItem['is_serialized'] ? 'selected' : '' ?>>Yes</option>
+                        <option value="0" <?= $editItem && !old('is_serialized', $editItem['is_serialized']) ? 'selected' : '' ?>>No</option>
+                        <option value="1" <?= $editItem && old('is_serialized', $editItem['is_serialized']) ? 'selected' : '' ?>>Yes</option>
                     </select>
                 </div>
             </div>
             <div class="form-group">
                 <label>Description</label>
-                <textarea name="description" class="form-control" id="formDescription" rows="3"><?= $editItem ? e($editItem['description'] ?? '') : '' ?></textarea>
+                <textarea name="description" class="form-control" id="formDescription" rows="3"><?= e(old('description', $editItem ? $editItem['description'] ?? '' : '')) ?></textarea>
             </div>
             <?php if ($editItem): ?>
                 <hr>

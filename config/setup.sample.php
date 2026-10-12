@@ -25,6 +25,7 @@ $APP_CONFIG = [
     'base_currency'       => 'NPR',
     'country_code'        => '+977',
     'debug'               => true,
+    'app_listing_allow_http' => false,        // true on local/dev only: allow http:// URLs for school-app listings
     'session_lifetime_seconds' => 28800,      // 8 h, N-02
     'upload_max_bytes'    => 10485760,        // 10 MB, X-03
     'pagination'          => 50,              // X-04

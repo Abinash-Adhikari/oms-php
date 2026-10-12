@@ -16,8 +16,8 @@ if (!$canManage) {
 $action = (string) ($_POST['action'] ?? '');
 $fromClientId = (int) ($_POST['from_client_id'] ?? 0);
 $back = $fromClientId
-    ? pageUrl('clients', 'detail') . '&id=' . $fromClientId
-    : 'show_page.php?module=leads&page=leads';
+    ? pageUrl('sales', 'client_detail') . '&id=' . $fromClientId
+    : 'show_page.php?module=sales&page=leads';
 
 /** Append an activity + refresh last_activity_on. */
 function logLeadActivity(Database $db, int $leadId, string $type, string $note, int $actor): void
@@ -33,11 +33,29 @@ function logLeadActivity(Database $db, int $leadId, string $type, string $note, 
 
 /**
  * Create a won-client-project row for a lead that was just marked Won, unless
- * one already exists for that lead. Returns the new project id (or existing).
+ * one already exists for that lead. A live demo/trial row (is_won = 0) is
+ * upgraded in place so the deployment keeps its id, url and history.
+ * Returns the new project id (or existing).
  */
 function autoProvisionClientProject(Database $db, array $lead, int $clientId, int $actor): ?int
 {
-    $existing = $db->selectOne('SELECT `id` FROM `tbl_client_projects` WHERE `lead_id` = ? LIMIT 1', [(int) $lead['id']]);
+    $trial = $db->selectOne(
+        "SELECT `id`, `client_id`, `title` FROM `tbl_client_projects`
+         WHERE `lead_id` = ? AND `is_won` = 0 AND `status` <> 'Cancelled'
+         ORDER BY `id` DESC LIMIT 1",
+        [(int) $lead['id']]
+    );
+    if ($trial) {
+        $db->update('tbl_client_projects', [
+            'is_won'     => 1,
+            'status'     => 'Active',
+            'client_id'  => (int) $trial['client_id'] ?: $clientId,
+            'updated_by' => $actor,
+        ], '`id` = ?', [(int) $trial['id']]);
+        logLeadActivity($db, (int) $lead['id'], 'Status Change', 'Trial "' . $trial['title'] . '" converted to won project', $actor);
+        return (int) $trial['id'];
+    }
+    $existing = $db->selectOne('SELECT `id` FROM `tbl_client_projects` WHERE `lead_id` = ? AND `is_won` = 1 LIMIT 1', [(int) $lead['id']]);
     if ($existing) {
         return (int) $existing['id'];
     }
@@ -52,10 +70,25 @@ function autoProvisionClientProject(Database $db, array $lead, int $clientId, in
         'title'      => $title,
         'value'      => $lead['estimated_value'],
         'status'     => 'Active',
+        'is_won'     => 1,
         'added_by'   => $actor,
     ]);
     logLeadActivity($db, (int) $lead['id'], 'Status Change', 'Client project "' . e($title) . '" auto-provisioned', $actor);
     return $projectId;
+}
+
+/** A lead marked Lost cancels its open demo/trial rows; the client stays as a Prospect. */
+function cancelLeadTrials(Database $db, int $leadId, int $actor): void
+{
+    $n = $db->update(
+        'tbl_client_projects',
+        ['status' => 'Cancelled', 'updated_by' => $actor],
+        "`lead_id` = ? AND `is_won` = 0 AND `status` <> 'Cancelled'",
+        [$leadId]
+    );
+    if ($n > 0) {
+        logLeadActivity($db, $leadId, 'Status Change', 'Demo/trial cancelled (lead Lost)', $actor);
+    }
 }
 
 try {
@@ -114,6 +147,16 @@ try {
                 logLeadActivity($db, $id, 'Note', 'Owner reassigned', $me);
             }
             $db->update('tbl_leads', $data, '`id` = ?', [$id]);
+            if ($data['stage'] === 'Lost' && $existing['stage'] !== 'Lost') {
+                cancelLeadTrials($db, $id, $me);
+            }
+            $wonClientId = (int) ($existing['won_client_id'] ?: $data['client_id']);
+            if ($data['stage'] === 'Won' && $existing['stage'] !== 'Won' && $wonClientId) {
+                $db->transaction(function () use ($db, $id, $existing, $data, $wonClientId, $me) {
+                    $db->update('tbl_leads', ['won_client_id' => $wonClientId, 'updated_by' => $me], '`id` = ?', [$id]);
+                    autoProvisionClientProject($db, array_merge($existing, $data, ['id' => $id]), $wonClientId, $me);
+                });
+            }
             setFlash('success', 'Lead updated.');
         } else {
             $newId = (int) $db->insert('tbl_leads', array_merge($data, ['added_by' => $me]));
@@ -173,6 +216,9 @@ try {
                     $db->update('tbl_leads', ['won_client_id' => $wonClientId, 'updated_by' => $me], '`id` = ?', [$lead['id']]);
                 }
             }
+        }
+        if ($stage === 'Lost' && $lead['stage'] !== 'Lost') {
+            cancelLeadTrials($db, $id, $me);
         }
         if ($log) {
             logLeadActivity($db, $id, 'Status Change', implode('; ', $log), $me);
@@ -355,8 +401,14 @@ try {
             setFlash('error', 'Lead not found.');
             redirect($back);
         }
-        if ($lead['stage'] !== 'Won') {
-            setFlash('error', 'Only Won leads can be provisioned as client projects.');
+        // is_won = 0 → demo/trial for an open lead; 1 → the won deployment.
+        $isWon = (string) ($_POST['is_won'] ?? '1') !== '0';
+        if ($isWon && $lead['stage'] !== 'Won') {
+            setFlash('error', 'Only Won leads can be provisioned as won projects.');
+            redirect($back . '&id=' . $id);
+        }
+        if (!$isWon && in_array($lead['stage'], ['Won', 'Lost'], true)) {
+            setFlash('error', 'Demo/trial can only be started for an open lead.');
             redirect($back . '&id=' . $id);
         }
         $title = trim((string) ($_POST['title'] ?? ''));
@@ -368,12 +420,20 @@ try {
 
         try {
             $projectUrl = normalize_project_url((string) ($_POST['url'] ?? ''));
+            $endDate = trim((string) ($_POST['end_date'] ?? ''));
+            if ($endDate !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate)) {
+                throw new InvalidArgumentException('Invalid end date.');
+            }
+            if ($endDate === '' && !$isWon) {
+                $endDate = trial_end_date(date('Y-m-d'), (int) ($_POST['trial_days'] ?? 14));
+            }
         } catch (InvalidArgumentException $e) {
             setFlash('error', $e->getMessage());
             redirect($back . '&id=' . $id);
         }
+        $endDate = $endDate ?: null;
 
-        $result = $db->transaction(function () use ($db, $me, $lead, $id, $title, $leadProject, $projectUrl) {
+        $result = $db->transaction(function () use ($db, $me, $lead, $id, $title, $leadProject, $projectUrl, $isWon, $endDate) {
             $mode = (string) ($_POST['client_mode'] ?? 'create');
             $clientId = (int) ($_POST['client_id'] ?? 0);
 
@@ -414,31 +474,51 @@ try {
                 }
             }
 
-            $db->update('tbl_leads', [
-                'won_client_id' => $clientId,
+            $leadUpdate = [
                 'client_id'     => $clientId,
                 'project_id'    => $leadProject ?: null,
                 'updated_by'    => $me,
-            ], '`id` = ?', [$id]);
+            ];
+            if ($isWon) {
+                $leadUpdate['won_client_id'] = $clientId;
+            }
+            $db->update('tbl_leads', $leadUpdate, '`id` = ?', [$id]);
 
-            $projectId = (int) $db->insert('tbl_client_projects', [
+            $row = [
                 'client_id'   => $clientId,
                 'lead_id'     => $id,
                 'project_id'  => $leadProject ?: null,
+                'is_won'      => $isWon ? 1 : 0,
                 'title'       => $title,
                 'package'     => trim((string) ($_POST['package'] ?? '')) ?: null,
                 'url'         => $projectUrl,
                 'value'       => ($_POST['value'] ?? '') !== '' ? round((float) $_POST['value'], 4) : null,
+                'end_date'    => $endDate,
                 'status'      => 'Active',
                 'description' => trim((string) ($_POST['description'] ?? '')) ?: null,
-                'added_by'    => $me,
-            ]);
+            ];
 
-            logLeadActivity($db, $id, 'Status Change', 'Provisioned client project "' . e($title) . '" (#' . $projectId . ')', $me);
+            // Winning a lead that ran a demo/trial upgrades that row in place.
+            $trial = $isWon ? $db->selectOne(
+                "SELECT `id` FROM `tbl_client_projects`
+                 WHERE `lead_id` = ? AND `is_won` = 0 AND `status` <> 'Cancelled'
+                 ORDER BY `id` DESC LIMIT 1",
+                [$id]
+            ) : null;
+            if ($trial) {
+                $projectId = (int) $trial['id'];
+                $db->update('tbl_client_projects', $row + ['updated_by' => $me], '`id` = ?', [$projectId]);
+                $note = 'Trial converted to won project "' . $title . '" (#' . $projectId . ')';
+            } else {
+                $projectId = (int) $db->insert('tbl_client_projects', $row + ['added_by' => $me]);
+                $note = ($isWon ? 'Provisioned client project "' : 'Started demo/trial "') . $title . '" (#' . $projectId . ')';
+            }
+
+            logLeadActivity($db, $id, 'Status Change', $note, $me);
             return ['project_id' => $projectId, 'client_id' => $clientId];
         });
 
-        setFlash('success', 'Client project "' . e($title) . '" provisioned.');
+        setFlash('success', ($isWon ? 'Client project "' : 'Demo/trial "') . $title . '" provisioned.');
         redirect($back . '&id=' . $id);
     }
 

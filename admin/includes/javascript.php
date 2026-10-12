@@ -636,6 +636,8 @@ function getNepaliDateInput(input) {
 <script src="<?= assetUrl('assets/js/file-upload-preview.js') ?>"></script>
 <script src="<?= assetUrl('assets/js/file-preview.js') ?>"></script>
 <script src="<?= assetUrl('assets/js/file-gallery.js') ?>"></script>
+<!-- Repopulate forms after a failed submit (window.CMS_OLD_INPUT, server-side) -->
+<script src="<?= assetUrl('assets/js/cms-form-restore.js') ?>?v=<?= @filemtime(__DIR__ . '/../assets/js/cms-form-restore.js') ?: '1' ?>"></script>
 <?php if (($_GET['module'] ?? '') === 'dashboard'): ?>
 <!-- Chart.js — dashboard only -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>

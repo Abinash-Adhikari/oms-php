@@ -90,7 +90,7 @@ $drawerOpen = ($editWarning !== null);
                 <select name="staff_id" class="form-control" id="formStaff" required>
                     <option value="">— Select staff —</option>
                     <?php foreach ($staff as $s): ?>
-                        <option value="<?= (int) $s['id'] ?>" <?= $editWarning && (int) $editWarning['staff_id'] === (int) $s['id'] ? 'selected' : '' ?>>
+                        <option value="<?= (int) $s['id'] ?>" <?= (int) old('staff_id', $editWarning['staff_id'] ?? '') === (int) $s['id'] ? 'selected' : '' ?>>
                             <?= e($s['fullname']) ?><?= !in_array($s['status'], ['Active', 'Current'], true) ? ' (' . e($s['status']) . ')' : '' ?>
                         </option>
                     <?php endforeach; ?>
@@ -99,29 +99,29 @@ $drawerOpen = ($editWarning !== null);
             <div class="form-group">
                 <label>Type</label>
                 <select name="warning_type" class="form-control" id="formType">
-                    <option value="Verbal" <?= $editWarning && ($editWarning['warning_type'] ?? '') === 'Verbal' ? 'selected' : '' ?>>Verbal</option>
-                    <option value="Written" <?= (!$editWarning || ($editWarning['warning_type'] ?? '') === 'Written') ? 'selected' : '' ?>>Written</option>
-                    <option value="Final" <?= $editWarning && ($editWarning['warning_type'] ?? '') === 'Final' ? 'selected' : '' ?>>Final</option>
+                    <option value="Verbal" <?= old('warning_type', $editWarning['warning_type'] ?? '') === 'Verbal' ? 'selected' : '' ?>>Verbal</option>
+                    <option value="Written" <?= old('warning_type', $editWarning['warning_type'] ?? 'Written') === 'Written' ? 'selected' : '' ?>>Written</option>
+                    <option value="Final" <?= old('warning_type', $editWarning['warning_type'] ?? '') === 'Final' ? 'selected' : '' ?>>Final</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Title *</label>
-                <input type="text" name="title" class="form-control" id="formTitle" required value="<?= $editWarning ? e($editWarning['title']) : '' ?>">
+                <input type="text" name="title" class="form-control" id="formTitle" required value="<?= e(old('title', $editWarning ? $editWarning['title'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Issued On</label>
-                <input type="date" name="issued_on" class="form-control" id="formIssuedOn" value="<?= $editWarning ? e($editWarning['issued_on']) : '' ?>">
+                <input type="date" name="issued_on" class="form-control" id="formIssuedOn" value="<?= e(old('issued_on', $editWarning ? $editWarning['issued_on'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Status</label>
                 <select name="is_active" class="form-control" id="formStatus">
-                    <option value="1" <?= ($editWarning && ($editWarning['is_active'] ?? 1)) ? 'selected' : '' ?>>Active</option>
-                    <option value="0" <?= $editWarning && !($editWarning['is_active'] ?? 1) ? 'selected' : '' ?>>Inactive</option>
+                    <option value="1" <?= old('is_active', $editWarning['is_active'] ?? '') == '1' ? 'selected' : '' ?>>Active</option>
+                    <option value="0" <?= old('is_active', $editWarning['is_active'] ?? '') == '0' ? 'selected' : '' ?>>Inactive</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Description</label>
-                <textarea name="description" class="form-control" id="formDescription" rows="4"><?= $editWarning ? e($editWarning['description']) : '' ?></textarea>
+                <textarea name="description" class="form-control" id="formDescription" rows="4"><?= e(old('description', $editWarning ? $editWarning['description'] : '')) ?></textarea>
             </div>
         </form>
     </div>

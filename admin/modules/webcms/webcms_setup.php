@@ -24,9 +24,9 @@ $fields = [
                         <div class="form-group">
                             <label><?= e($fl) ?></label>
                             <?php if ($fk === 'maps_embed'): ?>
-                                <textarea name="<?= e($fk) ?>" class="form-control" rows="3"><?= $setup ? e($setup[$fk]) : '' ?></textarea>
+                                <textarea name="<?= e($fk) ?>" class="form-control" rows="3"><?= e(old($fk, $setup[$fk] ?? '')) ?></textarea>
                             <?php else: ?>
-                                <input type="text" name="<?= e($fk) ?>" class="form-control" value="<?= $setup ? e($setup[$fk]) : '' ?>">
+                                <input type="text" name="<?= e($fk) ?>" class="form-control" value="<?= e(old($fk, $setup[$fk] ?? '')) ?>">
                             <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
@@ -36,9 +36,9 @@ $fields = [
                         <div class="form-group">
                             <label><?= e($fl) ?></label>
                             <?php if ($fk === 'seo_meta_keywords'): ?>
-                                <textarea name="<?= e($fk) ?>" class="form-control" rows="3"><?= $setup ? e($setup[$fk]) : '' ?></textarea>
+                                <textarea name="<?= e($fk) ?>" class="form-control" rows="3"><?= e(old($fk, $setup[$fk] ?? '')) ?></textarea>
                             <?php else: ?>
-                                <input type="text" name="<?= e($fk) ?>" class="form-control" value="<?= $setup ? e($setup[$fk]) : '' ?>">
+                                <input type="text" name="<?= e($fk) ?>" class="form-control" value="<?= e(old($fk, $setup[$fk] ?? '')) ?>">
                             <?php endif; ?>
                         </div>
                     <?php endforeach; ?>

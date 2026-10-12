@@ -116,7 +116,7 @@ if ($isPdf || $isPreview || $isWord) {
                             <label>Paper size</label>
                             <select name="paper_size" class="form-control">
                                 <?php foreach (['A4', 'Letter', 'Legal'] as $p): ?>
-                                    <option value="<?= $p ?>" <?= $settings['paper_size'] === $p ? 'selected' : '' ?>><?= $p ?></option>
+                                    <option value="<?= $p ?>" <?= old('paper_size', $settings['paper_size'] ?? '') === $p ? 'selected' : '' ?>><?= $p ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -124,7 +124,7 @@ if ($isPdf || $isPreview || $isWord) {
                             <label>Orientation</label>
                             <select name="orientation" class="form-control">
                                 <?php foreach (['Portrait', 'Landscape'] as $o): ?>
-                                    <option value="<?= $o ?>" <?= $settings['orientation'] === $o ? 'selected' : '' ?>><?= $o ?></option>
+                                    <option value="<?= $o ?>" <?= old('orientation', $settings['orientation'] ?? '') === $o ? 'selected' : '' ?>><?= $o ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -133,11 +133,11 @@ if ($isPdf || $isPreview || $isWord) {
                             <div class="d-flex">
                                 <select name="font_family" class="form-control mr-2">
                                     <?php foreach (['helvetica' => 'Helvetica', 'times' => 'Times', 'courier' => 'Courier', 'dejavusans' => 'DejaVu Sans'] as $fk => $fl): ?>
-                                        <option value="<?= $fk ?>" <?= $settings['font_family'] === $fk ? 'selected' : '' ?>><?= $fl ?></option>
+                                        <option value="<?= $fk ?>" <?= old('font_family', $settings['font_family'] ?? '') === $fk ? 'selected' : '' ?>><?= $fl ?></option>
                                     <?php endforeach; ?>
                                 </select>
                                 <input type="number" name="font_size_pt" class="form-control" style="width:90px" min="8" max="20"
-                                       value="<?= (int) $settings['font_size_pt'] ?>" title="Font size (pt)">
+                                       value="<?= e(old('font_size_pt', (int) $settings['font_size_pt'])) ?>" title="Font size (pt)">
                             </div>
                         </div>
                     </div>
@@ -146,7 +146,7 @@ if ($isPdf || $isPreview || $isWord) {
                             <div class="col-6 form-group">
                                 <label><?= $label ?></label>
                                 <input type="number" step="0.5" min="0" max="50" name="<?= $field ?>" class="form-control"
-                                       value="<?= e((string) $settings[$field]) ?>">
+                                       value="<?= e(old($field, (string) $settings[$field])) ?>">
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -165,7 +165,7 @@ if ($isPdf || $isPreview || $isWord) {
                                 'details_center_logo_right' => 'Details center / Logo right',
                                 'logo_top_details_bottom'   => 'Logo top / Details bottom',
                             ] as $val => $label): ?>
-                                <option value="<?= $val ?>" <?= ($settings['letterhead_style'] ?? '') === $val ? 'selected' : '' ?>><?= $label ?></option>
+                                <option value="<?= $val ?>" <?= old('letterhead_style', $settings['letterhead_style'] ?? '') === $val ? 'selected' : '' ?>><?= $label ?></option>
                             <?php endforeach; ?>
                         </select>
                         <small class="form-text text-muted">How the logo and company details are arranged in the document header.</small>
@@ -182,7 +182,7 @@ if ($isPdf || $isPreview || $isWord) {
                                     'text_only'   => 'Text only',
                                     'none'        => 'No header',
                                 ] as $mk => $ml): ?>
-                                    <option value="<?= $mk ?>" <?= $settings['header_mode'] === $mk ? 'selected' : '' ?>><?= $ml ?></option>
+                                    <option value="<?= $mk ?>" <?= old('header_mode', $settings['header_mode'] ?? '') === $mk ? 'selected' : '' ?>><?= $ml ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -201,16 +201,16 @@ if ($isPdf || $isPreview || $isWord) {
                         <div class="col-12 form-group">
                             <label>Header title <small class="text-muted">(blank = organization name)</small></label>
                             <input type="text" name="header_title" class="form-control" maxlength="191"
-                                   value="<?= e((string) $settings['header_title']) ?>">
+                                   value="<?= e(old('header_title', (string) $settings['header_title'])) ?>">
                         </div>
                         <div class="col-12 form-group">
                             <label>Header subtitle</label>
                             <input type="text" name="header_subtitle" class="form-control" maxlength="255"
-                                   value="<?= e((string) $settings['header_subtitle']) ?>">
+                                   value="<?= e(old('header_subtitle', (string) $settings['header_subtitle'])) ?>">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="mb-0"><input type="checkbox" name="show_header_line" value="1" <?= (int) $settings['show_header_line'] === 1 ? 'checked' : '' ?>> show divider line under header</label>
+                        <label class="mb-0"><input type="checkbox" name="show_header_line" value="1" <?= old('show_header_line', (int) $settings['show_header_line'] === 1) ? 'checked' : '' ?>> show divider line under header</label>
                     </div>
 
                     <h6 class="text-muted text-uppercase mb-2 mt-3" style="font-size:.75rem">Office profile details (letterhead)</h6>
@@ -223,7 +223,7 @@ if ($isPdf || $isPreview || $isWord) {
                             'show_vat'     => 'VAT / PAN no.',
                         ] as $flag => $label): ?>
                             <div class="col-6 form-group mb-2">
-                                <label class="mb-0"><input type="checkbox" name="<?= $flag ?>" value="1" <?= $detailFlags[$flag] === 1 ? 'checked' : '' ?>> <span><?= $label ?></span></label>
+                                <label class="mb-0"><input type="checkbox" name="<?= $flag ?>" value="1" <?= old($flag, $detailFlags[$flag] === 1) ? 'checked' : '' ?>> <span><?= $label ?></span></label>
                             </div>
                         <?php endforeach; ?>
                         <div class="col-12">
@@ -236,40 +236,40 @@ if ($isPdf || $isPreview || $isWord) {
                         <div class="col-12 form-group">
                             <label>Footer text</label>
                             <input type="text" name="footer_text" class="form-control" maxlength="255"
-                                   value="<?= e((string) $settings['footer_text']) ?>" placeholder="e.g. Company registered no · VAT no">
+                                   value="<?= e(old('footer_text', (string) $settings['footer_text'])) ?>" placeholder="e.g. Company registered no · VAT no">
                         </div>
                         <div class="col-12 form-group">
                             <label>Watermark text <small class="text-muted">(blank = none)</small></label>
                             <input type="text" name="watermark_text" class="form-control" maxlength="100"
-                                   value="<?= e((string) $settings['watermark_text']) ?>" placeholder="e.g. DRAFT / CONFIDENTIAL">
+                                   value="<?= e(old('watermark_text', (string) $settings['watermark_text'])) ?>" placeholder="e.g. DRAFT / CONFIDENTIAL">
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-6 form-group">
                             <label>Watermark opacity (0–1)</label>
                             <input type="number" step="0.01" min="0.01" max="0.5" name="watermark_opacity" class="form-control"
-                                   value="<?= e((string) $settings['watermark_opacity']) ?>">
+                                   value="<?= e(old('watermark_opacity', (string) $settings['watermark_opacity'])) ?>">
                         </div>
                         <div class="col-6 form-group">
                             <label>Page number format <small class="text-muted">({PAGE} / {PAGES} placeholders)</small></label>
                             <input type="text" name="page_number_format" class="form-control" maxlength="50"
-                                   value="<?= e((string) $settings['page_number_format']) ?>">
+                                   value="<?= e(old('page_number_format', (string) $settings['page_number_format'])) ?>">
                         </div>
                     </div>
                     <div class="form-group mb-0">
-                        <label class="mb-0"><input type="checkbox" name="show_page_numbers" value="1" <?= (int) $settings['show_page_numbers'] === 1 ? 'checked' : '' ?>> show page numbers</label>
-                        <label class="mb-0 ml-4"><input type="checkbox" name="show_generated_stamp" value="1" <?= (int) $settings['show_generated_stamp'] === 1 ? 'checked' : '' ?>> show "generated on" stamp</label>
+                        <label class="mb-0"><input type="checkbox" name="show_page_numbers" value="1" <?= old('show_page_numbers', (int) $settings['show_page_numbers'] === 1) ? 'checked' : '' ?>> show page numbers</label>
+                        <label class="mb-0 ml-4"><input type="checkbox" name="show_generated_stamp" value="1" <?= old('show_generated_stamp', (int) $settings['show_generated_stamp'] === 1) ? 'checked' : '' ?>> show "generated on" stamp</label>
                     </div>
 
                     <h6 class="text-muted text-uppercase mb-2 mt-3" style="font-size:.75rem">Defaults for business documents</h6>
                     <div class="form-group">
                         <label>Default terms &amp; conditions <small class="text-muted">(prefilled into quotations, proposals, agreements)</small></label>
-                        <textarea name="default_terms" class="form-control" rows="4"><?= e((string) $settings['default_terms']) ?></textarea>
+                        <textarea name="default_terms" class="form-control" rows="4"><?= e(old('default_terms', (string) $settings['default_terms'])) ?></textarea>
                     </div>
                     <div class="form-group">
                         <label>Signature block</label>
                         <textarea name="signature_block" class="form-control" rows="3"
-                                  placeholder="e.g. ______________________&#10;Authorized Signature&#10;Name / Designation"><?= e((string) $settings['signature_block']) ?></textarea>
+                                  placeholder="e.g. ______________________&#10;Authorized Signature&#10;Name / Designation"><?= e(old('signature_block', (string) $settings['signature_block'])) ?></textarea>
                     </div>
                 </div>
                 <div class="card-footer">

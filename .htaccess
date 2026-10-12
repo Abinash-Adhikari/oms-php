@@ -25,6 +25,9 @@ RewriteRule ^(config|scripts|classes|tests|docs|database)/ - [F,L]
 # --- Block access to clear_opcache.php (admin-only, no public access) ---
 RewriteRule ^clear_opcache\.php$ - [F,L]
 
+# --- Public API: /api/v1/<resource> → api/v1/index.php?path=<resource> ---
+RewriteRule ^api/v1/([a-z0-9/_-]*)$ api/v1/index.php?path=$1 [L,QSA]
+
 # --- Clean URLs for public pages ---
 # /about  →  /about.php
 # /services  →  /services.php

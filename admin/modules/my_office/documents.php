@@ -243,7 +243,7 @@ $qsStr = $qs ? '&' . http_build_query($qs) : '';
             <form action="operation.php?module=my_office&page=documents" method="post" class="d-flex mt-1" style="gap:.4rem;padding:0 .2rem">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="save_category">
-                <input type="text" name="title" class="form-control form-control-sm flex-fill" placeholder="New folder" required>
+                <input type="text" name="title" class="form-control form-control-sm flex-fill" placeholder="New folder" required value="<?= e(old_scoped('save_category', 'title')) ?>">
                 <button type="submit" class="btn btn-sm btn-outline-primary" title="Add folder"><i class="fas fa-plus"></i></button>
             </form>
         </nav>
@@ -477,28 +477,29 @@ $qsStr = $qs ? '&' . http_build_query($qs) : '';
             <?= csrfField() ?>
             <input type="hidden" name="action" value="save_document">
             <input type="hidden" name="id" value="<?= $edit ? (int) $edit['id'] : 0 ?>">
+            <?php $docScope = 'save_document:' . ($edit ? (int) $edit['id'] : 0); ?>
             <div class="form-group">
                 <label>Title *</label>
-                <input type="text" name="title" class="form-control" required value="<?= $edit ? e($edit['title']) : '' ?>">
+                <input type="text" name="title" class="form-control" required value="<?= e(old_scoped($docScope, 'title', $edit ? $edit['title'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Category</label>
                 <select name="category_id" class="form-control">
                     <option value="">—</option>
                     <?php foreach ($categories as $c): ?>
-                        <option value="<?= (int) $c['id'] ?>" <?= $edit && (int) $edit['category_id'] === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['title']) ?></option>
+                        <option value="<?= (int) $c['id'] ?>" <?= (int) old_scoped($docScope, 'category_id', $edit['category_id'] ?? '') === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['title']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="form-group">
                 <label>Renew date</label>
-                <input type="date" name="renew_date" class="form-control" value="<?= $edit ? e($edit['renew_date']) : '' ?>">
+                <input type="date" name="renew_date" class="form-control" value="<?= e(old_scoped($docScope, 'renew_date', $edit ? $edit['renew_date'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Access</label>
                 <select name="access_type" class="form-control">
-                    <option value="Public" <?= !$edit || $edit['access_type'] === 'Public' ? 'selected' : '' ?>>Public (all staff)</option>
-                    <option value="Private" <?= $edit && $edit['access_type'] === 'Private' ? 'selected' : '' ?>>Private (permission only)</option>
+                    <option value="Public" <?= old_scoped($docScope, 'access_type', $edit['access_type'] ?? 'Public') === 'Public' ? 'selected' : '' ?>>Public (all staff)</option>
+                    <option value="Private" <?= old_scoped($docScope, 'access_type', $edit['access_type'] ?? '') === 'Private' ? 'selected' : '' ?>>Private (permission only)</option>
                 </select>
             </div>
             <div class="form-group">

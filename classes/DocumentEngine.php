@@ -60,19 +60,15 @@ class DocumentEngine
 
         $prefix = $config['prefix'];
         $year = date('Y');
-        $last = $this->db->selectOne(
-            "SELECT document_number FROM `tbl_documents` WHERE document_number LIKE ? ORDER BY id DESC LIMIT 1",
-            ["$prefix-$year-%"]
+        // Highest sequence, not the newest row: imported or hand-numbered
+        // documents can be inserted out of order.
+        $row = $this->db->selectOne(
+            "SELECT MAX(CAST(SUBSTRING_INDEX(document_number, '-', -1) AS UNSIGNED)) AS seq
+             FROM `tbl_documents` WHERE document_number REGEXP ?",
+            ['^' . preg_quote($prefix, '/') . '-' . $year . '-[0-9]+$']
         );
 
-        if ($last) {
-            $parts = explode('-', $last['document_number']);
-            $seq = (int) end($parts) + 1;
-        } else {
-            $seq = 1;
-        }
-
-        return sprintf('%s-%s-%04d', $prefix, $year, $seq);
+        return sprintf('%s-%s-%04d', $prefix, $year, (int) ($row['seq'] ?? 0) + 1);
     }
 
     // ═══════════════════════════════════════════════════════════════

@@ -80,22 +80,22 @@ $drawerOpen = ($editSpace !== null);
             <input type="hidden" name="id" id="formId" value="<?= $editSpace ? (int) $editSpace['id'] : 0 ?>">
             <div class="form-group">
                 <label>Title *</label>
-                <input type="text" name="title" class="form-control" id="formTitle" required value="<?= $editSpace ? e($editSpace['title']) : '' ?>">
+                <input type="text" name="title" class="form-control" id="formTitle" required value="<?= e(old('title', $editSpace ? $editSpace['title'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Capacity</label>
-                <input type="number" name="capacity" class="form-control" id="formCapacity" value="<?= $editSpace ? e($editSpace['capacity']) : '' ?>">
+                <input type="number" name="capacity" class="form-control" id="formCapacity" value="<?= e(old('capacity', $editSpace ? $editSpace['capacity'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Status</label>
                 <select name="is_active" class="form-control" id="formStatus">
-                    <option value="1" <?= ($editSpace && ($editSpace['is_active'] ?? 1)) ? 'selected' : '' ?>>Active</option>
-                    <option value="0" <?= $editSpace && !($editSpace['is_active'] ?? 1) ? 'selected' : '' ?>>Inactive</option>
+                    <option value="1" <?= old('is_active', $editSpace['is_active'] ?? '') == '1' ? 'selected' : '' ?>>Active</option>
+                    <option value="0" <?= old('is_active', $editSpace['is_active'] ?? '') == '0' ? 'selected' : '' ?>>Inactive</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Description</label>
-                <textarea name="description" class="form-control" id="formDescription" rows="3"><?= $editSpace ? e($editSpace['description']) : '' ?></textarea>
+                <textarea name="description" class="form-control" id="formDescription" rows="3"><?= e(old('description', $editSpace ? $editSpace['description'] : '')) ?></textarea>
             </div>
         </form>
     </div>

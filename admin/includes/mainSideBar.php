@@ -143,7 +143,7 @@ foreach (($navBadgeQueries ?? []) as $key => $b) {
                     echo '<ul class="nav nav-treeview">';
                     foreach ($subs as $subKey => $subLabel) {
                         $subActive = $moduleActive && (strcasecmp($activePage, (string) $subKey) === 0);
-                        $subIcon = $subIcons[(string) $subKey] ?? 'nav-icon far fa-circle';
+                        $subIcon = $subIcons[$m . '.' . $subKey] ?? $subIcons[(string) $subKey] ?? 'nav-icon far fa-circle';
                         $badge = $navBadges[(string) $subKey] ?? null;
                         echo '<li class="nav-item">';
                         echo '<a href="' . pageUrl($m, (string) $subKey) . '" class="nav-link' . ($subActive ? ' active' : '') . '">';

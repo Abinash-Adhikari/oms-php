@@ -83,15 +83,15 @@ $fys = $db->select(
             <input type="hidden" name="action" value="save_fy">
             <div class="form-group">
                 <label>Title *</label>
-                <input type="text" name="title" class="form-control" required placeholder="e.g. 2027/28">
+                <input type="text" name="title" class="form-control" value="<?= e(old('title')) ?>" required placeholder="e.g. 2027/28">
             </div>
             <div class="form-group">
                 <label>Starting date *</label>
-                <input type="date" name="starting_date" class="form-control" required>
+                <input type="date" name="starting_date" class="form-control" value="<?= e(old('starting_date')) ?>" required>
             </div>
             <div class="form-group">
                 <label>Ending date *</label>
-                <input type="date" name="ending_date" class="form-control" required>
+                <input type="date" name="ending_date" class="form-control" value="<?= e(old('ending_date')) ?>" required>
             </div>
             <div class="form-group">
                 <label>Status</label>

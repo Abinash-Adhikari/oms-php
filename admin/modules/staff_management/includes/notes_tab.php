@@ -154,16 +154,16 @@ $drawerOpen = ($editNote !== null);
             <input type="hidden" name="event_id" id="noteId" value="<?= $editNote ? (int) $editNote['id'] : 0 ?>">
             <div class="form-group">
                 <label>Title *</label>
-                <input type="text" name="title" class="form-control" id="noteTitle" required value="<?= $editNote ? e($editNote['title']) : '' ?>">
+                <input type="text" name="title" class="form-control" id="noteTitle" required value="<?= e(old('title', $editNote ? $editNote['title'] : '')) ?>">
             </div>
             <div class="form-row">
                 <div class="col-6 form-group">
                     <label>Date *</label>
-                    <input type="date" name="note_date" class="form-control" id="noteDate" required value="<?= $editNote && isset($editNoteSchedules[0]) ? e($editNoteSchedules[0]['date']) : '' ?>">
+                    <input type="date" name="note_date" class="form-control" id="noteDate" required value="<?= e(old('note_date', $editNote && isset($editNoteSchedules[0]) ? $editNoteSchedules[0]['date'] : '')) ?>">
                 </div>
                 <div class="col-6 form-group">
                     <label>Expire date</label>
-                    <input type="date" name="expire_date" class="form-control" id="noteExpireDate" value="<?= $editNote ? e($editNote['expire_date']) : '' ?>">
+                    <input type="date" name="expire_date" class="form-control" id="noteExpireDate" value="<?= e(old('expire_date', $editNote ? $editNote['expire_date'] : '')) ?>">
                     <small class="text-muted">Leave empty to keep it visible. Notes added from the calendar expire on that date automatically.</small>
                 </div>
             </div>
@@ -188,7 +188,7 @@ $drawerOpen = ($editNote !== null);
             </div>
             <div class="form-group">
                 <label>Remarks</label>
-                <textarea name="remarks" class="form-control" id="noteRemarks" rows="3"><?= $editNote ? e($editNote['remarks']) : '' ?></textarea>
+                <textarea name="remarks" class="form-control" id="noteRemarks" rows="3"><?= e(old('remarks', $editNote ? $editNote['remarks'] : '')) ?></textarea>
             </div>
         </form>
     </div>

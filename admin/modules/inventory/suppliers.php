@@ -93,46 +93,46 @@ $drawerOpen = ($editSupplier !== null);
             <input type="hidden" name="id" id="formId" value="<?= $editSupplier ? (int) $editSupplier['id'] : 0 ?>">
             <div class="form-group">
                 <label>Name *</label>
-                <input type="text" name="name" class="form-control" id="formName" required value="<?= $editSupplier ? e($editSupplier['name']) : '' ?>">
+                <input type="text" name="name" class="form-control" id="formName" required value="<?= e(old('name', $editSupplier ? $editSupplier['name'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Contact Person</label>
-                <input type="text" name="contact_person" class="form-control" id="formContactPerson" value="<?= $editSupplier ? e($editSupplier['contact_person']) : '' ?>">
+                <input type="text" name="contact_person" class="form-control" id="formContactPerson" value="<?= e(old('contact_person', $editSupplier ? $editSupplier['contact_person'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>PAN No</label>
-                <input type="text" name="pan_num" class="form-control" id="formPanNum" value="<?= $editSupplier ? e($editSupplier['pan_num']) : '' ?>">
+                <input type="text" name="pan_num" class="form-control" id="formPanNum" value="<?= e(old('pan_num', $editSupplier ? $editSupplier['pan_num'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Email</label>
-                <input type="email" name="email" class="form-control" id="formEmail" value="<?= $editSupplier ? e($editSupplier['email']) : '' ?>">
+                <input type="email" name="email" class="form-control" id="formEmail" value="<?= e(old('email', $editSupplier ? $editSupplier['email'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Phone</label>
-                <input type="text" name="phone" class="form-control" id="formPhone" value="<?= $editSupplier ? e($editSupplier['phone']) : '' ?>">
+                <input type="text" name="phone" class="form-control" id="formPhone" value="<?= e(old('phone', $editSupplier ? $editSupplier['phone'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Status</label>
                 <select name="is_active" class="form-control" id="formStatus">
-                    <option value="1" <?= $editSupplier && $editSupplier['is_active'] ? 'selected' : '' ?>>Active</option>
-                    <option value="0" <?= $editSupplier && !$editSupplier['is_active'] ? 'selected' : '' ?>>Inactive</option>
+                    <option value="1" <?= $editSupplier && old('is_active', $editSupplier['is_active']) ? 'selected' : '' ?>>Active</option>
+                    <option value="0" <?= $editSupplier && !old('is_active', $editSupplier['is_active']) ? 'selected' : '' ?>>Inactive</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Address</label>
-                <input type="text" name="address" class="form-control" id="formAddress" value="<?= $editSupplier ? e($editSupplier['address']) : '' ?>">
+                <input type="text" name="address" class="form-control" id="formAddress" value="<?= e(old('address', $editSupplier ? $editSupplier['address'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Bank Name</label>
-                <input type="text" name="bank_name" class="form-control" id="formBankName" value="<?= $editSupplier ? e($editSupplier['bank_name']) : '' ?>">
+                <input type="text" name="bank_name" class="form-control" id="formBankName" value="<?= e(old('bank_name', $editSupplier ? $editSupplier['bank_name'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Bank Account No</label>
-                <input type="text" name="bank_account_num" class="form-control" id="formBankAccount" value="<?= $editSupplier ? e($editSupplier['bank_account_num']) : '' ?>">
+                <input type="text" name="bank_account_num" class="form-control" id="formBankAccount" value="<?= e(old('bank_account_num', $editSupplier ? $editSupplier['bank_account_num'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Notes</label>
-                <textarea name="notes" class="form-control" id="formNotes" rows="3"><?= $editSupplier ? e($editSupplier['notes']) : '' ?></textarea>
+                <textarea name="notes" class="form-control" id="formNotes" rows="3"><?= e(old('notes', $editSupplier ? $editSupplier['notes'] : '')) ?></textarea>
             </div>
         </form>
     </div>

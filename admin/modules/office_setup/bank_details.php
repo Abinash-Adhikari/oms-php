@@ -71,31 +71,31 @@ $drawerOpen = ($edit !== null);
             <input type="hidden" name="id" id="formId" value="<?= $edit ? (int) $edit['id'] : 0 ?>">
             <div class="form-group">
                 <label>Bank name *</label>
-                <input type="text" name="bank_name" class="form-control" id="formBankName" required value="<?= $edit ? e($edit['bank_name']) : '' ?>">
+                <input type="text" name="bank_name" class="form-control" id="formBankName" required value="<?= e(old('bank_name', $edit['bank_name'] ?? '')) ?>">
             </div>
             <div class="form-group">
                 <label>Account name *</label>
-                <input type="text" name="account_name" class="form-control" id="formAccountName" required value="<?= $edit ? e($edit['account_name']) : '' ?>">
+                <input type="text" name="account_name" class="form-control" id="formAccountName" required value="<?= e(old('account_name', $edit['account_name'] ?? '')) ?>">
             </div>
             <div class="form-group">
                 <label>Branch *</label>
-                <input type="text" name="branch" class="form-control" id="formBranch" required value="<?= $edit ? e($edit['branch']) : '' ?>">
+                <input type="text" name="branch" class="form-control" id="formBranch" required value="<?= e(old('branch', $edit['branch'] ?? '')) ?>">
             </div>
             <div class="form-group">
                 <label>Account number *</label>
-                <input type="text" name="account_number" class="form-control" id="formAccountNumber" required value="<?= $edit ? e($edit['account_number']) : '' ?>">
+                <input type="text" name="account_number" class="form-control" id="formAccountNumber" required value="<?= e(old('account_number', $edit['account_number'] ?? '')) ?>">
             </div>
             <div class="form-group">
                 <label>Account type *</label>
-                <input type="text" name="account_type" class="form-control" id="formAccountType" required value="<?= $edit ? e($edit['account_type']) : '' ?>">
+                <input type="text" name="account_type" class="form-control" id="formAccountType" required value="<?= e(old('account_type', $edit['account_type'] ?? '')) ?>">
             </div>
             <div class="form-group">
                 <label>SWIFT code</label>
-                <input type="text" name="swift_code" class="form-control" id="formSwiftCode" value="<?= $edit ? e($edit['swift_code']) : '' ?>">
+                <input type="text" name="swift_code" class="form-control" id="formSwiftCode" value="<?= e(old('swift_code', $edit['swift_code'] ?? '')) ?>">
             </div>
             <div class="form-group">
                 <label>Other details</label>
-                <textarea name="other_detail" class="form-control" id="formOtherDetail" rows="3"><?= $edit ? e($edit['other_detail']) : '' ?></textarea>
+                <textarea name="other_detail" class="form-control" id="formOtherDetail" rows="3"><?= e(old('other_detail', $edit['other_detail'] ?? '')) ?></textarea>
             </div>
         </form>
     </div>

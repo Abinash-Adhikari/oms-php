@@ -37,53 +37,53 @@ if ($logoUrl === '' && !empty($profile['logo_extension'])) {
                     <div class="row">
                         <div class="form-group col-md-6">
                             <label>Name *</label>
-                            <input type="text" name="name" class="form-control" required value="<?= e($profile['name']) ?>">
+                            <input type="text" name="name" class="form-control" required value="<?= e(old('name', $profile['name'])) ?>">
                         </div>
                         <div class="form-group col-md-6">
                             <label>Acronym</label>
-                            <input type="text" name="accronym" class="form-control" value="<?= e($profile['accronym']) ?>">
+                            <input type="text" name="accronym" class="form-control" value="<?= e(old('accronym', $profile['accronym'])) ?>">
                         </div>
                         <div class="form-group col-md-6">
                             <label>Address 1</label>
-                            <input type="text" name="address1" class="form-control" value="<?= e($profile['address1']) ?>">
+                            <input type="text" name="address1" class="form-control" value="<?= e(old('address1', $profile['address1'])) ?>">
                         </div>
                         <div class="form-group col-md-6">
                             <label>Address 2</label>
-                            <input type="text" name="address2" class="form-control" value="<?= e($profile['address2']) ?>">
+                            <input type="text" name="address2" class="form-control" value="<?= e(old('address2', $profile['address2'])) ?>">
                         </div>
                         <div class="form-group col-md-6">
                             <label>Email</label>
-                            <input type="email" name="email" class="form-control" value="<?= e($profile['email']) ?>">
+                            <input type="email" name="email" class="form-control" value="<?= e(old('email', $profile['email'])) ?>">
                         </div>
                         <div class="form-group col-md-3">
                             <label>Phone 1</label>
-                            <input type="text" name="phone1" class="form-control" value="<?= e($profile['phone1']) ?>">
+                            <input type="text" name="phone1" class="form-control" value="<?= e(old('phone1', $profile['phone1'])) ?>">
                         </div>
                         <div class="form-group col-md-3">
                             <label>Phone 2</label>
-                            <input type="text" name="phone2" class="form-control" value="<?= e($profile['phone2']) ?>">
+                            <input type="text" name="phone2" class="form-control" value="<?= e(old('phone2', $profile['phone2'])) ?>">
                         </div>
                         <div class="form-group col-md-6">
                             <label>VAT / PAN No</label>
-                            <input type="text" name="vat_no" class="form-control" value="<?= e($profile['vat_no']) ?>">
+                            <input type="text" name="vat_no" class="form-control" value="<?= e(old('vat_no', $profile['vat_no'])) ?>">
                         </div>
                         <div class="form-group col-md-6">
                             <label>Website</label>
-                            <input type="text" name="website" class="form-control" value="<?= e($profile['website']) ?>">
+                            <input type="text" name="website" class="form-control" value="<?= e(old('website', $profile['website'])) ?>">
                         </div>
                         <div class="form-group col-md-4">
                             <label>Slogan</label>
-                            <input type="text" name="slogan" class="form-control" value="<?= e($profile['slogan']) ?>">
+                            <input type="text" name="slogan" class="form-control" value="<?= e(old('slogan', $profile['slogan'])) ?>">
                         </div>
                         <div class="form-group col-md-4">
                             <label>Established (Estd)</label>
-                            <input type="text" name="estd" class="form-control" value="<?= e($profile['estd']) ?>">
+                            <input type="text" name="estd" class="form-control" value="<?= e(old('estd', $profile['estd'])) ?>">
                         </div>
                         <div class="form-group col-md-4">
                             <label>Calendar mode</label>
                             <select name="use_date" class="form-control">
-                                <option value="AD" <?= $profile['use_date'] === 'AD' ? 'selected' : '' ?>>AD</option>
-                                <option value="BS" <?= $profile['use_date'] === 'BS' ? 'selected' : '' ?> <?= !bsCalendarAvailable() ? 'disabled' : '' ?>>BS</option>
+                                <option value="AD" <?= old('use_date', $profile['use_date'] ?? '') === 'AD' ? 'selected' : '' ?>>AD</option>
+                                <option value="BS" <?= old('use_date', $profile['use_date'] ?? '') === 'BS' ? 'selected' : '' ?> <?= !bsCalendarAvailable() ? 'disabled' : '' ?>>BS</option>
                             </select>
                             <?php if (!bsCalendarAvailable()): ?>
                                 <small class="form-text text-muted">BS data not seeded — run <code>php scripts/seed_data.php</code> first.</small>
@@ -94,8 +94,8 @@ if ($logoUrl === '' && !empty($profile['logo_extension'])) {
                         <div class="form-group col-md-4">
                             <label>Leave year mode</label>
                             <select name="leave_year_mode" class="form-control">
-                                <option value="AD" <?= $profile['leave_year_mode'] === 'AD' ? 'selected' : '' ?>>AD</option>
-                                <option value="BS" <?= $profile['leave_year_mode'] === 'BS' ? 'selected' : '' ?>>BS</option>
+                                <option value="AD" <?= old('leave_year_mode', $profile['leave_year_mode'] ?? '') === 'AD' ? 'selected' : '' ?>>AD</option>
+                                <option value="BS" <?= old('leave_year_mode', $profile['leave_year_mode'] ?? '') === 'BS' ? 'selected' : '' ?>>BS</option>
                             </select>
                         </div>
                         <div class="form-group col-md-8">
@@ -112,11 +112,11 @@ if ($logoUrl === '' && !empty($profile['logo_extension'])) {
                         </div>
                         <div class="form-group col-md-4">
                             <label>Backup email</label>
-                            <input type="email" name="backup_email" class="form-control" value="<?= e($profile['backup_email']) ?>">
+                            <input type="email" name="backup_email" class="form-control" value="<?= e(old('backup_email', $profile['backup_email'])) ?>">
                         </div>
                         <div class="form-group col-md-4">
                             <label>Allow IPs</label>
-                            <input type="text" name="allow_ips" class="form-control" value="<?= e($profile['allow_ips']) ?>">
+                            <input type="text" name="allow_ips" class="form-control" value="<?= e(old('allow_ips', $profile['allow_ips'])) ?>">
                         </div>
                     </div>
                 </div>

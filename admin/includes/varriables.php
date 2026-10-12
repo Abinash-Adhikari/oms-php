@@ -5,15 +5,23 @@
  *
  * Module keys are lowercase snake_case. Sidebar sections group modules by
  * working rhythm and job flow:
- * MAIN / MY OFFICE / PEOPLE & HR / GROWTH & SALES / FINANCE / INVENTORY
+ * MAIN / MY OFFICE / PEOPLE & HR / SALES / MARKETING / FINANCE / INVENTORY
  * / REPORTS / OFFICE SETUP.
+ *
+ * Sales naming rule: Product = what we sell (leads/projects, tbl_projects);
+ * Client Project = one product delivered to one client (tbl_client_projects);
+ * Portfolio = the website showcase (webcms/projects). See docs/SALES_SOP.md.
+ * Sales consolidation: leads + clients modules moved into 'sales'
+ * (leads/projects → sales/products, clients/detail → sales/client_detail);
+ * old URLs resolve through $routeCanonical. The legacy quotation screen
+ * (leads/quotations) is retired; quotations live in Sales Documents.
  *
  * Phase 1 = presentation reorg (labels/ordering/grouping, keys unchanged).
  * Phase 2 = structural consolidation. hr_care moved my_office → staff_management
  * (files + route canonical map below); inventory/Reports retired from the
  * sidebar (canonical home = reports/Inventory); dead settings submodules
  * (office_profile, permissions) removed (canonical homes in office_setup and
- * staff_management). Quotations consolidation is deferred (data migration).
+ * staff_management). Quotations were later consolidated into sales/documents.
  * Phase 3 = nav restructure: 'Office Setup' renamed to 'Setup' (PDF/Word
  * setup moved in from Settings); settings module deleted; staff_management
  * permissions submodule deleted; Document Registry + Expense Claims moved
@@ -24,7 +32,7 @@ $icons = [
     'dashboard'        => 'nav-icon fas fa-tachometer-alt',
     'my_office'        => 'nav-icon fas fa-briefcase',
     'staff_management' => 'nav-icon fas fa-users',
-    'leads'            => 'nav-icon fas fa-filter',
+    'sales'            => 'nav-icon fas fa-handshake',
     'accounts'         => 'nav-icon fas fa-money-bill',
     'inventory'        => 'nav-icon fas fa-boxes',
     'reports'          => 'nav-icon fas fa-chart-bar',
@@ -37,10 +45,8 @@ $modules = [
     'dashboard',
     'my_office',
     'staff_management',
-    'webcms',
-    'leads',
-    'clients',
     'sales',
+    'webcms',
     'communication',
     'accounts',
     'inventory',
@@ -53,9 +59,7 @@ $navBars = [
     'my_office'        => 'My Office',
     'staff_management' => 'Staff Management',
     'webcms'           => 'Website CMS',
-    'leads'            => 'Leads',
-    'clients'          => 'Clients',
-    'sales'            => 'Sales Documents',
+    'sales'            => 'Sales',
     'accounts'         => 'Accounts',
     'inventory'        => 'Inventory',
     'reports'          => 'Reports',
@@ -92,15 +96,13 @@ $subNavBars = [
         'terminated_staffs'  => 'Terminated Staffs',
         'hr_care'            => 'HR Care',
     ],
-    'leads' => [
-        'leads'    => 'Leads',
-        'projects' => 'Catalog Projects',
-    ],
-    'clients' => [
-        'clients' => 'Clients',
-    ],
+    // Ordered by the customer lifecycle (docs/SALES_SOP.md).
     'sales' => [
-        'documents'     => 'Documents',
+        'leads'           => 'Leads',
+        'clients'         => 'Clients',
+        'client_projects' => 'Client Projects',
+        'documents'       => 'Sales Documents',
+        'products'        => 'Products',
     ],
     'accounts' => [
         'postings'             => 'Posting',
@@ -136,7 +138,7 @@ $subNavBars = [
     'webcms' => [
         'cms_home'     => 'Home',
         'services'     => 'Services',
-        'projects'     => 'Projects',
+        'projects'     => 'Portfolio',
         'news'         => 'News',
         'notices'      => 'Notices',
         'careers'      => 'Careers',
@@ -183,10 +185,12 @@ $subIcons = [
     'leave_management'      => 'nav-icon fas fa-plane-departure',
     'staff_history'         => 'nav-icon fas fa-history',
     'terminated_staffs'     => 'nav-icon fas fa-user-slash',
-    // leads
+    // sales (module-qualified keys win over bare page keys)
     'leads'                 => 'nav-icon fas fa-filter',
-    // clients (standalone module)
-    'clients'               => 'nav-icon fas fa-handshake',
+    'clients'               => 'nav-icon fas fa-building',
+    'sales.client_projects' => 'nav-icon fas fa-rocket',
+    'sales.documents'       => 'nav-icon fas fa-file-invoice',
+    'sales.products'        => 'nav-icon fas fa-box',
     // accounts
     'postings'              => 'nav-icon fas fa-file-invoice-dollar',
     'ledger'                => 'nav-icon fas fa-book',
@@ -246,6 +250,7 @@ $subIcons = [
  */
 $navBadgeQueries = [
     'leads' => [
+        'module' => 'sales',
         'page' => 'leads',
         'sql'  => "SELECT COUNT(*) FROM `tbl_leads` WHERE `stage` = 'New' AND (`is_active` = 1 OR `is_active` IS NULL)",
         'title' => 'New leads',
@@ -270,9 +275,9 @@ $pages = [
     'my_office'        => ['office_calendar', 'office_spaces', 'notices', 'documents', 'warnings', 'expense_claims'],
     'staff_management' => ['add_staff', 'permissions', 'staff_daily_tasks', 'leave_management', 'staff_history', 'terminated_staffs', 'hr_care'],
     'webcms'           => ['cms_home', 'services', 'projects', 'news', 'notices', 'careers', 'team', 'contact', 'webcms_setup'],
-    'leads'            => ['leads', 'projects'],
+    'leads'            => ['leads', 'client_projects', 'projects'],
     'clients'          => ['clients'],
-    'sales'            => ['documents'],
+    'sales'            => ['leads', 'clients', 'client_projects', 'documents', 'products'],
     'communication'    => ['email_sms', 'templates', 'logs'],
     'accounts'         => ['postings', 'ledger', 'bank_reconciliation', 'chart_of_account', 'fiscal_years', 'account_reports'],
     'inventory'        => ['items', 'stock', 'movements', 'categories', 'suppliers', 'purchase_requisitions', 'assets', 'reports'],
@@ -289,7 +294,7 @@ $pages = [
  * page whose Auth::can grant applies.
  */
 $innerPageGrants = [
-    'clients'          => ['detail' => 'clients'],
+    'sales'            => ['client_detail' => 'clients', 'legacy_quotation' => 'documents'],
     'staff_management' => ['detail' => 'add_staff'],
 ];
 
@@ -305,14 +310,28 @@ $innerPageGrants = [
  * means the moved page keeps its original operation handler (e.g. Inventory
  * Reports CSV exports live at inventory/operation/reports_operation.php).
  *
- * NOTE (deferred): leads → quotations is NOT mapped here — it is a legacy
- * quotation system on tbl_quotations, separate from sales/documents type
- * 'quotation' (tbl_documents). Consolidation needs a data migration first.
+ * leads → quotations: the legacy tbl_quotations system was migrated into
+ * sales/documents type 'quotation' (seed-table-documents-from-legacy-quotations);
+ * old links go through sales/legacy_quotation to translate ids.
  */
 $routeCanonical = [
     'my_office'  => ['hr_care' => ['module' => 'staff_management', 'page' => 'hr_care', 'post' => true]],
     'inventory'  => ['reports' => ['module' => 'reports', 'page' => 'inventory', 'post' => false]],
-    'business_sources' => ['business_sources' => ['module' => 'clients', 'page' => 'clients', 'post' => true]],
+    'business_sources' => ['business_sources' => ['module' => 'sales', 'page' => 'clients', 'post' => true]],
+    // Sales consolidation: Leads/Clients/Client Projects/Products → sales module.
+    // Legacy quotations were migrated to Sales Documents; legacy_quotation maps
+    // old quotation ids to their new document ids.
+    'leads' => [
+        'leads'           => ['module' => 'sales', 'page' => 'leads', 'post' => true],
+        'quotations'      => ['module' => 'sales', 'page' => 'legacy_quotation', 'post' => false],
+        'client_projects' => ['module' => 'sales', 'page' => 'client_projects', 'post' => true],
+        'projects'        => ['module' => 'sales', 'page' => 'products', 'post' => true],
+    ],
+    'clients' => [
+        'clients' => ['module' => 'sales', 'page' => 'clients', 'post' => true],
+        'detail'  => ['module' => 'sales', 'page' => 'client_detail', 'post' => false],
+        'home'    => ['module' => 'sales', 'page' => 'clients', 'post' => false],
+    ],
     'office_setup' => [
         'documents'      => ['module' => 'my_office', 'page' => 'documents', 'post' => true],
     ],
@@ -326,16 +345,17 @@ $routeCanonical = [
 /** Modules rendered directly as a page (no submodule shell). */
 $singlePageModules = ['dashboard'];
 
-/** Sidebar section labels (ALL CAPS — Phase 1 grouping; webcms/leads/sales/communication share GROWTH & SALES). */
+/**
+ * Sidebar section labels (ALL CAPS). SALES follows the customer lifecycle
+ * (one Sales module); MARKETING holds the website and outreach.
+ */
 $navSidebarSections = [
     'dashboard'        => 'MAIN',
     'my_office'        => 'MY OFFICE',
     'staff_management' => 'PEOPLE & HR',
-    'webcms'           => 'GROWTH & SALES',
-    'leads'            => 'GROWTH & SALES',
-    'clients'          => 'GROWTH & SALES',
-    'sales'            => 'GROWTH & SALES',
-    'communication'    => 'GROWTH & SALES',
+    'sales'            => 'SALES',
+    'webcms'           => 'MARKETING',
+    'communication'    => 'MARKETING',
     'accounts'         => 'FINANCE',
     'inventory'        => 'INVENTORY',
     'reports'          => 'REPORTS',

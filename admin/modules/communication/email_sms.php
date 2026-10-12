@@ -61,19 +61,19 @@ $recentLogs = $db->select(
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group"><label>SMTP Host</label>
-                        <input type="text" name="smtp_host" class="form-control" value="<?= e($settings['smtp_host'] ?? 'smtp-relay.brevo.com') ?>" placeholder="smtp-relay.brevo.com"></div>
+                        <input type="text" name="smtp_host" class="form-control" value="<?= e(old('smtp_host', $settings['smtp_host'] ?? 'smtp-relay.brevo.com')) ?>" placeholder="smtp-relay.brevo.com"></div>
                     <div class="form-group"><label>SMTP Port</label>
-                        <input type="number" name="smtp_port" class="form-control" value="<?= e($settings['smtp_port'] ?? '587') ?>"></div>
+                        <input type="number" name="smtp_port" class="form-control" value="<?= e(old('smtp_port', $settings['smtp_port'] ?? '587')) ?>"></div>
                     <div class="form-group"><label>SMTP Username</label>
-                        <input type="text" name="smtp_username" class="form-control" value="<?= e($settings['smtp_username'] ?? '') ?>" placeholder="your-email@gmail.com"></div>
+                        <input type="text" name="smtp_username" class="form-control" value="<?= e(old('smtp_username', $settings['smtp_username'] ?? '')) ?>" placeholder="your-email@gmail.com"></div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group"><label>SMTP Password (API Key)</label>
                         <input type="password" name="smtp_password" class="form-control" value="" placeholder="<?= $settings['smtp_password_enc'] ? '•••••••• (set)' : 'Paste your Brevo SMTP key here' ?>" autocomplete="new-password"></div>
                     <div class="form-group"><label>From Name</label>
-                        <input type="text" name="smtp_from_name" class="form-control" value="<?= e($settings['smtp_from_name'] ?? office_display_name()) ?>"></div>
+                        <input type="text" name="smtp_from_name" class="form-control" value="<?= e(old('smtp_from_name', $settings['smtp_from_name'] ?? office_display_name())) ?>"></div>
                     <div class="form-group"><label>From Email</label>
-                        <input type="email" name="smtp_from_email" class="form-control" value="<?= e($settings['smtp_from_email'] ?? '') ?>" placeholder="noreply@yourdomain.com"></div>
+                        <input type="email" name="smtp_from_email" class="form-control" value="<?= e(old('smtp_from_email', $settings['smtp_from_email'] ?? '')) ?>" placeholder="noreply@yourdomain.com"></div>
                 </div>
             </div>
             <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Save Email Settings</button>
@@ -97,8 +97,8 @@ $recentLogs = $db->select(
                     <div class="form-group"><label>SMS Provider</label>
                         <select name="sms_provider" class="form-control">
                             <option value="">— Select —</option>
-                            <option value="Sparrow" <?= ($settings['sms_provider'] ?? '') === 'Sparrow' ? 'selected' : '' ?>>Sparrow</option>
-                            <option value="Generic" <?= ($settings['sms_provider'] ?? '') === 'Generic' ? 'selected' : '' ?>>Generic HTTP API</option>
+                            <option value="Sparrow" <?= old('sms_provider', $settings['sms_provider'] ?? '') === 'Sparrow' ? 'selected' : '' ?>>Sparrow</option>
+                            <option value="Generic" <?= old('sms_provider', $settings['sms_provider'] ?? '') === 'Generic' ? 'selected' : '' ?>>Generic HTTP API</option>
                         </select></div>
                 </div>
                 <div class="col-md-4">
@@ -107,7 +107,7 @@ $recentLogs = $db->select(
                 </div>
                 <div class="col-md-4">
                     <div class="form-group"><label>Sender ID</label>
-                        <input type="text" name="sms_sender_id" class="form-control" value="<?= e($settings['sms_sender_id'] ?? '') ?>"></div>
+                        <input type="text" name="sms_sender_id" class="form-control" value="<?= e(old('sms_sender_id', $settings['sms_sender_id'] ?? '')) ?>"></div>
                 </div>
             </div>
             <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Save SMS Settings</button>

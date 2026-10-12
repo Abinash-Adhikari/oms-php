@@ -69,6 +69,18 @@ $orgName   = office_display_name();
         window.APP_WEEKLY_OFF_DAYS = <?= json_encode($__weeklyOff, JSON_UNESCAPED_UNICODE) ?>;
     </script>
 
+    <!-- Values from a failed POST (passwords/tokens excluded) — repopulated by cms-form-restore.js -->
+    <script>
+        window.CMS_OLD_INPUT = <?= json_encode(
+            $_SESSION['_old_input'] ?? [],
+            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
+        ) ?>;
+        window.CMS_OLD_SCOPED = <?= json_encode(
+            $_SESSION['_old_scoped'] ?? [],
+            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
+        ) ?>;
+    </script>
+
     <!-- Font preconnect + premium fonts (moved out of CSS @import — non-blocking) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

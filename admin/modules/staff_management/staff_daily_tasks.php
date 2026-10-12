@@ -119,18 +119,18 @@ $drawerOpen = ($edit !== null);
                 <label>Staff</label>
                 <select name="staff_id" class="form-control" id="taskStaffId" <?= $seeAll ? '' : 'disabled' ?>>
                     <?php foreach ($staffs as $s): ?>
-                        <option value="<?= (int) $s['id'] ?>" <?= (!$seeAll && (int) $s['id'] === $me) || ($edit && (int) $edit['staff_id'] === (int) $s['id']) ? 'selected' : '' ?>><?= e($s['fullname']) ?><?= $s['department_title'] ? ' (' . e($s['department_title']) . ')' : '' ?></option>
+                        <option value="<?= (int) $s['id'] ?>" <?= (!$seeAll && (int) $s['id'] === $me) || (int) old('staff_id', $edit['staff_id'] ?? '') === (int) $s['id'] ? 'selected' : '' ?>><?= e($s['fullname']) ?><?= $s['department_title'] ? ' (' . e($s['department_title']) . ')' : '' ?></option>
                     <?php endforeach; ?>
                 </select>
                 <?php if (!$seeAll): ?><input type="hidden" name="staff_id" value="<?= (int) $me ?>"><?php endif; ?>
             </div>
             <div class="form-group">
                 <label>Date</label>
-                <input type="date" name="date" class="form-control" id="taskDate" required value="<?= $edit ? e($edit['date']) : e($date) ?>">
+                <input type="date" name="date" class="form-control" id="taskDate" required value="<?= e(old('date', $edit ? $edit['date'] : $date)) ?>">
             </div>
             <div class="form-group">
                 <label>Tasks done *</label>
-                <textarea name="tasks" class="form-control" id="taskText" rows="6" required placeholder="What did you work on today?"><?= $edit ? e($edit['tasks']) : '' ?></textarea>
+                <textarea name="tasks" class="form-control" id="taskText" rows="6" required placeholder="What did you work on today?"><?= e(old('tasks', $edit ? $edit['tasks'] : '')) ?></textarea>
             </div>
         </form>
     </div>

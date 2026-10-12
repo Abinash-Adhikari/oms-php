@@ -189,7 +189,7 @@ $adjustDrawerOpen = ($adjUser > 0);
                                 <?= csrfField() ?>
                                 <input type="hidden" name="action" value="checkout">
                                 <div class="input-group input-group-sm mb-1">
-                                    <input type="text" name="reason_checkout" class="form-control" placeholder="Reason for leaving">
+                                    <input type="text" name="reason_checkout" class="form-control" placeholder="Reason for leaving" value="<?= e(old('reason_checkout')) ?>">
                                     <div class="input-group-append">
                                         <button type="submit" class="btn btn-warning"><i class="fas fa-sign-out-alt"></i></button>
                                     </div>
@@ -205,7 +205,7 @@ $adjustDrawerOpen = ($adjUser > 0);
                         <?= csrfField() ?>
                         <input type="hidden" name="action" value="checkin">
                         <div class="input-group input-group-sm mb-1">
-                            <input type="text" name="reason_checkin" class="form-control" placeholder="Reason for late arrival">
+                            <input type="text" name="reason_checkin" class="form-control" placeholder="Reason for late arrival" value="<?= e(old('reason_checkin')) ?>">
                             <div class="input-group-append">
                                 <button type="submit" class="btn btn-success"><i class="fas fa-sign-in-alt"></i></button>
                             </div>
@@ -465,22 +465,22 @@ $adjustDrawerOpen = ($adjUser > 0);
                 <select name="user_id" class="form-control" id="adjUserId" required>
                     <option value="">Select staff…</option>
                     <?php foreach ($activeStaff as $as): ?>
-                        <option value="<?= (int) $as['id'] ?>" <?= $adjUser === (int) $as['id'] ? 'selected' : '' ?>><?= e($as['fullname']) ?></option>
+                        <option value="<?= (int) $as['id'] ?>" <?= (int) old('user_id', $adjUser) === (int) $as['id'] ? 'selected' : '' ?>><?= e($as['fullname']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="form-group">
                 <label>Date *</label>
-                <input type="date" name="date" class="form-control" id="adjDate" required value="<?= e($adjDate) ?>">
+                <input type="date" name="date" class="form-control" id="adjDate" required value="<?= e(old('date', $adjDate)) ?>">
             </div>
             <div class="form-row">
                 <div class="col-6 form-group">
                     <label>Check-in</label>
-                    <input type="time" name="checkin" class="form-control" id="adjCheckin" value="<?= $adj ? e($adj['checkin']) : '' ?>">
+                    <input type="time" name="checkin" class="form-control" id="adjCheckin" value="<?= e(old('checkin', $adj ? $adj['checkin'] : '')) ?>">
                 </div>
                 <div class="col-6 form-group">
                     <label>Check-out</label>
-                    <input type="time" name="checkout" class="form-control" id="adjCheckout" value="<?= $adj ? e($adj['checkout']) : '' ?>">
+                    <input type="time" name="checkout" class="form-control" id="adjCheckout" value="<?= e(old('checkout', $adj ? $adj['checkout'] : '')) ?>">
                 </div>
             </div>
             <div class="form-row">
@@ -488,13 +488,13 @@ $adjustDrawerOpen = ($adjUser > 0);
                     <label>Status</label>
                     <select name="status" class="form-control" id="adjStatus">
                         <?php foreach (['present', 'absent', 'leave', 'holiday'] as $st): ?>
-                            <option value="<?= $st ?>" <?= $adj && $adj['status'] === $st ? 'selected' : '' ?>><?= ucfirst($st) ?></option>
+                            <option value="<?= $st ?>" <?= old('status', $adj['status'] ?? '') === $st ? 'selected' : '' ?>><?= ucfirst($st) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-6 form-group">
                     <label>Reason (late/early)</label>
-                    <input type="text" name="reason" class="form-control" id="adjReason" value="<?= $adj ? e($adj['reason_checkin'] ?: $adj['reason_checkout']) : '' ?>">
+                    <input type="text" name="reason" class="form-control" id="adjReason" value="<?= e(old('reason', $adj ? ($adj['reason_checkin'] ?: $adj['reason_checkout']) : '')) ?>">
                 </div>
             </div>
         </form>

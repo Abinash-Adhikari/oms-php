@@ -110,7 +110,7 @@ $rows = $db->select(
                             <input type="hidden" name="id" value="<?= (int) $l['id'] ?>">
                             <input type="hidden" name="status" value="Rejected">
                             <div class="col-md-8">
-                                <input type="text" name="reason" class="form-control form-control-sm" placeholder="Rejection reason (required, shown to staff)" required>
+                                <input type="text" name="reason" class="form-control form-control-sm" placeholder="Rejection reason (required, shown to staff)" required value="<?= e(old('reason')) ?>">
                             </div>
                             <div class="col-md-4">
                                 <button type="submit" class="btn btn-sm btn-danger">Confirm rejection</button>

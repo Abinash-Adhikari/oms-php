@@ -189,17 +189,18 @@ $drawerOpen = ($editTask !== null);
                             <?= csrfField() ?>
                             <input type="hidden" name="action" value="post_update">
                             <input type="hidden" name="task_id" value="<?= (int) $t['id'] ?>">
+                            <input type="hidden" name="_scope" value="task_update:<?= (int) $t['id'] ?>">
                             <div class="col-md-3">
                                 <label class="small mb-0">Status</label>
                                 <select name="status" class="form-control form-control-sm">
                                     <?php foreach (array_keys($statusBadges) as $st): ?>
-                                        <option value="<?= $st ?>" <?= $t['status'] === $st ? 'selected' : '' ?>><?= $st ?></option>
+                                        <option value="<?= $st ?>" <?= old('status', $t['status'] ?? '') === $st ? 'selected' : '' ?>><?= $st ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-md-5">
                                 <label class="small mb-0">Progress update</label>
-                                <input type="text" name="update_text" class="form-control form-control-sm" placeholder="What did you do?">
+                                <input type="text" name="update_text" class="form-control form-control-sm" placeholder="What did you do?" value="<?= e(old('update_text')) ?>">
                             </div>
                             <div class="col-md-3">
                                 <label class="small mb-0">File (optional)</label>
@@ -255,7 +256,7 @@ $drawerOpen = ($editTask !== null);
             <input type="hidden" name="task_id" id="taskId" value="<?= $editTask ? (int) $editTask['id'] : 0 ?>">
             <div class="form-group">
                 <label>Title *</label>
-                <input type="text" name="title" class="form-control" id="taskTitle" required value="<?= $editTask ? e($editTask['title']) : '' ?>">
+                <input type="text" name="title" class="form-control" id="taskTitle" required value="<?= e(old('title', $editTask ? $editTask['title'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Description</label>

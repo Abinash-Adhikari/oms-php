@@ -114,7 +114,7 @@ $monogram = mb_strtoupper(mb_substr($orgShort, 0, 1));
                 <?= csrfField() ?>
                 <div class="pl-field">
                     <i class="fas fa-user pl-field-icon"></i>
-                    <input type="text" name="userId" class="pl-input" placeholder="Username or User ID" required autofocus autocomplete="username" <?= $rateLimited ? 'disabled' : '' ?>>
+                    <input type="text" name="userId" value="<?= e(old('userId')) ?>" class="pl-input" placeholder="Username or User ID" required autofocus autocomplete="username" <?= $rateLimited ? 'disabled' : '' ?>>
                 </div>
                 <div class="pl-field">
                     <i class="fas fa-lock pl-field-icon"></i>

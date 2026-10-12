@@ -99,7 +99,7 @@ Each module follows a **display+operation split** (`pages/` for forms/lists, `op
 - Denies `config/`, `scripts/`, `classes/`, `tests/`, `docs/`, `database/`, hidden files (`.`-prefixed), `composer.json|lock`, `phpunit.xml.dist`, `.gitignore`, `.htaccess`.
 - Blocks `clear_opcache.php` (admin-only).
 - **Custom 404** → `/404.php`; `Options -Indexes` (no dir listing).
-- Clean-URL rewrites for public + admin paths (`/admin/leads → admin/show_page.php?module=leads`).
+- Clean-URL rewrites for public + admin paths (`/admin/sales → admin/show_page.php?module=sales`).
 
 ---
 

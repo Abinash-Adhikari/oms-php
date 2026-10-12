@@ -80,18 +80,18 @@ $drawerOpen = ($editNotice !== null);
             <input type="hidden" name="id" id="formId" value="<?= $editNotice ? (int) $editNotice['id'] : 0 ?>">
             <div class="form-group">
                 <label>Title *</label>
-                <input type="text" name="title" class="form-control" id="formTitle" required value="<?= $editNotice ? e($editNotice['title']) : '' ?>">
+                <input type="text" name="title" class="form-control" id="formTitle" required value="<?= e(old('title', $editNotice ? $editNotice['title'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Status</label>
                 <select name="is_active" class="form-control" id="formStatus">
-                    <option value="1" <?= ($editNotice && ($editNotice['is_active'] ?? 1)) ? 'selected' : '' ?>>Active</option>
-                    <option value="0" <?= $editNotice && !($editNotice['is_active'] ?? 1) ? 'selected' : '' ?>>Inactive</option>
+                    <option value="1" <?= old('is_active', $editNotice['is_active'] ?? '') == '1' ? 'selected' : '' ?>>Active</option>
+                    <option value="0" <?= old('is_active', $editNotice['is_active'] ?? '') == '0' ? 'selected' : '' ?>>Inactive</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Description</label>
-                <textarea name="description" class="form-control" id="formDescription" rows="4"><?= $editNotice ? e($editNotice['description']) : '' ?></textarea>
+                <textarea name="description" class="form-control" id="formDescription" rows="4"><?= e(old('description', $editNotice ? $editNotice['description'] : '')) ?></textarea>
             </div>
         </form>
     </div>

@@ -188,5 +188,20 @@ $files = [
     // --- Document engine: show_items flag (was hand-added, never migrated) ---
     'alter-table-documents-add-show_items',
 
+    // --- Client projects: demo/trial (not won) vs won deployments ---
+    'alter-table-client_projects-add-is_won',
+
+    // --- Nav: Client Projects becomes a Leads sidebar submodule ---
+    'seed-table-users_login-grant-client_projects',
+
+    // --- Nav: Leads/Clients/Client Projects/Products consolidated into Sales ---
+    'seed-table-users_login-move-grants-to-sales',
+
+    // --- Retire legacy quotations: tbl_quotations → tbl_documents (quotation) ---
+    'seed-table-documents-from-legacy-quotations',
+
+    // --- Public API: school-app listing fields on client projects ---
+    'alter-table-client_projects-add-app-fields',
+
     // Append new migration filenames below only (do not insert in the middle).
 ];

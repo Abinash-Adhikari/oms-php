@@ -71,22 +71,22 @@ $drawerOpen = ($edit !== null);
             <input type="hidden" name="id" id="formId" value="<?= $edit ? (int) $edit['id'] : 0 ?>">
             <div class="form-group">
                 <label>Title *</label>
-                <input type="text" name="title" class="form-control" required value="<?= $edit ? e($edit['title']) : '' ?>">
+                <input type="text" name="title" class="form-control" required value="<?= e(old('title', $edit['title'] ?? '')) ?>">
             </div>
             <div class="form-group">
                 <label>From date *</label>
-                <input type="date" name="from_date" class="form-control" required value="<?= $edit ? e($edit['from_date']) : '' ?>">
+                <input type="date" name="from_date" class="form-control" required value="<?= e(old('from_date', $edit['from_date'] ?? '')) ?>">
             </div>
             <div class="form-group">
                 <label>To date *</label>
-                <input type="date" name="to_date" class="form-control" required value="<?= $edit ? e($edit['to_date']) : '' ?>">
+                <input type="date" name="to_date" class="form-control" required value="<?= e(old('to_date', $edit['to_date'] ?? '')) ?>">
             </div>
             <div class="form-group">
                 <label>Department scope</label>
                 <select name="department_id" class="form-control">
                     <option value="">All departments</option>
                     <?php foreach ($departments as $d): ?>
-                        <option value="<?= (int) $d['id'] ?>" <?= $edit && (int) $edit['department_id'] === (int) $d['id'] ? 'selected' : '' ?>><?= e($d['title']) ?></option>
+                        <option value="<?= (int) $d['id'] ?>" <?= old('department_id', $edit ? (int) $edit['department_id'] : '') == (int) $d['id'] ? 'selected' : '' ?>><?= e($d['title']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -94,13 +94,13 @@ $drawerOpen = ($edit !== null);
                 <label>Gender scope</label>
                 <select name="gender_to" class="form-control">
                     <?php foreach (['Both', 'Male', 'Female'] as $g): ?>
-                        <option value="<?= $g ?>" <?= $edit && $edit['gender_to'] === $g ? 'selected' : '' ?>><?= $g ?></option>
+                        <option value="<?= $g ?>" <?= old('gender_to', $edit ? $edit['gender_to'] : '') === $g ? 'selected' : '' ?>><?= $g ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="form-group">
                 <label>Remarks</label>
-                <input type="text" name="remarks" class="form-control" value="<?= $edit ? e($edit['remarks']) : '' ?>">
+                <input type="text" name="remarks" class="form-control" value="<?= e(old('remarks', $edit['remarks'] ?? '')) ?>">
             </div>
         </form>
     </div>

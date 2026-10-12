@@ -2,7 +2,7 @@
 /**
  * SB-Tech — global search endpoint (omnibar).
  * GET /admin/search.php?q=… returns JSON groups across leads, clients,
- * project catalog, quotations and client projects.
+ * products, sales documents and client projects.
  */
 include __DIR__ . '/../config/setup.php';
 
@@ -37,7 +37,7 @@ foreach ($db->select(
         'icon'  => 'fas fa-funnel-dollar text-primary',
         'title' => $r['company'] ?: $r['contact_name'],
         'sub'   => $r['stage'] . ($r['email'] ? ' · ' . $r['email'] : ''),
-        'url'   => pageUrl('leads', 'leads') . '&id=' . (int) $r['id'],
+        'url'   => pageUrl('sales', 'leads') . '&id=' . (int) $r['id'],
     ];
 }
 
@@ -54,7 +54,7 @@ foreach ($db->select(
         'icon'  => 'fas fa-building text-success',
         'title' => $r['name'],
         'sub'   => ($r['contact_person'] ? $r['contact_person'] . ' · ' : '') . ($r['email'] ?: $r['phone']),
-        'url'   => pageUrl('clients', 'detail') . '&id=' . (int) $r['id'],
+        'url'   => pageUrl('sales', 'client_detail') . '&id=' . (int) $r['id'],
     ];
 }
 
@@ -67,28 +67,28 @@ foreach ($db->select(
 ) as $r) {
     $out[] = [
         'type'  => 'project',
-        'group' => 'Project Catalog',
+        'group' => 'Products',
         'icon'  => 'fas fa-project-diagram text-info',
         'title' => $r['name'],
         'sub'   => ($r['code'] ? $r['code'] . ' · ' : '') . ($r['category'] ?: ''),
-        'url'   => pageUrl('leads', 'projects') . '&edit=' . (int) $r['id'],
+        'url'   => pageUrl('sales', 'products') . '&edit=' . (int) $r['id'],
     ];
 }
 
 foreach ($db->select(
-    'SELECT id, quotation_number, client_name, subject, status
-     FROM `tbl_quotations`
-     WHERE `quotation_number` LIKE ? OR `client_name` LIKE ? OR `subject` LIKE ?
+    'SELECT id, document_type, document_number, client_name, subject, status
+     FROM `tbl_documents`
+     WHERE `document_number` LIKE ? OR `client_name` LIKE ? OR `subject` LIKE ?
      ORDER BY id DESC LIMIT 8',
     [$kw, $kw, $kw]
 ) as $r) {
     $out[] = [
-        'type'  => 'quotation',
-        'group' => 'Quotations',
+        'type'  => 'document',
+        'group' => 'Sales Documents',
         'icon'  => 'fas fa-file-invoice text-warning',
-        'title' => $r['quotation_number'],
-        'sub'   => $r['client_name'] . ' · ' . $r['status'] . ($r['subject'] ? ' — ' . mb_strimwidth($r['subject'], 0, 40, '…') : ''),
-        'url'   => pageUrl('leads', 'quotations') . '&id=' . (int) $r['id'],
+        'title' => $r['document_number'],
+        'sub'   => ($r['client_name'] ?: '—') . ' · ' . $r['status'] . ($r['subject'] ? ' — ' . mb_strimwidth($r['subject'], 0, 40, '…') : ''),
+        'url'   => pageUrl('sales', 'documents') . '&type=' . urlencode($r['document_type']) . '&id=' . (int) $r['id'],
     ];
 }
 
@@ -106,7 +106,7 @@ foreach ($db->select(
         'icon'  => 'fas fa-handshake text-success',
         'title' => $r['title'],
         'sub'   => ($r['client_name'] ? $r['client_name'] . ' · ' : '') . ($r['url'] ?: '') . ' · ' . $r['status'],
-        'url'   => pageUrl('leads', 'client_projects') . '&id=' . (int) $r['id'],
+        'url'   => pageUrl('sales', 'client_projects') . '&id=' . (int) $r['id'],
     ];
 }
 

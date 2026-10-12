@@ -427,7 +427,7 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                         </div>
                         <div class="form-group">
                             <label>Title *</label>
-                            <input type="text" name="title" class="form-control" required placeholder="e.g. Sprint review">
+                            <input type="text" name="title" class="form-control" required placeholder="e.g. Sprint review" value="<?= e(old_scoped('save_event', 'title')) ?>">
                         </div>
                         <div class="form-group">
                             <label>Privacy</label>
@@ -465,7 +465,7 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                         </div>
                         <div class="form-group">
                             <label>Other attendees</label>
-                            <input type="text" name="other_attendees" class="form-control" placeholder="Names, emails…">
+                            <input type="text" name="other_attendees" class="form-control" placeholder="Names, emails…" value="<?= e(old_scoped('save_event', 'other_attendees')) ?>">
                         </div>
                         <div class="form-group">
                             <label>Venue</label>
@@ -485,7 +485,7 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                         </div>
                         <div class="form-group" id="calEvtLocWrap" hidden>
                             <label>Location</label>
-                            <input type="text" name="venue_location_text" id="calEvtLoc" class="form-control" placeholder="Address…">
+                            <input type="text" name="venue_location_text" id="calEvtLoc" class="form-control" placeholder="Address…" value="<?= e(old_scoped('save_event', 'venue_location_text')) ?>">
                         </div>
                         <label class="d-block text-muted mb-1">Schedule</label>
                         <div id="calEvtSched">
@@ -514,7 +514,7 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                         </div>
                         <div class="form-group mb-0">
                             <label>Remarks</label>
-                            <textarea name="remarks" rows="2" class="form-control" placeholder="Optional details"></textarea>
+                            <textarea name="remarks" rows="2" class="form-control" placeholder="Optional details"><?= e(old_scoped('save_event', 'remarks')) ?></textarea>
                         </div>
                         </div>
                     </div>
@@ -529,12 +529,13 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                         <div class="card-body">
                             <?= csrfField() ?>
                             <input type="hidden" name="action" value="save_event">
+                            <input type="hidden" name="_scope" value="cal_note">
                             <input type="hidden" name="type" value="Note">
                             <input type="hidden" name="redirect" value="calendar">
                             <input type="hidden" name="note_date" class="calNoteDate">
                             <div class="form-group">
                             <label>Title *</label>
-                            <input type="text" name="title" class="form-control" required placeholder="e.g. Follow up with vendor">
+                            <input type="text" name="title" class="form-control" required placeholder="e.g. Follow up with vendor" value="<?= e(old_scoped('cal_note', 'title')) ?>">
                             <small class="text-muted">Notes added from the calendar expire automatically on this date.</small>
                         </div>
                         <div class="form-group">
@@ -557,7 +558,7 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                         </div>
                         <div class="form-group mb-0">
                             <label>Remarks</label>
-                            <textarea name="remarks" rows="2" class="form-control" placeholder="Optional details"></textarea>
+                            <textarea name="remarks" rows="2" class="form-control" placeholder="Optional details"><?= e(old_scoped('cal_note', 'remarks')) ?></textarea>
                         </div>
                         </div>
                     </div>
@@ -576,15 +577,15 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                             <input type="hidden" name="todo_date" class="calTodoDate">
                             <div class="form-group">
                             <label>What needs to be done? *</label>
-                            <input type="text" name="title" class="form-control" required placeholder="e.g. Submit monthly report">
+                            <input type="text" name="title" class="form-control" required placeholder="e.g. Submit monthly report" value="<?= e(old_scoped('save_todo', 'title')) ?>">
                         </div>
                         <div class="form-group">
                             <label>Time</label>
-                            <input type="time" name="todo_time" class="form-control">
+                            <input type="time" name="todo_time" class="form-control" value="<?= e(old_scoped('save_todo', 'todo_time')) ?>">
                         </div>
                         <div class="form-group mb-0">
                             <label>Remarks</label>
-                            <textarea name="remarks" rows="2" class="form-control" placeholder="Optional details"></textarea>
+                            <textarea name="remarks" rows="2" class="form-control" placeholder="Optional details"><?= e(old_scoped('save_todo', 'remarks')) ?></textarea>
                         </div>
                         </div>
                     </div>
@@ -602,7 +603,7 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                             <input type="hidden" name="redirect" value="calendar">
                             <div class="form-group">
                         <label>Title *</label>
-                        <input type="text" name="title" class="form-control" required placeholder="e.g. Dashain holiday">
+                        <input type="text" name="title" class="form-control" required placeholder="e.g. Dashain holiday" value="<?= e(old_scoped('save', 'title')) ?>">
                     </div>
                     <div class="form-group">
                         <label>From date <?= date_system_label() ?> *</label>
@@ -631,7 +632,7 @@ $bsNote = $calMode === 'BS' && !$bsAvailable ? '<div class="alert alert-warning 
                     </div>
                     <div class="form-group mb-0">
                         <label>Remarks</label>
-                        <input type="text" name="remarks" class="form-control" placeholder="Optional details">
+                        <input type="text" name="remarks" class="form-control" placeholder="Optional details" value="<?= e(old_scoped('save', 'remarks')) ?>">
                     </div>
                         </div>
                     </div>

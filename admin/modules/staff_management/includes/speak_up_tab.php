@@ -99,7 +99,7 @@ $statusBadges = ['Pending' => 'warning', 'In Progress' => 'info', 'Acknowledged'
                                 <select name="assigned" class="form-control form-control-sm">
                                     <option value="">Unassigned</option>
                                     <?php foreach ($activeStaff as $st): ?>
-                                        <option value="<?= (int) $st['id'] ?>" <?= (int) $g['assigned'] === (int) $st['id'] ? 'selected' : '' ?>><?= e($st['fullname']) ?></option>
+                                        <option value="<?= (int) $st['id'] ?>" <?= (int) old_scoped('admin_update_grievance:' . (int) $g['id'], 'assigned', $g['assigned'] ?? '') === (int) $st['id'] ? 'selected' : '' ?>><?= e($st['fullname']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -107,13 +107,13 @@ $statusBadges = ['Pending' => 'warning', 'In Progress' => 'info', 'Acknowledged'
                                 <label class="small mb-0">Status</label>
                                 <select name="status" class="form-control form-control-sm">
                                     <?php foreach (array_keys($statusBadges) as $st): ?>
-                                        <option value="<?= $st ?>" <?= $g['status'] === $st ? 'selected' : '' ?>><?= $st ?></option>
+                                        <option value="<?= $st ?>" <?= old_scoped('admin_update_grievance:' . (int) $g['id'], 'status', $g['status'] ?? '') === $st ? 'selected' : '' ?>><?= $st ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="small mb-0">Deadline</label>
-                                <input type="datetime-local" name="deadline" class="form-control form-control-sm" value="<?= $g['deadline'] ? e(date('Y-m-d\TH:i', strtotime($g['deadline']))) : '' ?>">
+                                <input type="datetime-local" name="deadline" class="form-control form-control-sm" value="<?= e(old_scoped('admin_update_grievance:' . (int) $g['id'], 'deadline', $g['deadline'] ? date('Y-m-d\TH:i', strtotime($g['deadline'])) : '')) ?>">
                             </div>
                             <div class="col-md-2">
                                 <button type="submit" class="btn btn-sm btn-primary btn-block">Save</button>
@@ -130,7 +130,7 @@ $statusBadges = ['Pending' => 'warning', 'In Progress' => 'info', 'Acknowledged'
                                 <input type="hidden" name="id" value="<?= (int) $g['id'] ?>">
                                 <div class="col-md-7">
                                     <label class="small mb-0">Update note</label>
-                                    <input type="text" name="update_text" class="form-control form-control-sm" placeholder="Progress or response">
+                                    <input type="text" name="update_text" class="form-control form-control-sm" placeholder="Progress or response" value="<?= e(old_scoped('post_grievance_update:' . (int) $g['id'], 'update_text')) ?>">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="small mb-0">File (optional)</label>
@@ -186,11 +186,11 @@ $statusBadges = ['Pending' => 'warning', 'In Progress' => 'info', 'Acknowledged'
             <input type="hidden" name="action" value="save_grievance">
             <div class="form-group">
                 <label>Title *</label>
-                <input type="text" name="title" class="form-control" required>
+                <input type="text" name="title" class="form-control" required value="<?= e(old('title')) ?>">
             </div>
             <div class="form-group">
                 <label>Description *</label>
-                <textarea name="description" class="form-control" rows="5" required></textarea>
+                <textarea name="description" class="form-control" rows="5" required><?= e(old('description')) ?></textarea>
             </div>
             <div class="form-group">
                 <label>Attachment (optional)</label>

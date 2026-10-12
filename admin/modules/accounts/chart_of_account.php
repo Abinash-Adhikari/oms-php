@@ -90,8 +90,8 @@ $activeTerminal = $terminalId ? ($db->selectOne('SELECT * FROM `tbl_account_term
                         <input type="hidden" name="group_id" value="<?= (int) $groupId ?>">
                         <input type="hidden" name="subgroup_id" value="<?= (int) $subgroupId ?>">
                         <input type="hidden" name="terminal_id" value="<?= (int) $terminalId ?>">
-                        <input type="text" name="title" class="form-control" placeholder="New <?= strtolower($colLabel) ?>" required>
-                        <input type="number" name="position" class="form-control" style="max-width:70px" placeholder="Pos" value="0">
+                        <input type="text" name="title" class="form-control" value="<?= e(old('title')) ?>" placeholder="New <?= strtolower($colLabel) ?>" required>
+                        <input type="number" name="position" class="form-control" style="max-width:70px" placeholder="Pos" value="<?= e(old('position', '0')) ?>">
                         <div class="input-group-append">
                             <button class="btn btn-primary" <?= $colKey === 'subgroup' && !$activeGroup ? 'disabled title="Select a group first"' : ($colKey === 'terminal' && !$activeSubgroup ? 'disabled title="Select a sub-group first"' : ($colKey === 'subterminal' && !$activeTerminal ? 'disabled title="Select a terminal first"' : '')) ?>>
                                 <i class="fas fa-plus"></i>

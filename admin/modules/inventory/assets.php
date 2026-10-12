@@ -153,11 +153,11 @@ if ($viewLogId):
             <div class="form-row">
                 <div class="col-6 form-group">
                     <label>Asset Tag *</label>
-                    <input type="text" name="asset_tag" class="form-control" id="formAssetTag" required value="<?= $editAsset ? e($editAsset['asset_tag']) : '' ?>" placeholder="Auto-generated if empty">
+                    <input type="text" name="asset_tag" class="form-control" id="formAssetTag" required value="<?= e(old('asset_tag', $editAsset ? $editAsset['asset_tag'] : '')) ?>" placeholder="Auto-generated if empty">
                 </div>
                 <div class="col-6 form-group">
                     <label>Name *</label>
-                    <input type="text" name="name" class="form-control" id="formName" required value="<?= $editAsset ? e($editAsset['name']) : '' ?>">
+                    <input type="text" name="name" class="form-control" id="formName" required value="<?= e(old('name', $editAsset ? $editAsset['name'] : '')) ?>">
                 </div>
             </div>
             <div class="form-group">
@@ -165,44 +165,44 @@ if ($viewLogId):
                 <select name="item_id" class="form-control" id="formItemId">
                     <option value="0">— None —</option>
                     <?php foreach ($items as $i): ?>
-                        <option value="<?= (int) $i['id'] ?>" <?= $editAsset && (int) $editAsset['item_id'] === (int) $i['id'] ? 'selected' : '' ?>><?= e($i['name']) ?> (<?= e($i['sku']) ?>)</option>
+                        <option value="<?= (int) $i['id'] ?>" <?= $editAsset && (int) old('item_id', $editAsset['item_id']) === (int) $i['id'] ? 'selected' : '' ?>><?= e($i['name']) ?> (<?= e($i['sku']) ?>)</option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="form-group">
                 <label>Serial Number</label>
-                <input type="text" name="serial_number" class="form-control" id="formSerial" value="<?= $editAsset ? e($editAsset['serial_number']) : '' ?>">
+                <input type="text" name="serial_number" class="form-control" id="formSerial" value="<?= e(old('serial_number', $editAsset ? $editAsset['serial_number'] : '')) ?>">
             </div>
             <div class="form-row">
                 <div class="col-6 form-group">
                     <label>Brand</label>
-                    <input type="text" name="brand" class="form-control" id="formBrand" value="<?= $editAsset ? e($editAsset['brand']) : '' ?>">
+                    <input type="text" name="brand" class="form-control" id="formBrand" value="<?= e(old('brand', $editAsset ? $editAsset['brand'] : '')) ?>">
                 </div>
                 <div class="col-6 form-group">
                     <label>Model</label>
-                    <input type="text" name="model" class="form-control" id="formModel" value="<?= $editAsset ? e($editAsset['model']) : '' ?>">
+                    <input type="text" name="model" class="form-control" id="formModel" value="<?= e(old('model', $editAsset ? $editAsset['model'] : '')) ?>">
                 </div>
             </div>
             <div class="form-row">
                 <div class="col-6 form-group">
                     <label>Purchase Date</label>
-                    <input type="date" name="purchase_date" class="form-control" id="formPurchaseDate" value="<?= $editAsset ? e($editAsset['purchase_date']) : '' ?>">
+                    <input type="date" name="purchase_date" class="form-control" id="formPurchaseDate" value="<?= e(old('purchase_date', $editAsset ? $editAsset['purchase_date'] : '')) ?>">
                 </div>
                 <div class="col-6 form-group">
                     <label>Purchase Price</label>
-                    <input type="number" step="0.01" name="purchase_price" class="form-control" id="formPurchasePrice" value="<?= $editAsset ? e($editAsset['purchase_price']) : '' ?>">
+                    <input type="number" step="0.01" name="purchase_price" class="form-control" id="formPurchasePrice" value="<?= e(old('purchase_price', $editAsset ? $editAsset['purchase_price'] : '')) ?>">
                 </div>
             </div>
             <div class="form-group">
                 <label>Warranty Expiry</label>
-                <input type="date" name="warranty_expiry" class="form-control" id="formWarranty" value="<?= $editAsset ? e($editAsset['warranty_expiry']) : '' ?>">
+                <input type="date" name="warranty_expiry" class="form-control" id="formWarranty" value="<?= e(old('warranty_expiry', $editAsset ? $editAsset['warranty_expiry'] : '')) ?>">
             </div>
             <div class="form-row">
                 <div class="col-6 form-group">
                     <label>Condition</label>
                     <select name="condition_status" class="form-control" id="formCondition">
                         <?php foreach (['New','Good','Fair','Poor','Damaged','Retired'] as $c): ?>
-                            <option value="<?= $c ?>" <?= $editAsset && $editAsset['condition_status'] === $c ? 'selected' : '' ?>><?= $c ?></option>
+                            <option value="<?= $c ?>" <?= $editAsset && old('condition_status', $editAsset['condition_status']) === $c ? 'selected' : '' ?>><?= $c ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -210,7 +210,7 @@ if ($viewLogId):
                     <label>Status</label>
                     <select name="current_status" class="form-control" id="formStatus">
                         <?php foreach (['In Stock','Assigned','Under Maintenance','Retired','Disposed'] as $s): ?>
-                            <option value="<?= $s ?>" <?= $editAsset && $editAsset['current_status'] === $s ? 'selected' : '' ?>><?= $s ?></option>
+                            <option value="<?= $s ?>" <?= $editAsset && old('current_status', $editAsset['current_status']) === $s ? 'selected' : '' ?>><?= $s ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -220,17 +220,17 @@ if ($viewLogId):
                 <select name="assigned_to" class="form-control" id="formAssignedTo">
                     <option value="0">— Nobody —</option>
                     <?php foreach ($staffs as $st): ?>
-                        <option value="<?= (int) $st['id'] ?>" <?= $editAsset && (int) $editAsset['assigned_to'] === (int) $st['id'] ? 'selected' : '' ?>><?= e($st['fullname']) ?></option>
+                        <option value="<?= (int) $st['id'] ?>" <?= $editAsset && (int) old('assigned_to', $editAsset['assigned_to']) === (int) $st['id'] ? 'selected' : '' ?>><?= e($st['fullname']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="form-group">
                 <label>Location</label>
-                <input type="text" name="location" class="form-control" id="formLocation" value="<?= $editAsset ? e($editAsset['location']) : '' ?>">
+                <input type="text" name="location" class="form-control" id="formLocation" value="<?= e(old('location', $editAsset ? $editAsset['location'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Notes</label>
-                <textarea name="notes" class="form-control" id="formNotes" rows="3"><?= $editAsset ? e($editAsset['notes']) : '' ?></textarea>
+                <textarea name="notes" class="form-control" id="formNotes" rows="3"><?= e(old('notes', $editAsset ? $editAsset['notes'] : '')) ?></textarea>
             </div>
         </form>
     </div>

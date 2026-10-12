@@ -179,16 +179,16 @@ $openFy = accountingCurrentOpenFy();
                     <div class="form-row">
                         <div class="form-group col-6">
                             <label>Date * <small class="text-muted">(<?= e($openFy['title']) ?>)</small></label>
-                            <input type="date" name="date" class="form-control" required value="<?= $edit ? e($edit['voucher_date']) : date('Y-m-d') ?>" max="<?= date('Y-m-d') ?>">
+                            <input type="date" name="date" class="form-control" required value="<?= e(old('date', $edit ? $edit['voucher_date'] : date('Y-m-d'))) ?>" max="<?= date('Y-m-d') ?>">
                         </div>
                         <div class="form-group col-6">
                             <label>Reference no</label>
-                            <input type="text" name="reference_no" class="form-control" value="<?= $edit ? e($edit['reference_no'] ?? '') : '' ?>">
+                            <input type="text" name="reference_no" class="form-control" value="<?= e(old('reference_no', $edit ? $edit['reference_no'] ?? '' : '')) ?>">
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Narration</label>
-                        <textarea name="narration" class="form-control" rows="2"><?= $edit ? e($edit['narration'] ?? '') : '' ?></textarea>
+                        <textarea name="narration" class="form-control" rows="2"><?= e(old('narration', $edit ? $edit['narration'] ?? '' : '')) ?></textarea>
                     </div>
                     <div class="form-group">
                         <label>Attachment (jpg/png/pdf)</label>

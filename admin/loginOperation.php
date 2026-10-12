@@ -18,6 +18,7 @@ $password = (string) ($_POST['password'] ?? '');
 
 if ($username === '' || $password === '') {
     $_SESSION['login_err_msg'] = 'Please enter both username and password.';
+    capture_old_input();
     redirect('login.php');
 }
 
@@ -29,6 +30,7 @@ if (!$rateCheck['allowed']) {
     $retryMsg = RateLimiter::formatRetryAfter($rateCheck['retry_after']);
     $_SESSION['login_err_msg'] = 'Too many failed attempts. Please try again in ' . $retryMsg . '.';
     $_SESSION['login_rate_limited'] = true;
+    capture_old_input();
     redirect('login.php');
 }
 
@@ -38,6 +40,7 @@ if (empty($result['ok'])) {
     // Record failed attempt for rate limiting.
     RateLimiter::recordFailure($clientIp, $username);
     $_SESSION['login_err_msg'] = $result['message'] ?? 'Invalid UserId or Password';
+    capture_old_input();
     redirect('login.php');
 }
 

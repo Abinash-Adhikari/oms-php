@@ -89,6 +89,12 @@ if (isset($_GET['id'])) {
         [(int) $lead['id']]
     );
     $files = $db->select('SELECT * FROM `tbl_lead_files` WHERE lead_id = ? ORDER BY added_on DESC', [(int) $lead['id']]);
+    $leadTrials = $db->select(
+        'SELECT `id`, `title`, `url`, `end_date`, `status` FROM `tbl_client_projects`
+         WHERE `lead_id` = ? AND `is_won` = 0 ORDER BY `id` DESC',
+        [(int) $lead['id']]
+    );
+    $canStartTrial = !in_array($lead['stage'], ['Won', 'Lost'], true);
     $dup = null;
     if (($lead['email'] || $lead['phone']) && !in_array($lead['stage'], ['Won', 'Lost'], true)) {
         $dup = $db->selectOne(
@@ -110,18 +116,18 @@ if (isset($_GET['id'])) {
     <!-- ── Detail View ── -->
     <nav aria-label="breadcrumb" class="mb-2">
         <ol class="breadcrumb bg-transparent p-0 mb-0 small" style="margin-bottom:0">
-            <li class="breadcrumb-item"><a href="<?= pageUrl('leads', 'leads') ?>">Leads</a></li>
+            <li class="breadcrumb-item"><a href="<?= pageUrl('sales', 'leads') ?>">Leads</a></li>
             <?php if ($lead['client_name']): ?>
-                <li class="breadcrumb-item"><a href="<?= pageUrl('clients', 'detail') ?>&id=<?= (int) $lead['client_id'] ?>"><?= e($lead['client_name']) ?></a></li>
+                <li class="breadcrumb-item"><a href="<?= pageUrl('sales', 'client_detail') ?>&id=<?= (int) $lead['client_id'] ?>"><?= e($lead['client_name']) ?></a></li>
             <?php endif; ?>
             <?php if ($lead['project_name']): ?>
-                <li class="breadcrumb-item"><a href="<?= pageUrl('leads', 'projects') ?>"><?= e($lead['project_name']) ?></a></li>
+                <li class="breadcrumb-item"><a href="<?= pageUrl('sales', 'products') ?>"><?= e($lead['project_name']) ?></a></li>
             <?php endif; ?>
             <li class="breadcrumb-item active"><?= e($lead['company'] ?: $lead['contact_name']) ?></li>
         </ol>
     </nav>
     <div class="d-flex align-items-center mb-3">
-        <a href="<?= pageUrl('leads', 'leads') ?>" class="btn btn-sm btn-outline-secondary mr-2"><i class="fas fa-arrow-left"></i></a>
+        <a href="<?= pageUrl('sales', 'leads') ?>" class="btn btn-sm btn-outline-secondary mr-2"><i class="fas fa-arrow-left"></i></a>
         <div>
             <h4 class="mb-0 font-weight-bold"><?= e($lead['company'] ?: $lead['contact_name']) ?></h4>
             <small class="text-muted"><?= e($lead['contact_name'] ?: '—') ?> · <?= e($lead['email'] ?: '—') ?></small>
@@ -168,11 +174,11 @@ if (isset($_GET['id'])) {
                             <i class="fas fa-clone mr-2"></i>
                             <div class="flex-grow-1">
                                 <strong>Possible duplicate:</strong>
-                                <a href="<?= pageUrl('leads', 'leads') ?>&id=<?= (int) $dup['id'] ?>"><?= e($dup['company'] ?: $dup['contact_name']) ?></a>
+                                <a href="<?= pageUrl('sales', 'leads') ?>&id=<?= (int) $dup['id'] ?>"><?= e($dup['company'] ?: $dup['contact_name']) ?></a>
                                 shares the same email/phone.
                             </div>
                             <?php if ($canManage): ?>
-                                <form action="operation.php?module=leads&page=leads" method="post" class="d-inline">
+                                <form action="operation.php?module=sales&page=leads" method="post" class="d-inline">
                                     <?= csrfField() ?>
                                     <input type="hidden" name="action" value="merge_leads">
                                     <input type="hidden" name="keep_id" value="<?= (int) $lead['id'] ?>">
@@ -190,7 +196,7 @@ if (isset($_GET['id'])) {
                                 <tr><th class="text-muted">Email</th><td><?= $lead['email'] ? '<a href="mailto:' . e($lead['email']) . '">' . e($lead['email']) . '</a>' : '—' ?></td></tr>
                                 <tr><th class="text-muted">Phone</th><td><?= $lead['phone'] ? '<a href="tel:' . e($lead['phone']) . '">' . e($lead['phone']) . '</a>' : '—' ?></td></tr>
                                 <tr><th class="text-muted">Service Interest</th><td><?= e($lead['service_interest'] ?: '—') ?></td></tr>
-                                <tr><th class="text-muted">Project</th><td><?= $lead['project_name'] ? '<a href="' . pageUrl('leads', 'projects') . '">' . e($lead['project_name']) . '</a>' : '—' ?></td></tr>
+                                <tr><th class="text-muted">Product</th><td><?= $lead['project_name'] ? '<a href="' . pageUrl('sales', 'products') . '">' . e($lead['project_name']) . '</a>' : '—' ?></td></tr>
                                 <tr><th class="text-muted">Source</th><td><span class="badge badge-light border"><?= e($lead['source']) ?></span></td></tr>
                             </table>
                         </div>
@@ -204,7 +210,7 @@ if (isset($_GET['id'])) {
                                     <tr><th class="text-muted">Lost Reason</th><td class="text-danger"><?= e($lead['lost_reason']) ?></td></tr>
                                 <?php endif; ?>
                                 <?php if ($lead['client_name']): ?>
-                                    <tr><th class="text-muted">Client</th><td><a href="<?= pageUrl('clients', 'detail') ?>&id=<?= (int) $lead['client_id'] ?>"><i class="fas fa-link mr-1"></i><?= e($lead['client_name']) ?></a></td></tr>
+                                    <tr><th class="text-muted">Client</th><td><a href="<?= pageUrl('sales', 'client_detail') ?>&id=<?= (int) $lead['client_id'] ?>"><i class="fas fa-link mr-1"></i><?= e($lead['client_name']) ?></a></td></tr>
                                 <?php endif; ?>
                             </table>
                         </div>
@@ -238,7 +244,7 @@ if (isset($_GET['id'])) {
                 </div>
                 <div class="card-body p-0">
                     <?php if ($canManage): ?>
-                        <form action="operation.php?module=leads&page=leads" method="post" class="d-flex align-items-center p-3 border-bottom">
+                        <form action="operation.php?module=sales&page=leads" method="post" class="d-flex align-items-center p-3 border-bottom">
                             <?= csrfField() ?>
                             <input type="hidden" name="action" value="add_activity">
                             <input type="hidden" name="id" value="<?= (int) $lead['id'] ?>">
@@ -247,7 +253,7 @@ if (isset($_GET['id'])) {
                                     <option value="<?= $t ?>"><?= $t ?></option>
                                 <?php endforeach; ?>
                             </select>
-                            <input type="text" name="note" class="form-control form-control-sm mx-2" placeholder="Log an activity..." required>
+                            <input type="text" name="note" class="form-control form-control-sm mx-2" placeholder="Log an activity..." value="<?= e(old_scoped('add_activity:' . (int) $lead['id'], 'note')) ?>" required>
                             <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i></button>
                         </form>
                     <?php endif; ?>
@@ -284,7 +290,7 @@ if (isset($_GET['id'])) {
                         <h3 class="card-title"><i class="fas fa-bolt mr-1"></i>Quick Actions</h3>
                     </div>
                     <div class="card-body">
-                        <form action="operation.php?module=leads&page=leads" method="post" class="mb-3">
+                        <form action="operation.php?module=sales&page=leads" method="post" class="mb-3">
                             <?= csrfField() ?>
                             <input type="hidden" name="action" value="update_lead">
                             <input type="hidden" name="id" value="<?= (int) $lead['id'] ?>">
@@ -292,7 +298,7 @@ if (isset($_GET['id'])) {
                                 <label class="small text-muted mb-1">Stage</label>
                                 <select name="stage" class="form-control form-control-sm">
                                     <?php foreach ($stages as $st): ?>
-                                        <option value="<?= $st ?>" <?= $lead['stage'] === $st ? 'selected' : '' ?>><?= $st ?></option>
+                                        <option value="<?= $st ?>" <?= old_scoped('update_lead:' . (int) $lead['id'], 'stage', $lead['stage'] ?? '') === $st ? 'selected' : '' ?>><?= $st ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -300,7 +306,7 @@ if (isset($_GET['id'])) {
                                 <label class="small text-muted mb-1">Priority</label>
                                 <select name="priority" class="form-control form-control-sm">
                                     <?php foreach ($priorities as $p): ?>
-                                        <option value="<?= $p ?>" <?= $lead['priority'] === $p ? 'selected' : '' ?>><?= $p ?></option>
+                                        <option value="<?= $p ?>" <?= old_scoped('update_lead:' . (int) $lead['id'], 'priority', $lead['priority'] ?? '') === $p ? 'selected' : '' ?>><?= $p ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -316,17 +322,17 @@ if (isset($_GET['id'])) {
                             <?php if ($lead['stage'] === 'Lost'): ?>
                                 <div class="form-group mb-2">
                                     <label class="small text-muted mb-1">Lost Reason</label>
-                                    <input type="text" name="lost_reason" class="form-control form-control-sm" value="<?= e($lead['lost_reason']) ?>">
+                                    <input type="text" name="lost_reason" class="form-control form-control-sm" value="<?= e(old_scoped('update_lead:' . (int) $lead['id'], 'lost_reason', $lead['lost_reason'])) ?>">
                                 </div>
                             <?php endif; ?>
                             <button type="submit" class="btn btn-sm btn-primary btn-block"><i class="fas fa-save mr-1"></i>Save Changes</button>
                         </form>
 
                         <hr class="my-2">
-                        <a href="<?= pageUrl('leads', 'leads') ?>&edit=<?= (int) $lead['id'] ?>" class="btn btn-sm btn-outline-primary btn-block mb-2"><i class="fas fa-edit mr-1"></i>Edit Lead Details</a>
+                        <a href="<?= pageUrl('sales', 'leads') ?>&edit=<?= (int) $lead['id'] ?>" class="btn btn-sm btn-outline-primary btn-block mb-2"><i class="fas fa-edit mr-1"></i>Edit Lead Details</a>
 
                         <?php if ($lead['stage'] === 'Lost'): ?>
-                            <form action="operation.php?module=leads&page=leads" method="post">
+                            <form action="operation.php?module=sales&page=leads" method="post">
                                 <?= csrfField() ?>
                                 <input type="hidden" name="action" value="reopen_lead">
                                 <input type="hidden" name="id" value="<?= (int) $lead['id'] ?>">
@@ -344,26 +350,51 @@ if (isset($_GET['id'])) {
                             <button type="button" class="btn btn-sm btn-success btn-block mb-2" onclick="openProvisionDrawer()"><i class="fas fa-plus mr-1"></i>Add Another Project</button>
                         <?php endif; ?>
 
+                        <?php if ($leadTrials || $canStartTrial): ?>
+                            <div class="border rounded p-3 mt-2 bg-light">
+                                <h6 class="mb-2"><i class="fas fa-flask text-info mr-1"></i>Demo / Trial</h6>
+                                <?php foreach ($leadTrials as $t):
+                                    $expired = $t['end_date'] && $t['end_date'] < date('Y-m-d'); ?>
+                                    <div class="small mb-2">
+                                        <span class="font-weight-bold"><?= e($t['title']) ?></span>
+                                        <?php if ($t['status'] === 'Cancelled'): ?>
+                                            <span class="badge badge-secondary">Cancelled</span>
+                                        <?php elseif ($expired): ?>
+                                            <span class="badge badge-danger">Expired</span>
+                                        <?php else: ?>
+                                            <span class="badge badge-info">Trial</span>
+                                        <?php endif; ?>
+                                        <?php if ($t['end_date']): ?><br><span class="text-muted">Ends <?= e(formatDateView($t['end_date'])) ?></span><?php endif; ?>
+                                        <?php if ($t['url']): ?><br><a href="<?= e($t['url']) ?>" target="_blank" rel="noopener noreferrer"><?= e($t['url']) ?></a><?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                                <?php if ($canStartTrial): ?>
+                                    <p class="small text-muted mb-2">Lead not won yet but using the software? Record it as a client project (not won). Winning the lead converts it.</p>
+                                    <button type="button" class="btn btn-sm btn-outline-info btn-block" onclick="openProvisionDrawer('trial')"><i class="fas fa-flask mr-1"></i>Start Demo / Trial</button>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+
                         <?php if ($lead['client_id']): ?>
                             <div class="border rounded p-3 mt-2 bg-light">
                                 <h6 class="mb-2"><i class="fas fa-link text-primary mr-1"></i>Linked Client</h6>
                                 <div class="d-flex align-items-center justify-content-between mb-2">
-                                    <a href="<?= pageUrl('clients', 'detail') ?>&id=<?= (int) $lead['client_id'] ?>" class="font-weight-bold">
+                                    <a href="<?= pageUrl('sales', 'client_detail') ?>&id=<?= (int) $lead['client_id'] ?>" class="font-weight-bold">
                                         <i class="fas fa-building mr-1"></i><?= e($lead['client_name']) ?>
                                     </a>
-                                    <form action="operation.php?module=leads&page=leads" method="post" class="d-inline">
+                                    <form action="operation.php?module=sales&page=leads" method="post" class="d-inline">
                                         <?= csrfField() ?>
                                         <input type="hidden" name="action" value="unlink_lead_from_client">
                                         <input type="hidden" name="id" value="<?= (int) $lead['id'] ?>">
                                         <button type="submit" class="btn btn-sm btn-outline-danger confirm-submit" data-confirm="Unlink this lead from the client?"><i class="fas fa-unlink"></i></button>
                                     </form>
                                 </div>
-                                <a href="<?= pageUrl('leads', 'quotations') ?>&add=1&client_id=<?= (int) $lead['client_id'] ?>" class="btn btn-sm btn-outline-primary btn-block"><i class="fas fa-file-invoice mr-1"></i>Create Quotation</a>
+                                <a href="<?= pageUrl('sales', 'documents') ?>&type=quotation&add=1&client_id=<?= (int) $lead['client_id'] ?>&lead_id=<?= (int) $lead['id'] ?>" class="btn btn-sm btn-outline-primary btn-block"><i class="fas fa-file-invoice mr-1"></i>Create Quotation</a>
                             </div>
                         <?php else: ?>
                             <div class="border rounded p-3 mt-2 bg-light">
                                 <h6 class="mb-2"><i class="fas fa-link text-primary mr-1"></i>Link to Existing Client</h6>
-                                <form action="operation.php?module=leads&page=leads" method="post">
+                                <form action="operation.php?module=sales&page=leads" method="post">
                                     <?= csrfField() ?>
                                     <input type="hidden" name="action" value="link_lead_to_client">
                                     <input type="hidden" name="id" value="<?= (int) $lead['id'] ?>">
@@ -388,11 +419,11 @@ if (isset($_GET['id'])) {
                         <h3 class="card-title"><i class="fas fa-clock mr-1"></i>Follow-up Task</h3>
                     </div>
                     <div class="card-body">
-                        <form action="operation.php?module=leads&page=leads" method="post">
+                        <form action="operation.php?module=sales&page=leads" method="post">
                             <?= csrfField() ?>
                             <input type="hidden" name="action" value="create_followup">
                             <input type="hidden" name="id" value="<?= (int) $lead['id'] ?>">
-                            <div class="form-group mb-2"><label class="small text-muted">Deadline</label><input type="datetime-local" name="deadline" class="form-control form-control-sm" required></div>
+                            <div class="form-group mb-2"><label class="small text-muted">Deadline</label><input type="datetime-local" name="deadline" class="form-control form-control-sm" value="<?= e(old_scoped('create_followup:' . (int) $lead['id'], 'deadline')) ?>" required></div>
                             <div class="form-group mb-2"><label class="small text-muted">Assign to</label>
                                 <select name="assigned_to" class="form-control form-control-sm">
                                     <option value="">Unassigned</option>
@@ -401,7 +432,7 @@ if (isset($_GET['id'])) {
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="form-group mb-2"><label class="small text-muted">Note</label><input type="text" name="note" class="form-control form-control-sm" placeholder="e.g. Send proposal"></div>
+                            <div class="form-group mb-2"><label class="small text-muted">Note</label><input type="text" name="note" class="form-control form-control-sm" placeholder="e.g. Send proposal" value="<?= e(old_scoped('create_followup:' . (int) $lead['id'], 'note')) ?>"></div>
                             <button type="submit" class="btn btn-sm btn-outline-primary btn-block"><i class="fas fa-plus mr-1"></i>Create Task</button>
                         </form>
                     </div>
@@ -413,7 +444,7 @@ if (isset($_GET['id'])) {
                         <h3 class="card-title"><i class="fas fa-paperclip mr-1"></i>Attach File</h3>
                     </div>
                     <div class="card-body">
-                        <form action="operation.php?module=leads&page=leads" method="post" enctype="multipart/form-data">
+                        <form action="operation.php?module=sales&page=leads" method="post" enctype="multipart/form-data">
                             <?= csrfField() ?>
                             <input type="hidden" name="action" value="add_lead_file">
                             <input type="hidden" name="id" value="<?= (int) $lead['id'] ?>">
@@ -445,10 +476,11 @@ if (isset($_GET['id'])) {
             </div>
             <style>.pw-step-num{width:28px;height:28px;font-size:.8rem;border:2px solid var(--secondary-color,#6c757d);color:var(--secondary-color,#6c757d);transition:all .2s}.pw-step.active .pw-step-num{background:var(--primary-color,#007bff);border-color:var(--primary-color,#007bff);color:#fff}.pw-step.done .pw-step-num{background:#28a745;border-color:#28a745;color:#fff}#pwStep1,#pwStep2,#pwStep3{display:none}#pwStep1.active,#pwStep2.active,#pwStep3.active{display:block}</style>
 
-            <form action="operation.php?module=leads&page=leads" method="post" id="pwForm">
+            <form action="operation.php?module=sales&page=leads" method="post" id="pwForm">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="provision_win">
                 <input type="hidden" name="id" value="<?= (int) $lead['id'] ?>">
+                <input type="hidden" name="is_won" id="pwIsWon" value="1">
 
                 <div id="pwStep1" class="active">
                     <div class="form-group">
@@ -472,15 +504,15 @@ if (isset($_GET['id'])) {
                     <div id="pwNewClientGroup">
                         <div class="form-group">
                             <label class="small font-weight-bold">Name *</label>
-                            <input type="text" name="name" class="form-control form-control-sm" value="<?= e($lead['company'] ?: $lead['contact_name']) ?>">
+                            <input type="text" name="name" class="form-control form-control-sm" value="<?= e(old('name', $lead['company'] ?: $lead['contact_name'])) ?>">
                         </div>
                         <div class="form-group">
                             <label class="small font-weight-bold">Contact person</label>
-                            <input type="text" name="contact_person" class="form-control form-control-sm" value="<?= e($lead['contact_name']) ?>">
+                            <input type="text" name="contact_person" class="form-control form-control-sm" value="<?= e(old('contact_person', $lead['contact_name'])) ?>">
                         </div>
                         <div class="row">
-                            <div class="col-6 form-group"><label class="small font-weight-bold">Address</label><input type="text" name="address" class="form-control form-control-sm"></div>
-                            <div class="col-6 form-group"><label class="small font-weight-bold">PAN</label><input type="text" name="pan_num" class="form-control form-control-sm"></div>
+                            <div class="col-6 form-group"><label class="small font-weight-bold">Address</label><input type="text" name="address" class="form-control form-control-sm" value="<?= e(old('address')) ?>"></div>
+                            <div class="col-6 form-group"><label class="small font-weight-bold">PAN</label><input type="text" name="pan_num" class="form-control form-control-sm" value="<?= e(old('pan_num')) ?>"></div>
                         </div>
                     </div>
                 </div>
@@ -488,7 +520,7 @@ if (isset($_GET['id'])) {
                 <div id="pwStep2">
                     <h6 class="text-muted text-uppercase mb-2" style="font-size:.7rem;letter-spacing:.05em">Project Details</h6>
                     <div class="form-group">
-                        <label class="small font-weight-bold">Catalog project</label>
+                        <label class="small font-weight-bold">Product</label>
                         <select name="project_id" id="pwProject" class="form-control form-control-sm">
                             <option value="">— None —</option>
                             <?php foreach ($catalogProjects as $cp): ?>
@@ -498,26 +530,37 @@ if (isset($_GET['id'])) {
                     </div>
                     <div class="form-group">
                         <label class="small font-weight-bold">Title *</label>
-                        <input type="text" name="title" id="pwTitleInput" class="form-control form-control-sm" required value="<?= e($lead['company'] ?: $lead['contact_name']) ?>">
+                        <input type="text" name="title" id="pwTitleInput" class="form-control form-control-sm" required value="<?= e(old('title', $lead['company'] ?: $lead['contact_name'])) ?>">
                     </div>
                     <div class="row">
-                        <div class="col-6 form-group"><label class="small font-weight-bold">Package</label><input type="text" name="package" class="form-control form-control-sm"></div>
-                        <div class="col-6 form-group"><label class="small font-weight-bold">URL</label><input type="text" name="url" class="form-control form-control-sm" placeholder="https://project.example.com"></div>
+                        <div class="col-6 form-group"><label class="small font-weight-bold">Package</label><input type="text" name="package" class="form-control form-control-sm" value="<?= e(old('package')) ?>"></div>
+                        <div class="col-6 form-group"><label class="small font-weight-bold">URL</label><input type="text" name="url" class="form-control form-control-sm" placeholder="https://project.example.com" value="<?= e(old('url')) ?>"></div>
                     </div>
-                    <div class="form-group">
-                        <label class="small font-weight-bold">Value (NPR)</label>
-                        <input type="number" name="value" id="pwValue" class="form-control form-control-sm" step="0.01" min="0" value="<?= $lead['estimated_value'] !== null ? e($lead['estimated_value']) : '' ?>">
+                    <div class="row">
+                        <div class="col-6 form-group">
+                            <label class="small font-weight-bold">Value (NPR)</label>
+                            <input type="number" name="value" id="pwValue" class="form-control form-control-sm" step="0.01" min="0" value="<?= e(old('value', $lead['estimated_value'] !== null ? $lead['estimated_value'] : '')) ?>">
+                        </div>
+                        <div class="col-6 form-group">
+                            <label class="small font-weight-bold" id="pwEndLabel">Expiry date</label>
+                            <input type="date" name="end_date" class="form-control form-control-sm" value="<?= e(old('end_date')) ?>">
+                        </div>
+                    </div>
+                    <div class="form-group" id="pwTrialDaysGroup" style="display:none">
+                        <label class="small font-weight-bold">Trial length (days)</label>
+                        <input type="number" name="trial_days" class="form-control form-control-sm" min="1" max="365" value="14">
+                        <small class="text-muted">Used when Expiry date is empty.</small>
                     </div>
                     <div class="form-group">
                         <label class="small font-weight-bold">Description</label>
-                        <textarea name="description" class="form-control form-control-sm" rows="2"></textarea>
+                        <textarea name="description" class="form-control form-control-sm" rows="2"><?= e(old('description')) ?></textarea>
                     </div>
                 </div>
 
                 <div id="pwStep3">
                     <div class="border rounded p-3 bg-light mb-3">
                         <h6 class="font-weight-bold mb-2">Ready to provision</h6>
-                        <p class="small text-muted mb-0">Creates the client (if new) and the won project.</p>
+                        <p class="small text-muted mb-0" id="pwConfirmText">Creates the client (if new) and the won project.</p>
                     </div>
                 </div>
 
@@ -537,7 +580,15 @@ if (isset($_GET['id'])) {
         if (bd) bd.classList.remove('active');
         document.body.style.overflow = '';
     }
-    function openProvisionDrawer() {
+    function openProvisionDrawer(mode) {
+        var trial = mode === 'trial';
+        document.getElementById('pwIsWon').value = trial ? '0' : '1';
+        document.getElementById('pwTitle').textContent = trial ? 'Start Demo / Trial' : 'Provision Client + Project';
+        document.getElementById('pwEndLabel').textContent = trial ? 'Trial ends' : 'Expiry date';
+        document.getElementById('pwTrialDaysGroup').style.display = trial ? '' : 'none';
+        document.getElementById('pwConfirmText').textContent = trial
+            ? 'Creates the client (if new) as a Prospect and a client project marked not won. Winning this lead converts it.'
+            : 'Creates the client (if new) and the won project.';
         closeAllDrawers();
         document.getElementById('drawerBackdrop').classList.add('active');
         document.getElementById('provisionDrawer').classList.add('open');
@@ -603,12 +654,12 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
     }
 ?>
     <div class="d-flex align-items-center mb-3">
-        <a href="<?= pageUrl('leads', 'leads') ?>" class="btn btn-sm btn-outline-secondary mr-2"><i class="fas fa-arrow-left"></i></a>
+        <a href="<?= pageUrl('sales', 'leads') ?>" class="btn btn-sm btn-outline-secondary mr-2"><i class="fas fa-arrow-left"></i></a>
         <h4 class="mb-0 font-weight-bold"><?= $edit ? 'Edit Lead' : 'New Lead' ?></h4>
     </div>
     <div class="card card-outline">
         <div class="card-body">
-            <form action="operation.php?module=leads&page=leads" method="post">
+            <form action="operation.php?module=sales&page=leads" method="post">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="save_lead">
                 <input type="hidden" name="id" value="<?= $edit ? (int) $edit['id'] : 0 ?>">
@@ -625,8 +676,9 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="form-group"><label>Service interest</label><input type="text" name="service_interest" class="form-control" value="<?= $edit ? e($edit['service_interest']) : '' ?>"></div>
-                        <div class="form-group"><label>Catalog project</label>
+                        <?php $leadSaveScope = 'save_lead:' . ($edit ? (int) $edit['id'] : 0); ?>
+                        <div class="form-group"><label>Service interest</label><input type="text" name="service_interest" class="form-control" value="<?= e(old_scoped($leadSaveScope, 'service_interest', $edit ? $edit['service_interest'] : '')) ?>"></div>
+                        <div class="form-group"><label>Product</label>
                             <select name="project_id" class="form-control">
                                 <option value="">— None —</option>
                                 <?php foreach ($catalogProjects as $cp): ?>
@@ -636,26 +688,26 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="form-group"><label>Message</label><textarea name="message" class="form-control" rows="3"><?= $edit ? e($edit['message']) : '' ?></textarea></div>
+                        <div class="form-group"><label>Message</label><textarea name="message" class="form-control" rows="3"><?= e(old_scoped($leadSaveScope, 'message', $edit ? $edit['message'] : '')) ?></textarea></div>
                     </div>
                     <div class="col-md-6">
                         <div class="row">
                             <div class="col-6 form-group"><label>Source</label>
-                                <select name="source" id="sourceSelectFull" class="form-control" onchange="toggleReferralFields()"><?php foreach (['Website', 'Phone', 'Email', 'Walk-in', 'Referral', 'Social', 'Other'] as $s): ?><option value="<?= $s ?>" <?= $edit && $edit['source'] === $s ? 'selected' : '' ?>><?= $s ?></option><?php endforeach; ?></select>
+                                <select name="source" id="sourceSelectFull" class="form-control" onchange="toggleReferralFields()"><?php foreach (['Website', 'Phone', 'Email', 'Walk-in', 'Referral', 'Social', 'Other'] as $s): ?><option value="<?= $s ?>" <?= old_scoped($leadSaveScope, 'source', $edit['source'] ?? '') === $s ? 'selected' : '' ?>><?= $s ?></option><?php endforeach; ?></select>
                             </div>
                             <div class="col-6 form-group"><label>Priority</label>
-                                <select name="priority" class="form-control"><?php foreach ($priorities as $p): ?><option value="<?= $p ?>" <?= !$edit || $edit['priority'] === $p ? 'selected' : '' ?>><?= $p ?></option><?php endforeach; ?></select>
+                                <select name="priority" class="form-control"><?php foreach ($priorities as $p): ?><option value="<?= $p ?>" <?= old_scoped($leadSaveScope, 'priority', $edit ? $edit['priority'] : '') === $p ? 'selected' : '' ?>><?= $p ?></option><?php endforeach; ?></select>
                             </div>
                         </div>
                         <div class="form-group"><label>Stage</label>
-                            <select name="stage" class="form-control"><?php foreach ($stages as $st): ?><option value="<?= $st ?>" <?= $edit && $edit['stage'] === $st ? 'selected' : '' ?>><?= $st ?></option><?php endforeach; ?></select>
+                            <select name="stage" class="form-control"><?php foreach ($stages as $st): ?><option value="<?= $st ?>" <?= old_scoped($leadSaveScope, 'stage', $edit ? $edit['stage'] : '') === $st ? 'selected' : '' ?>><?= $st ?></option><?php endforeach; ?></select>
                         </div>
-                        <div class="form-group"><label>Estimated value (NPR)</label><input type="number" name="estimated_value" class="form-control" step="0.01" min="0" value="<?= $edit && $edit['estimated_value'] !== null ? e($edit['estimated_value']) : '' ?>"></div>
+                        <div class="form-group"><label>Estimated value (NPR)</label><input type="number" name="estimated_value" class="form-control" step="0.01" min="0" value="<?= e(old_scoped($leadSaveScope, 'estimated_value', $edit && $edit['estimated_value'] !== null ? $edit['estimated_value'] : '')) ?>"></div>
                         <div id="fullReferralFields"<?= $edit && $edit['source'] === 'Referral' ? '' : ' style="display:none"' ?>>
-                            <div class="form-group"><label>Source name *</label><input type="text" name="contact_name" id="contactNameFull" class="form-control" <?= $edit && $edit['source'] === 'Referral' ? 'required' : '' ?> value="<?= $edit ? e($edit['contact_name']) : '' ?>"></div>
+                            <div class="form-group"><label>Source name *</label><input type="text" name="contact_name" id="contactNameFull" class="form-control" <?= $edit && $edit['source'] === 'Referral' ? 'required' : '' ?> value="<?= e(old_scoped($leadSaveScope, 'contact_name', $edit ? $edit['contact_name'] : '')) ?>"></div>
                             <div class="row">
-                                <div class="col-6 form-group"><label>Email</label><input type="email" name="email" class="form-control" value="<?= $edit ? e($edit['email']) : '' ?>"></div>
-                                <div class="col-6 form-group"><label>Phone</label><input type="text" name="phone" class="form-control" value="<?= $edit ? e($edit['phone']) : '' ?>"></div>
+                                <div class="col-6 form-group"><label>Email</label><input type="email" name="email" class="form-control" value="<?= e(old_scoped($leadSaveScope, 'email', $edit ? $edit['email'] : '')) ?>"></div>
+                                <div class="col-6 form-group"><label>Phone</label><input type="text" name="phone" class="form-control" value="<?= e(old_scoped($leadSaveScope, 'phone', $edit ? $edit['phone'] : '')) ?>"></div>
                             </div>
                         </div>
                         <div class="form-group"><label>Owner</label>
@@ -664,7 +716,7 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i><?= $edit ? 'Update' : 'Save' ?> Lead</button>
-                <a href="<?= pageUrl('leads', 'leads') ?>" class="btn btn-default ml-2">Cancel</a>
+                <a href="<?= pageUrl('sales', 'leads') ?>" class="btn btn-default ml-2">Cancel</a>
             </form>
         </div>
     </div>
@@ -746,7 +798,7 @@ foreach ($leads as $l) {
 }
 
 // ── Build form URL for drawer prefill ──
-$pageUrl = pageUrl('leads', 'leads');
+$pageUrl = pageUrl('sales', 'leads');
 ?>
 
 <!-- ── KPI Cards ── -->
@@ -792,7 +844,7 @@ $pageUrl = pageUrl('leads', 'leads');
 <div class="card card-outline mb-3">
     <div class="card-body py-2">
         <form method="get" class="d-flex align-items-center flex-wrap" style="gap:.5rem">
-            <input type="hidden" name="module" value="leads">
+            <input type="hidden" name="module" value="sales">
             <input type="hidden" name="page" value="leads">
             <input type="hidden" name="view" value="<?= e($viewMode) ?>">
 
@@ -839,12 +891,12 @@ $pageUrl = pageUrl('leads', 'leads');
 
                 <!-- View toggle -->
                 <div class="btn-group btn-group-sm">
-                    <a href="./show_page.php?module=leads&page=leads&view=kanban<?= $stageFilter ? '&stage=' . urlencode($stageFilter) : '' ?>" class="btn btn-outline-secondary <?= $viewMode === 'kanban' ? 'active' : '' ?>"><i class="fas fa-columns"></i></a>
-                    <a href="./show_page.php?module=leads&page=leads&view=table<?= $stageFilter ? '&stage=' . urlencode($stageFilter) : '' ?>" class="btn btn-outline-secondary <?= $viewMode === 'table' ? 'active' : '' ?>"><i class="fas fa-list"></i></a>
+                    <a href="./show_page.php?module=sales&page=leads&view=kanban<?= $stageFilter ? '&stage=' . urlencode($stageFilter) : '' ?>" class="btn btn-outline-secondary <?= $viewMode === 'kanban' ? 'active' : '' ?>"><i class="fas fa-columns"></i></a>
+                    <a href="./show_page.php?module=sales&page=leads&view=table<?= $stageFilter ? '&stage=' . urlencode($stageFilter) : '' ?>" class="btn btn-outline-secondary <?= $viewMode === 'table' ? 'active' : '' ?>"><i class="fas fa-list"></i></a>
                 </div>
 
                 <!-- Export -->
-                <form action="operation.php?module=leads&page=leads" method="post" class="d-inline">
+                <form action="operation.php?module=sales&page=leads" method="post" class="d-inline">
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="export_leads">
                     <button type="submit" class="btn btn-sm btn-outline-secondary" title="Export CSV"><i class="fas fa-file-csv"></i></button>
@@ -956,13 +1008,13 @@ $pageUrl = pageUrl('leads', 'leads');
                             <td><small class="font-weight-bold"><?= $l['estimated_value'] ? leadFormatValue($l['estimated_value']) : '—' ?></small></td>
                             <td>
                                 <?php if ($canManage): ?>
-                                    <form action="operation.php?module=leads&page=leads" method="post" class="d-inline">
+                                    <form action="operation.php?module=sales&page=leads" method="post" class="d-inline">
                                         <?= csrfField() ?>
                                         <input type="hidden" name="action" value="update_lead">
                                         <input type="hidden" name="id" value="<?= (int) $l['id'] ?>">
                                         <select name="stage" class="form-control form-control-sm" style="width:110px;padding:2px 4px;font-size:.75rem" onchange="this.form.submit()">
                                             <?php foreach ($stages as $st): ?>
-                                                <option value="<?= $st ?>" <?= $l['stage'] === $st ? 'selected' : '' ?>><?= $st ?></option>
+                                                <option value="<?= $st ?>" <?= old_scoped('update_lead:' . (int) $l['id'], 'stage', $l['stage'] ?? '') === $st ? 'selected' : '' ?>><?= $st ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </form>
@@ -998,7 +1050,7 @@ $pageUrl = pageUrl('leads', 'leads');
         <button type="button" class="cms-drawer-close" onclick="closeLeadDrawer()" aria-label="Close"><i class="fas fa-times"></i></button>
     </div>
     <div class="cms-drawer-body">
-        <form action="operation.php?module=leads&page=leads" method="post" id="leadForm">
+        <form action="operation.php?module=sales&page=leads" method="post" id="leadForm">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="save_lead">
             <input type="hidden" name="id" id="leadId" value="0">
@@ -1018,10 +1070,10 @@ $pageUrl = pageUrl('leads', 'leads');
             <h6 class="text-muted text-uppercase mb-2" style="font-size:.7rem;letter-spacing:.05em">Lead Details</h6>
             <div class="form-group">
                 <label class="small font-weight-bold">Service Interest</label>
-                <input type="text" name="service_interest" id="leadService" class="form-control form-control-sm" placeholder="e.g. Web Development, Mobile App">
+                <input type="text" name="service_interest" id="leadService" class="form-control form-control-sm" placeholder="e.g. Web Development, Mobile App" value="<?= e(old_scoped('save_lead:0', 'service_interest')) ?>">
             </div>
             <div class="form-group">
-                <label class="small font-weight-bold">Catalog Project</label>
+                <label class="small font-weight-bold">Product</label>
                 <select name="project_id" id="leadProject" class="form-control form-control-sm">
                     <option value="">— None —</option>
                     <?php foreach ($catalogProjects as $cp): ?>
@@ -1031,7 +1083,7 @@ $pageUrl = pageUrl('leads', 'leads');
             </div>
             <div class="form-group">
                 <label class="small font-weight-bold">Message / Notes</label>
-                <textarea name="message" id="leadMessage" class="form-control form-control-sm" rows="2" placeholder="Requirements or notes..."></textarea>
+                <textarea name="message" id="leadMessage" class="form-control form-control-sm" rows="2" placeholder="Requirements or notes..."><?= e(old_scoped('save_lead:0', 'message')) ?></textarea>
             </div>
             <div class="row">
                 <div class="col-6 form-group">
@@ -1062,22 +1114,22 @@ $pageUrl = pageUrl('leads', 'leads');
                 </div>
                 <div class="col-6 form-group">
                     <label class="small font-weight-bold">Est. Value (NPR)</label>
-                    <input type="number" name="estimated_value" id="leadValue" class="form-control form-control-sm" step="0.01" min="0" placeholder="0.00">
+                    <input type="number" name="estimated_value" id="leadValue" class="form-control form-control-sm" step="0.01" min="0" placeholder="0.00" value="<?= e(old_scoped('save_lead:0', 'estimated_value')) ?>">
                 </div>
             </div>
             <div id="drawerReferralFields" style="display:none">
                 <div class="form-group">
                     <label class="small font-weight-bold">Source Name *</label>
-                    <input type="text" name="contact_name" id="leadContact" class="form-control form-control-sm" placeholder="Full name" required>
+                    <input type="text" name="contact_name" id="leadContact" class="form-control form-control-sm" placeholder="Full name" value="<?= e(old_scoped('save_lead:0', 'contact_name')) ?>" required>
                 </div>
                 <div class="row">
                     <div class="col-6 form-group">
                         <label class="small font-weight-bold">Email</label>
-                        <input type="email" name="email" id="leadEmail" class="form-control form-control-sm" placeholder="email@example.com">
+                        <input type="email" name="email" id="leadEmail" class="form-control form-control-sm" placeholder="email@example.com" value="<?= e(old_scoped('save_lead:0', 'email')) ?>">
                     </div>
                     <div class="col-6 form-group">
                         <label class="small font-weight-bold">Phone</label>
-                        <input type="text" name="phone" id="leadPhone" class="form-control form-control-sm" placeholder="+977-9800000000">
+                        <input type="text" name="phone" id="leadPhone" class="form-control form-control-sm" placeholder="+977-9800000000" value="<?= e(old_scoped('save_lead:0', 'phone')) ?>">
                     </div>
                 </div>
             </div>

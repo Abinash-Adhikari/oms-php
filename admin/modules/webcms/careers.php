@@ -50,7 +50,7 @@ $appStatuses = ['New', 'Shortlisted', 'Interview', 'Offer', 'Rejected'];
                                 <input type="hidden" name="id" value="<?= (int) $a['id'] ?>">
                                 <select name="status" class="form-control form-control-sm" onchange="this.form.submit()">
                                     <?php foreach ($appStatuses as $st): ?>
-                                        <option value="<?= $st ?>" <?= $a['status'] === $st ? 'selected' : '' ?>><?= $st ?></option>
+                                        <option value="<?= $st ?>" <?= old('status', $a['status'] ?? '') === $st ? 'selected' : '' ?>><?= $st ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </form>

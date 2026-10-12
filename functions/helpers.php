@@ -111,6 +111,9 @@ function redirect(string $url): void
 function setFlash(string $type, string $message): void
 {
     $_SESSION['flash'][$type][] = $message;
+    if ($type === 'error') {
+        capture_old_input();
+    }
 }
 
 function flashMessages(): array
@@ -118,6 +121,102 @@ function flashMessages(): array
     $messages = $_SESSION['flash'] ?? [];
     unset($_SESSION['flash']);
     return $messages;
+}
+
+/**
+ * Keys whose submitted values must never be remembered (X-01): password-like
+ * fields, CSRF tokens and similar secrets.
+ */
+function is_sensitive_input_key(string $key): bool
+{
+    $key = strtolower($key);
+    foreach (['password', 'passwd', 'pwd', 'secret', 'csrf', 'token', 'captcha'] as $needle) {
+        if (str_contains($key, $needle)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Snapshot the submitted POST body so a failed submit can repopulate the form.
+ * Called automatically for every error flash; sensitive keys are dropped.
+ */
+function capture_old_input(): void
+{
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+        return;
+    }
+    if ($_POST === [] || isset($_SESSION['_old_input_new'])) {
+        return;
+    }
+    // Resolve the failing form's scope: an explicit `_scope` hidden field wins,
+    // otherwise `action` (+ `:id` when the form submits one). Same-named fields
+    // on different forms of one page never leak into each other this way.
+    $scope = (string) ($_POST['_scope'] ?? ($_POST['action'] ?? 'default'));
+    if (!array_key_exists('_scope', $_POST) && array_key_exists('id', $_POST) && (string) $_POST['id'] !== '') {
+        $scope .= ':' . (string) $_POST['id'];
+    }
+    $safe = [];
+    foreach ($_POST as $key => $value) {
+        if (!is_sensitive_input_key((string) $key)) {
+            $safe[$key] = $value;
+        }
+    }
+    $_SESSION['_old_input_new'] = $safe;
+    $_SESSION['_old_scoped_new'][$scope] = $safe;
+}
+
+/**
+ * Age captured input by one request (flash semantics): the POST that failed on
+ * the previous request becomes readable via old() for exactly this request.
+ */
+function age_old_input(): void
+{
+    $_SESSION['_old_input'] = $_SESSION['_old_input_new'] ?? [];
+    $_SESSION['_old_scoped'] = $_SESSION['_old_scoped_new'] ?? [];
+    unset($_SESSION['_old_input_new']);
+    unset($_SESSION['_old_scoped_new']);
+}
+
+/** A value from the most recent failed submit, or $default when none. */
+function old(string $key, $default = '')
+{
+    if (!isset($_SESSION['_old_input']) || !is_array($_SESSION['_old_input']) || !array_key_exists($key, $_SESSION['_old_input'])) {
+        return $default;
+    }
+    return $_SESSION['_old_input'][$key];
+}
+
+/**
+ * A value from the most recent failed submit of one specific form, or
+ * $default when none. $scope is the failing form's `action` value — plus `:id`
+ * when the form submits an `id` field — or the value of an explicit `_scope`
+ * hidden input (see capture_old_input()). Use for same-named fields that sit
+ * on several forms of the same page (tabs, drawers, per-row forms).
+ */
+function old_scoped(string $scope, string $key, $default = '')
+{
+    if (isset($_SESSION['_old_scoped'][$scope]) && is_array($_SESSION['_old_scoped'][$scope]) && array_key_exists($key, $_SESSION['_old_scoped'][$scope])) {
+        return $_SESSION['_old_scoped'][$scope][$key];
+    }
+    return $default;
+}
+
+/**
+ * Checked state for a checkbox after a failed submit of its form.
+ *
+ * Unchecking a box removes its field from the POST body, so an *absent* key —
+ * not a value — is the only truthful signal for "was unchecked when submitted".
+ * Falls back to $storedChecked whenever no failed POST is pending for $scope,
+ * so an error on a different form never forces a box on this one.
+ */
+function old_checkbox(string $scope, string $key, bool $storedChecked): bool
+{
+    if (isset($_SESSION['_old_scoped'][$scope]) && is_array($_SESSION['_old_scoped'][$scope])) {
+        return array_key_exists($key, $_SESSION['_old_scoped'][$scope]);
+    }
+    return $storedChecked;
 }
 
 /** CSRF token: generate once per session, verify on every POST (X-01). */
@@ -541,6 +640,28 @@ function normalize_project_url(string $raw): ?string
         throw new InvalidArgumentException('Enter a valid URL (e.g. https://project.example.com).');
     }
     return $url;
+}
+
+/**
+ * Expiry date of a demo/trial client project: $days after $start (Y-m-d).
+ * Days are clamped to 1..365 so a typo can't create an open-ended trial.
+ *
+ * @throws InvalidArgumentException when $start is not a valid Y-m-d date.
+ */
+function trial_end_date(string $start, int $days): string
+{
+    $date = DateTimeImmutable::createFromFormat('!Y-m-d', $start);
+    if ($date === false || $date->format('Y-m-d') !== $start) {
+        throw new InvalidArgumentException('Invalid trial start date.');
+    }
+    $days = max(1, min(365, $days));
+    return $date->modify('+' . $days . ' days')->format('Y-m-d');
+}
+
+/** Client lifecycle label: a client with at least one won project is a Customer. */
+function client_lifecycle(int $wonProjectCount): string
+{
+    return $wonProjectCount > 0 ? 'Customer' : 'Prospect';
 }
 
 /** Move an uploaded file into user_uploads/<module>/ with a safe name. */

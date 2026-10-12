@@ -391,6 +391,32 @@ class BusinessLogicTest extends TestCase
         $this->assertNull(normalize_project_url('   '));
     }
 
+    public function testTrialEndDateAddsDays()
+    {
+        $this->assertSame('2026-10-25', trial_end_date('2026-10-11', 14));
+        $this->assertSame('2027-03-01', trial_end_date('2027-02-28', 1));
+    }
+
+    public function testTrialEndDateClampsDays()
+    {
+        $this->assertSame('2026-10-12', trial_end_date('2026-10-11', 0));
+        $this->assertSame('2026-10-12', trial_end_date('2026-10-11', -5));
+        $this->assertSame('2027-10-11', trial_end_date('2026-10-11', 9999));
+    }
+
+    public function testTrialEndDateRejectsInvalidStart()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        trial_end_date('2026-02-30', 14);
+    }
+
+    public function testClientLifecycle()
+    {
+        $this->assertSame('Prospect', client_lifecycle(0));
+        $this->assertSame('Customer', client_lifecycle(1));
+        $this->assertSame('Customer', client_lifecycle(3));
+    }
+
     public function testNormalizeProjectUrlRejectsInvalid()
     {
         $this->expectException(InvalidArgumentException::class);

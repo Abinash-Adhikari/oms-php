@@ -34,3 +34,6 @@ Thumbs.db
 *.tmp
 composer.phar
 .gstack/
+
+# Local AI tooling (not part of the app)
+.opencode/

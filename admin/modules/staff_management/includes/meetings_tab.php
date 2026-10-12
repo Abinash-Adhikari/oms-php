@@ -163,21 +163,21 @@ $drawerOpen = ($editEvent !== null);
             <input type="hidden" name="event_id" id="eventId" value="<?= $editEvent ? (int) $editEvent['id'] : 0 ?>">
             <div class="form-group">
                 <label>Title *</label>
-                <input type="text" name="title" class="form-control" id="eventTitle" required value="<?= $editEvent ? e($editEvent['title']) : '' ?>">
+                <input type="text" name="title" class="form-control" id="eventTitle" required value="<?= e(old('title', $editEvent ? $editEvent['title'] : '')) ?>">
             </div>
             <div class="form-row">
                 <div class="col-6 form-group">
                     <label>Type</label>
                     <select name="type" id="event_type" class="form-control">
-                        <option value="Meeting" <?= $editEvent && $editEvent['type'] === 'Meeting' ? 'selected' : '' ?>>Meeting</option>
-                        <option value="Event" <?= $editEvent && $editEvent['type'] === 'Event' ? 'selected' : '' ?>>Event</option>
+                        <option value="Meeting" <?= old('type', $editEvent['type'] ?? '') === 'Meeting' ? 'selected' : '' ?>>Meeting</option>
+                        <option value="Event" <?= old('type', $editEvent['type'] ?? '') === 'Event' ? 'selected' : '' ?>>Event</option>
                     </select>
                 </div>
                 <div class="col-6 form-group">
                     <label>Privacy</label>
                     <select name="privacy" id="event_privacy" class="form-control">
-                        <option value="Public" <?= !$editEvent || $editEvent['privacy'] === 'Public' ? 'selected' : '' ?>>Public</option>
-                        <option value="Private" <?= $editEvent && $editEvent['privacy'] === 'Private' ? 'selected' : '' ?>>Private</option>
+                        <option value="Public" <?= old('privacy', $editEvent['privacy'] ?? 'Public') === 'Public' ? 'selected' : '' ?>>Public</option>
+                        <option value="Private" <?= old('privacy', $editEvent['privacy'] ?? 'Public') === 'Private' ? 'selected' : '' ?>>Private</option>
                     </select>
                 </div>
             </div>
@@ -186,7 +186,7 @@ $drawerOpen = ($editEvent !== null);
                 <select name="attendees_department" class="form-control">
                     <option value="">All departments</option>
                     <?php foreach ($departments as $d): ?>
-                        <option value="<?= (int) $d['id'] ?>" <?= $editEvent && (int) $editEvent['attendees_department'] === (int) $d['id'] ? 'selected' : '' ?>><?= e($d['title']) ?></option>
+                        <option value="<?= (int) $d['id'] ?>" <?= (int) old('attendees_department', $editEvent['attendees_department'] ?? '') === (int) $d['id'] ? 'selected' : '' ?>><?= e($d['title']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -211,14 +211,14 @@ $drawerOpen = ($editEvent !== null);
             </div>
             <div class="form-group">
                 <label>Other attendees (external)</label>
-                <input type="text" name="other_attendees" class="form-control" placeholder="e.g. Client names" value="<?= $editEvent ? e($editEvent['other_attendees']) : '' ?>">
+                <input type="text" name="other_attendees" class="form-control" placeholder="e.g. Client names" value="<?= e(old('other_attendees', $editEvent ? $editEvent['other_attendees'] : '')) ?>">
             </div>
             <div class="form-row">
                 <div class="col-6 form-group">
                     <label>Venue</label>
                     <select name="venue_type" id="venue_type" class="form-control">
-                        <option value="In Office" <?= !$editEvent || $editEvent['venue_type'] === 'In Office' ? 'selected' : '' ?>>In Office</option>
-                        <option value="Out of Office" <?= $editEvent && $editEvent['venue_type'] === 'Out of Office' ? 'selected' : '' ?>>Out of Office</option>
+                        <option value="In Office" <?= old('venue_type', $editEvent['venue_type'] ?? 'In Office') === 'In Office' ? 'selected' : '' ?>>In Office</option>
+                        <option value="Out of Office" <?= old('venue_type', $editEvent['venue_type'] ?? 'In Office') === 'Out of Office' ? 'selected' : '' ?>>Out of Office</option>
                     </select>
                 </div>
                 <div class="col-6 form-group" id="hall_group">
@@ -226,13 +226,13 @@ $drawerOpen = ($editEvent !== null);
                     <select name="venue_location" class="form-control">
                         <option value="">—</option>
                         <?php foreach ($halls as $h): ?>
-                            <option value="<?= e($h['hall_name']) ?>" <?= $editEvent && $editEvent['venue_location'] === $h['hall_name'] ? 'selected' : '' ?>><?= e($h['hall_name']) ?> (<?= (int) $h['occupancy'] ?> seats)</option>
+                            <option value="<?= e($h['hall_name']) ?>" <?= old('venue_location', $editEvent['venue_location'] ?? '') === $h['hall_name'] ? 'selected' : '' ?>><?= e($h['hall_name']) ?> (<?= (int) $h['occupancy'] ?> seats)</option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-6 form-group" id="location_group" style="display:none">
                     <label>Location</label>
-                    <input type="text" name="venue_location_text" class="form-control" placeholder="Address / venue name">
+                    <input type="text" name="venue_location_text" class="form-control" placeholder="Address / venue name" value="<?= e(old('venue_location_text')) ?>">
                 </div>
             </div>
             <div class="form-group">
@@ -260,7 +260,7 @@ $drawerOpen = ($editEvent !== null);
             </div>
             <div class="form-group">
                 <label>Remarks</label>
-                <textarea name="remarks" class="form-control" id="eventRemarks" rows="2"><?= $editEvent ? e($editEvent['remarks']) : '' ?></textarea>
+                <textarea name="remarks" class="form-control" id="eventRemarks" rows="2"><?= e(old('remarks', $editEvent ? $editEvent['remarks'] : '')) ?></textarea>
             </div>
         </form>
     </div>

@@ -80,7 +80,7 @@ $drawerOpen = ($editCat !== null);
             <input type="hidden" name="id" id="formId" value="<?= $editCat ? (int) $editCat['id'] : 0 ?>">
             <div class="form-group">
                 <label>Title *</label>
-                <input type="text" name="title" class="form-control" id="formTitle" required value="<?= $editCat ? e($editCat['title']) : '' ?>">
+                <input type="text" name="title" class="form-control" id="formTitle" required value="<?= e(old('title', $editCat ? $editCat['title'] : '')) ?>">
             </div>
             <div class="form-group">
                 <label>Parent Category</label>
@@ -88,25 +88,25 @@ $drawerOpen = ($editCat !== null);
                     <option value="">— None (top-level) —</option>
                     <?php foreach ($categories as $c): ?>
                         <?php if (!$editCat || (int) $c['id'] !== (int) ($editCat['id'] ?? 0)): ?>
-                            <option value="<?= (int) $c['id'] ?>" <?= $editCat && (int) $editCat['parent_id'] === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['title']) ?></option>
+                            <option value="<?= (int) $c['id'] ?>" <?= $editCat && (int) old('parent_id', $editCat['parent_id']) === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['title']) ?></option>
                         <?php endif; ?>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="form-group">
                 <label>Position</label>
-                <input type="number" name="position" class="form-control" id="formPosition" value="<?= $editCat ? (int) $editCat['position'] : 0 ?>">
+                <input type="number" name="position" class="form-control" id="formPosition" value="<?= e(old('position', $editCat ? (int) $editCat['position'] : 0)) ?>">
             </div>
             <div class="form-group">
                 <label>Status</label>
                 <select name="is_active" class="form-control" id="formStatus">
-                    <option value="1" <?= ($editCat && $editCat['is_active']) ? 'selected' : '' ?>>Active</option>
-                    <option value="0" <?= $editCat && !$editCat['is_active'] ? 'selected' : '' ?>>Inactive</option>
+                    <option value="1" <?= ($editCat && old('is_active', $editCat['is_active'])) ? 'selected' : '' ?>>Active</option>
+                    <option value="0" <?= $editCat && !old('is_active', $editCat['is_active']) ? 'selected' : '' ?>>Inactive</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Description</label>
-                <textarea name="description" class="form-control" id="formDescription" rows="3"><?= $editCat ? e($editCat['description']) : '' ?></textarea>
+                <textarea name="description" class="form-control" id="formDescription" rows="3"><?= e(old('description', $editCat ? $editCat['description'] : '')) ?></textarea>
             </div>
         </form>
     </div>

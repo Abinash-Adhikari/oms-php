@@ -207,14 +207,23 @@ tbl_clients            ← organizations/individuals the sales team works with
 tbl_client_contacts    → tbl_clients (people, one primary)
 tbl_projects           ← the product/catalog catalog (ERP, POS, Website, …)
 tbl_client_projects    → tbl_clients, tbl_leads, tbl_projects (won deployments)
-tbl_quotations         → tbl_clients (client_id), optionally tbl_leads
-tbl_quotation_items    → tbl_quotations (ON DELETE CASCADE)
-tbl_quotation_files    → tbl_quotations (ON DELETE CASCADE)
+tbl_quotations         → tbl_clients (client_id), optionally tbl_leads  [LEGACY, read-only]
+tbl_quotation_items    → tbl_quotations (ON DELETE CASCADE)            [LEGACY, read-only]
+tbl_quotation_files    → tbl_quotations (ON DELETE CASCADE)            [LEGACY, read-only]
 tbl_documents          ← unified document engine header (all doc types)
 tbl_document_items     → tbl_documents (shared line items)
 tbl_document_files     → tbl_documents (shared attachments)
 tbl_sales_vouchers     → tbl_fiscal_years, tbl_clients (client_id)
 ```
+
+**`tbl_quotations` / `tbl_quotation_items` / `tbl_quotation_files`** —
+**legacy, read-only.** The old quotation screen was retired; every row was
+copied into `tbl_documents` (type `quotation`) with its items and files by
+`seed-table-documents-from-legacy-quotations`. `migrated_document_id` (→
+`tbl_documents.id`) and `migrated_document_number` record where each one went
+(a number already taken in `tbl_documents` got the next free `QTN-<year>-NNNN`),
+so old links redirect via `sales/legacy_quotation`. Nothing writes to these
+tables any more; they can be dropped in a later migration.
 
 **`tbl_documents`** — the **unified document engine** (DocumentEngine):
 all business documents share one header table, discriminated by `document_type`
@@ -246,7 +255,7 @@ website's contact/quote forms write here (source = Website).
 
 Reaching **Won auto-provisions** the won Client Project row (and, when
 missing, the Business Source) via `provisionWonLead()` in
-`admin/modules/leads/operation/leads.php` — idempotent for already-linked wins.
+`admin/modules/sales/operation/leads.php` — idempotent for already-linked wins.
 
 **`tbl_clients`** — companies and
 individuals the sales team works with, identified by `type`
@@ -275,7 +284,15 @@ scheme is normalised to `https://` on save) plus the legacy entitlement columns
 `permitted_modules` (JSON array of module keys) and `permitted_submodules`
 (JSON map module → submodule keys), which are no longer written. Extra columns:
 `package` (plan/edition sold), `value DECIMAL(18,4)`, `start_date`/`end_date`,
-`status` ENUM(Active, Completed, On Hold, Cancelled).
+`status` ENUM(Active, Completed, On Hold, Cancelled). `is_won` TINYINT(1):
+`1` = won deal, `0` = demo/trial for a lead that is not won yet (`end_date` is
+the trial expiry). Reaching Won flips the lead's trial row to `1` instead of
+inserting a new one; Lost sets it to `Cancelled`. A client with no won
+project is shown as a **Prospect**, otherwise a **Customer** (derived, not
+stored).
+School-app listing (`GET /api/v1/schools`): `app_slug` VARCHAR(32) UNIQUE — the
+public app id; a row is listed only when it is set, and it never changes once
+saved. `city` VARCHAR(100), `accent` CHAR(7) (`#RRGGBB`), `sort_order` INT.
 
 ### 2.7 Inventory
 
