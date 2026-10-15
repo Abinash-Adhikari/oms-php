@@ -53,14 +53,9 @@ function leadTimeAgo($datetime) {
     return date('M j', strtotime($datetime));
 }
 
-// ── Helper: format currency compact ──
+// ── Helper: format currency compact (shared lakh/crore formatter) ──
 function leadFormatValue($val) {
-    if ($val === null || $val == 0) return '—';
-    $v = (float) $val;
-    if ($v >= 10000000) return 'NPR ' . number_format($v / 10000000, 1) . 'Cr';
-    if ($v >= 100000) return 'NPR ' . number_format($v / 100000, 1) . 'L';
-    if ($v >= 1000) return 'NPR ' . number_format($v / 1000, 1) . 'K';
-    return 'NPR ' . number_format($v, 0);
+    return format_compact_money($val === null ? null : (float) $val);
 }
 
 // ================================================================== detail
@@ -768,25 +763,34 @@ $leads = $db->select(
 );
 
 // ── KPI data ──
-$today = date('Y-m-d');
+$mtd = month_to_date_windows(date('Y-m-d'));
+$months6 = month_keys(date('Y-m'), 6);
 $kpis = $db->selectOne("SELECT
     COUNT(*) AS total,
-    SUM(CASE WHEN stage = 'New' THEN 1 ELSE 0 END) AS new_count,
     SUM(CASE WHEN stage IN ('New','Contacted','Qualified','Proposal') THEN 1 ELSE 0 END) AS active_pipeline,
     SUM(CASE WHEN stage = 'Won' THEN 1 ELSE 0 END) AS won,
     SUM(CASE WHEN stage = 'Lost' THEN 1 ELSE 0 END) AS lost,
-    SUM(CASE WHEN stage IN ('New','Contacted','Qualified','Proposal') THEN COALESCE(estimated_value,0) ELSE 0 END) AS pipeline_value,
     SUM(CASE WHEN stage = 'Won' THEN COALESCE(estimated_value,0) ELSE 0 END) AS won_value,
     SUM(CASE WHEN assigned_to IS NULL AND stage NOT IN ('Won','Lost') THEN 1 ELSE 0 END) AS unassigned,
-    SUM(CASE WHEN COALESCE(last_activity_on, added_on) < DATE_SUB(NOW(), INTERVAL 7 DAY) AND stage NOT IN ('Won','Lost') THEN 1 ELSE 0 END) AS aging
-FROM tbl_leads") ?: [];
+    SUM(CASE WHEN COALESCE(last_activity_on, added_on) < DATE_SUB(NOW(), INTERVAL 7 DAY) AND stage NOT IN ('Won','Lost') THEN 1 ELSE 0 END) AS aging,
+    SUM(CASE WHEN DATE(added_on) BETWEEN ? AND ? THEN 1 ELSE 0 END) AS mtd,
+    SUM(CASE WHEN DATE(added_on) BETWEEN ? AND ? THEN 1 ELSE 0 END) AS prev_mtd
+FROM tbl_leads", [$mtd['cur_start'], $mtd['cur_end'], $mtd['prev_start'], $mtd['prev_end']]) ?: [];
+$openValueByStage = rows_to_map($db->select(
+    "SELECT stage, COALESCE(SUM(estimated_value), 0) AS v FROM tbl_leads
+     WHERE stage IN ('New','Contacted','Qualified','Proposal') GROUP BY stage"
+), 'stage', 'v');
+$leadsMonthly = rows_to_map($db->select(
+    "SELECT DATE_FORMAT(added_on, '%Y-%m') AS m, COUNT(*) AS c FROM tbl_leads WHERE added_on >= ? GROUP BY m",
+    [$months6[0] . '-01']
+), 'm', 'c');
 
-$winRate = 0;
-$totalClosed = ($kpis['won'] ?? 0) + ($kpis['lost'] ?? 0);
-if ($totalClosed > 0) {
-    $winRate = round(($kpis['won'] / $totalClosed) * 100);
-}
-$avgDealSize = ($kpis['won'] ?? 0) > 0 ? ($kpis['won_value'] ?? 0) / $kpis['won'] : 0;
+$activePipeline = (int) ($kpis['active_pipeline'] ?? 0);
+$wonCount = (int) ($kpis['won'] ?? 0);
+$lostCount = (int) ($kpis['lost'] ?? 0);
+$totalClosed = $wonCount + $lostCount;
+$agingCount = (int) ($kpis['aging'] ?? 0);
+$avgDealSize = $wonCount > 0 ? (float) ($kpis['won_value'] ?? 0) / $wonCount : 0.0;
 
 // Group leads by stage for Kanban
 $leadsByStage = [];
@@ -801,43 +805,37 @@ foreach ($leads as $l) {
 $pageUrl = pageUrl('sales', 'leads');
 ?>
 
-<!-- ── KPI Cards ── -->
-<div class="tms-kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
-    <div class="tms-kpi-card bg-info" style="cursor:default">
-        <div class="tms-kpi-icon"><i class="fas fa-funnel-dollar"></i></div>
-        <div class="tms-kpi-meta">
-            <p class="tms-kpi-label">Total Leads</p>
-            <p class="tms-kpi-value"><?= (int) ($kpis['total'] ?? 0) ?></p>
-        </div>
-    </div>
-    <div class="tms-kpi-card bg-primary" style="cursor:default">
-        <div class="tms-kpi-icon"><i class="fas fa-bolt"></i></div>
-        <div class="tms-kpi-meta">
-            <p class="tms-kpi-label">Active Pipeline</p>
-            <p class="tms-kpi-value"><?= (int) ($kpis['active_pipeline'] ?? 0) ?></p>
-        </div>
-    </div>
-    <a href="<?= $pageUrl ?>?stage=Won" class="tms-kpi-card bg-success">
-        <div class="tms-kpi-icon"><i class="fas fa-trophy"></i></div>
-        <div class="tms-kpi-meta">
-            <p class="tms-kpi-label">Won</p>
-            <p class="tms-kpi-value"><?= (int) ($kpis['won'] ?? 0) ?> <small class="text-muted" style="font-size:.7rem;font-weight:400"><?= $winRate ?>%</small></p>
-        </div>
-    </a>
-    <div class="tms-kpi-card bg-warning" style="cursor:default">
-        <div class="tms-kpi-icon"><i class="fas fa-coins"></i></div>
-        <div class="tms-kpi-meta">
-            <p class="tms-kpi-label">Pipeline Value</p>
-            <p class="tms-kpi-value" style="font-size:1.1rem"><?= leadFormatValue($kpis['pipeline_value'] ?? 0) ?></p>
-        </div>
-    </div>
-    <a href="<?= $pageUrl ?>?aging=1" class="tms-kpi-card bg-danger">
-        <div class="tms-kpi-icon"><i class="fas fa-fire"></i></div>
-        <div class="tms-kpi-meta">
-            <p class="tms-kpi-label">Aging (7d+)</p>
-            <p class="tms-kpi-value"><?= (int) ($kpis['aging'] ?? 0) ?></p>
-        </div>
-    </a>
+<!-- ── KPI tiles ── -->
+<div class="ana-grid" style="--ana-cols:5">
+    <?= stat_tile([
+        'label' => 'Open deals', 'icon' => 'fas fa-bolt', 'tone' => 'primary',
+        'value' => number_format($activePipeline),
+        'sub'   => number_format((int) ($kpis['total'] ?? 0)) . ' leads all-time',
+    ]) ?>
+    <?= stat_tile([
+        'label' => 'Pipeline value', 'icon' => 'fas fa-coins', 'tone' => 'warning',
+        'value' => format_compact_money(array_sum($openValueByStage), 'NPR', 'NPR 0'),
+        'sub'   => format_compact_money(weighted_pipeline($openValueByStage)) . ' weighted forecast',
+    ]) ?>
+    <?= stat_tile([
+        'label' => 'Win rate', 'icon' => 'fas fa-trophy', 'tone' => 'success',
+        'value' => $totalClosed > 0 ? percent_of($wonCount, $totalClosed) . '%' : '—',
+        'sub'   => $wonCount . ' won · ' . $lostCount . ' lost' . ($wonCount > 0 ? ' · avg ' . format_compact_money($avgDealSize) : ''),
+        'href'  => $pageUrl . '&stage=Won',
+    ]) ?>
+    <?= stat_tile([
+        'label' => 'New this month', 'icon' => 'fas fa-filter', 'tone' => 'info',
+        'value' => number_format((int) ($kpis['mtd'] ?? 0)),
+        'delta' => percent_change((float) ($kpis['prev_mtd'] ?? 0), (float) ($kpis['mtd'] ?? 0)),
+        'delta_label' => 'vs last month',
+        'spark' => fill_series($months6, $leadsMonthly),
+    ]) ?>
+    <?= stat_tile([
+        'label' => 'Idle 7+ days', 'icon' => 'fas fa-hourglass-half', 'tone' => $agingCount > 0 ? 'danger' : 'neutral',
+        'value' => number_format($agingCount),
+        'sub'   => percent_of($agingCount, $activePipeline) . '% of open · ' . (int) ($kpis['unassigned'] ?? 0) . ' unassigned',
+        'href'  => $pageUrl . '&aging=1',
+    ]) ?>
 </div>
 
 <!-- ── Toolbar ── -->

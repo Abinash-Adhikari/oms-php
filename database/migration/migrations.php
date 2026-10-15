@@ -203,5 +203,38 @@ $files = [
     // --- Public API: school-app listing fields on client projects ---
     'alter-table-client_projects-add-app-fields',
 
+    // --- Payroll P1: funds, salary structures, tax years/slabs (docs/PAYROLL_PLAN.md) ---
+    'alter-table-users_login-add-employment-fields',
+    'alter-table-office_leave_configs-add-is_paid',
+    'seed-table-office_leave_configs-unpaid-leave',
+    'create-table-payroll_funds',
+    'create-table-staff_fund_enrollments',
+    'create-table-payroll_components',
+    'create-table-staff_salary_structures',
+    'create-table-staff_salary_structure_items',
+    'create-table-payroll_tax_years',
+    'create-table-payroll_tax_slabs',
+    'seed-table-payroll_tax_years-2083-84',
+
+    // --- Payroll P2: monthly runs, lines, payslips ---
+    'create-table-payroll_runs',
+    'create-table-payroll_run_lines',
+    'create-table-payroll_run_line_items',
+    'seed-table-users_login-grant-my_office-payslips',
+
+    // --- Payroll P3: accounting map, posting stamps, payroll accounts ---
+    'create-table-payroll_settings',
+    'alter-table-payroll_funds-add-payable_terminal_id',
+    'alter-table-payroll_runs-add-posting-fields',
+    'seed-table-account_terminals-payroll',
+
+    // --- Payroll P4: staff advances recovered through payroll ---
+    'create-table-staff_advances',
+    'alter-table-payroll_run_line_items-add-advance_id',
+
+    // --- Payroll review fixes: unique active run per month, separate deductions account ---
+    'alter-table-payroll_runs-add-active_period_key',
+    'alter-table-payroll_settings-add-deductions_terminal_id',
+
     // Append new migration filenames below only (do not insert in the middle).
 ];

@@ -57,7 +57,7 @@ Give SB-Tech one internal system to run the office: staff & HR operations (atten
 
 ### 2.2 Out of scope (this PRD)
 - Student/parent portal, academics, exams, fees, library, transport (school-only; dropped)
-- Payroll/salary processing (expense claims + ledger only)
+- ~~Payroll/salary processing~~ — moved in scope 2026-10-13; see `docs/PAYROLL_PLAN.md`
 - Full public website content PRD (see §2.3 for integration points)
 - Mobile app (future; reuses same data/API endpoints)
 
@@ -323,7 +323,7 @@ Give SB-Tech one internal system to run the office: staff & HR operations (atten
 ---
 
 ## 7. Non-goals (v1)
-- Payroll/salary computation and payslips (claims + ledger only)
+- ~~Payroll/salary computation and payslips~~ — now planned in `docs/PAYROLL_PLAN.md` (P1 built)
 - Multi-tenant SaaS (single office per install; `tenant_id`-ready design only if productizing)
 - Real-time chat / video meetings
 - Mobile app (data/API ready for a later phase)

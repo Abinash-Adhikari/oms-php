@@ -44,28 +44,80 @@ $logs = $db->select(
 $modules = $db->select("SELECT DISTINCT module FROM tbl_audit_log ORDER BY module");
 $actions = $db->select("SELECT DISTINCT action FROM tbl_audit_log ORDER BY action");
 
-// Summary
-$moduleCounts = $db->select("SELECT module, COUNT(*) AS c FROM tbl_audit_log GROUP BY module ORDER BY c DESC");
-$actionCounts = $db->select("SELECT action, COUNT(*) AS c FROM tbl_audit_log GROUP BY action ORDER BY c DESC");
-$recentLogins = (int) ($db->selectOne("SELECT COUNT(*) AS c FROM tbl_audit_log WHERE module = 'auth' AND action = 'login' AND added_on >= DATE_SUB(NOW(), INTERVAL 24 HOUR)")['c'] ?? 0);
+// Summary — last 30 days vs the 30 before, independent of the table filters.
+$days30 = day_keys(date('Y-m-d'), 30);
+$sum = $db->selectOne(
+    "SELECT SUM(added_on >= DATE_SUB(NOW(), INTERVAL 30 DAY)) AS events30,
+            SUM(added_on < DATE_SUB(NOW(), INTERVAL 30 DAY) AND added_on >= DATE_SUB(NOW(), INTERVAL 60 DAY)) AS events_prev30,
+            SUM(module = 'auth' AND action = 'login' AND added_on >= DATE_SUB(NOW(), INTERVAL 24 HOUR)) AS logins24,
+            COUNT(DISTINCT CASE WHEN added_on >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN actor_id END) AS users7,
+            SUM(module <> 'auth' AND added_on >= DATE_SUB(NOW(), INTERVAL 30 DAY)) AS changes30
+     FROM tbl_audit_log"
+) ?: [];
+$dailyLogins = [];
+$dailyChanges = [];
+foreach ($db->select(
+    "SELECT DATE(added_on) AS d, module = 'auth' AS is_auth, COUNT(*) AS c
+     FROM tbl_audit_log WHERE added_on >= ? GROUP BY d, is_auth",
+    [$days30[0]]
+) as $r) {
+    if ((int) $r['is_auth'] === 1) {
+        $dailyLogins[$r['d']] = (int) $r['c'];
+    } else {
+        $dailyChanges[$r['d']] = (int) $r['c'];
+    }
+}
+$topModules = $db->select(
+    "SELECT module, COUNT(*) AS c FROM tbl_audit_log
+     WHERE added_on >= DATE_SUB(NOW(), INTERVAL 30 DAY) GROUP BY module ORDER BY c DESC LIMIT 8"
+);
 ?>
 
-<div class="row mb-3">
-    <div class="col-md-3">
-        <div class="info-box"><span class="info-box-icon bg-info"><i class="fas fa-database"></i></span>
-            <div class="info-box-content"><span class="info-box-text">Total Logs</span><span class="info-box-number"><?= number_format($total) ?></span></div></div>
+<div class="ana-grid">
+    <?= stat_tile(['label' => 'Events (30 days)', 'icon' => 'fas fa-database', 'tone' => 'info',
+        'value' => number_format((int) ($sum['events30'] ?? 0)),
+        'delta' => percent_change((float) ($sum['events_prev30'] ?? 0), (float) ($sum['events30'] ?? 0)),
+        'delta_label' => 'vs previous 30 days']) ?>
+    <?= stat_tile(['label' => 'Logins (24 h)', 'icon' => 'fas fa-sign-in-alt', 'tone' => 'success',
+        'value' => number_format((int) ($sum['logins24'] ?? 0)), 'sub' => 'trend: sign-ins per day, 30 days',
+        'spark' => fill_series($days30, $dailyLogins)]) ?>
+    <?= stat_tile(['label' => 'Active users (7 days)', 'icon' => 'fas fa-user-shield', 'tone' => 'primary',
+        'value' => number_format((int) ($sum['users7'] ?? 0)), 'sub' => 'distinct people with any logged action']) ?>
+    <?= stat_tile(['label' => 'Data changes (30 days)', 'icon' => 'fas fa-pen', 'tone' => 'warning',
+        'value' => number_format((int) ($sum['changes30'] ?? 0)), 'sub' => 'everything except sign-in / sign-out',
+        'spark' => fill_series($days30, $dailyChanges)]) ?>
+</div>
+
+<div class="row ana-row">
+    <div class="col-lg-8">
+        <div class="ana-card">
+            <div class="ana-card__head"><div><h3 class="ana-card__title">Activity</h3><p class="ana-card__hint">Logged events per day, last 30 days</p></div></div>
+            <div class="ana-chart" style="--h:220px">
+                <canvas role="img" aria-label="Stacked bar chart of sign-ins and data changes per day"
+                        data-chart="<?= chart_attr([
+                            'type' => 'bar', 'stacked' => true,
+                            'labels' => array_map(static fn ($d) => date('j M', strtotime($d)), $days30),
+                            'series' => [
+                                ['label' => 'Data changes', 'data' => fill_series($days30, $dailyChanges), 'slot' => 1],
+                                ['label' => 'Sign-in / out', 'data' => fill_series($days30, $dailyLogins), 'slot' => 3],
+                            ],
+                            'empty' => 'No activity in the last 30 days.',
+                        ]) ?>"></canvas>
+            </div>
+        </div>
     </div>
-    <div class="col-md-3">
-        <div class="info-box"><span class="info-box-icon bg-success"><i class="fas fa-sign-in-alt"></i></span>
-            <div class="info-box-content"><span class="info-box-text">Logins (24h)</span><span class="info-box-number"><?= $recentLogins ?></span></div></div>
-    </div>
-    <div class="col-md-3">
-        <div class="info-box"><span class="info-box-icon bg-warning"><i class="fas fa-puzzle-piece"></i></span>
-            <div class="info-box-content"><span class="info-box-text">Modules Active</span><span class="info-box-number"><?= count($moduleCounts) ?></span></div></div>
-    </div>
-    <div class="col-md-3">
-        <div class="info-box"><span class="info-box-icon bg-primary"><i class="fas fa-bolt"></i></span>
-            <div class="info-box-content"><span class="info-box-text">Action Types</span><span class="info-box-number"><?= count($actionCounts) ?></span></div></div>
+    <div class="col-lg-4">
+        <div class="ana-card">
+            <div class="ana-card__head"><div><h3 class="ana-card__title">Busiest modules</h3><p class="ana-card__hint">Last 30 days</p></div></div>
+            <div class="ana-chart" style="--h:220px">
+                <canvas role="img" aria-label="Horizontal bar chart of logged events per module"
+                        data-chart="<?= chart_attr([
+                            'type' => 'hbar', 'labels' => array_column($topModules, 'module'),
+                            'series' => [['label' => 'Events', 'data' => array_map('intval', array_column($topModules, 'c')), 'slot' => 1]],
+                            'empty' => 'No activity in the last 30 days.',
+                        ]) ?>"></canvas>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -104,7 +156,7 @@ $recentLogins = (int) ($db->selectOne("SELECT COUNT(*) AS c FROM tbl_audit_log W
         </form>
     </div>
     <div class="card-body p-0">
-        <table class="table table-sm table-striped">
+        <table class="table table-sm table-striped ana-table">
             <thead><tr><th>Date</th><th>Module</th><th>Action</th><th>Entity</th><th>Actor</th><th>IP</th><th>Description</th></tr></thead>
             <tbody>
             <?php if (!$logs): ?>

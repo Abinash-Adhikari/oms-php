@@ -23,6 +23,7 @@ try {
         $carryForward = !empty($_POST['carry_forward']) ? 1 : 0;
         $documentation = !empty($_POST['documentation_required']) ? 1 : 0;
         $isActive = !empty($_POST['is_active']) ? 1 : 0;
+        $isPaid = !empty($_POST['is_paid']) ? 1 : 0;
 
         if ($title === '') {
             setFlash('error', 'Leave type title is required.');
@@ -44,6 +45,7 @@ try {
             'leave_year'             => $leaveYear ?: null,
             'description'            => $description ?: null,
             'is_active'              => $isActive,
+            'is_paid'                => $isPaid,
             'carry_forward'          => $carryForward,
             'max_carry_forward'      => $maxCarry,
             'requires_approval'      => $requiresApproval,

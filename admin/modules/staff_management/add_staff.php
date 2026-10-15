@@ -90,7 +90,7 @@ if ($mode === 'list'):
                                     <select name="gender" class="form-control">
                                         <option value="">—</option>
                                         <?php foreach (['Male', 'Female', 'Other'] as $g): ?>
-                                            <option value="<?= $g ?>" <?= old('gender', $edit['gender'] ?? '') === $g ? 'selected' : '' ?>><?= $g ?></option>
+                                            <option value="<?= e($g) ?>" <?= old('gender', $edit['gender'] ?? '') === $g ? 'selected' : '' ?>><?= e($g) ?></option>
                                         <?php endforeach; ?>
                                     </select></div>
                                 <div class="form-group col-md-6"><label>Date of birth</label>
@@ -107,7 +107,7 @@ if ($mode === 'list'):
                                     <select name="marital_status" class="form-control">
                                         <option value="">—</option>
                                         <?php foreach (['Married', 'Unmarried', 'Divorced'] as $m): ?>
-                                            <option value="<?= $m ?>" <?= old('marital_status', $edit['marital_status'] ?? '') === $m ? 'selected' : '' ?>><?= $m ?></option>
+                                            <option value="<?= e($m) ?>" <?= old('marital_status', $edit['marital_status'] ?? '') === $m ? 'selected' : '' ?>><?= e($m) ?></option>
                                         <?php endforeach; ?>
                                     </select></div>
                             </div>
@@ -143,8 +143,17 @@ if ($mode === 'list'):
                                         <option value="Admin" <?= old('staff_type', $edit['staff_type'] ?? '') === 'Admin' ? 'selected' : '' ?>>Admin</option>
                                         <option value="Service" <?= old('staff_type', $edit['staff_type'] ?? '') === 'Service' ? 'selected' : '' ?>>Service</option>
                                     </select></div>
+                                <div class="form-group col-md-6"><label>Employment type</label>
+                                    <select name="employment_type" class="form-control">
+                                        <?php foreach (['Permanent', 'Contract', 'Probation', 'Intern'] as $et): ?>
+                                            <option value="<?= e($et) ?>" <?= old('employment_type', $edit['employment_type'] ?? 'Permanent') === $et ? 'selected' : '' ?>><?= e($et) ?></option>
+                                        <?php endforeach; ?>
+                                    </select></div>
                                 <div class="form-group col-md-6"><label>Join date</label>
                                     <input type="date" name="join_date" class="form-control" value="<?= e(old('join_date', $edit ? $edit['join_date'] : '')) ?>"></div>
+                                <div class="form-group col-md-6"><label>Contract / internship ends</label>
+                                    <input type="date" name="contract_end_date" class="form-control" value="<?= e(old('contract_end_date', $edit ? ($edit['contract_end_date'] ?? '') : '')) ?>">
+                                    <small class="text-muted">Leave empty for permanent staff</small></div>
                                 <div class="form-group col-md-6"><label>Department</label>
                                     <select name="department_id" class="form-control">
                                         <option value="">—</option>
@@ -168,7 +177,7 @@ if ($mode === 'list'):
                                             <?php $offDays = array_map('strval', $offOld); ?>
                                         <?php endif; ?>
                                         <?php foreach (['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as $wd): ?>
-                                            <option value="<?= $wd ?>" <?= in_array($wd, $offDays, true) ? 'selected' : '' ?>><?= $wd ?></option>
+                                            <option value="<?= e($wd) ?>" <?= in_array($wd, $offDays, true) ? 'selected' : '' ?>><?= e($wd) ?></option>
                                         <?php endforeach; ?>
                                     </select>
                                     <small class="text-muted">Hold Ctrl to select multiple days.</small></div>
@@ -178,6 +187,11 @@ if ($mode === 'list'):
                                     <input type="time" name="checkout" class="form-control" value="<?= e(old('checkout', $edit && $edit['checkout'] ? substr($edit['checkout'], 0, 5) : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>PAN no</label>
                                     <input type="text" name="pan_num" class="form-control" value="<?= e(old('pan_num', $edit ? $edit['pan_num'] : '')) ?>"></div>
+                                <div class="form-group col-md-6"><label>Tax filing status</label>
+                                    <select name="tax_filing_status" class="form-control">
+                                        <option value="Single" <?= old('tax_filing_status', $edit['tax_filing_status'] ?? 'Single') === 'Single' ? 'selected' : '' ?>>Single</option>
+                                        <option value="Couple" <?= old('tax_filing_status', $edit['tax_filing_status'] ?? 'Single') === 'Couple' ? 'selected' : '' ?>>Couple (elected under section 50)</option>
+                                    </select></div>
                                 <div class="form-group col-md-6"><label>Bank</label>
                                     <input type="text" name="bank" class="form-control" value="<?= e(old('bank', $edit ? $edit['bank'] : '')) ?>"></div>
                                 <div class="form-group col-md-6"><label>Bank account no</label>
@@ -211,7 +225,7 @@ if ($mode === 'list'):
                                 <div class="form-group col-md-6"><label>Status</label>
                                     <select name="status" class="form-control">
                                         <?php foreach (['Active', 'Block', 'Terminated'] as $s): ?>
-                                            <option value="<?= $s ?>" <?= old('status', $edit['status'] ?? '') === $s ? 'selected' : '' ?>><?= $s ?></option>
+                                            <option value="<?= e($s) ?>" <?= old('status', $edit['status'] ?? '') === $s ? 'selected' : '' ?>><?= e($s) ?></option>
                                         <?php endforeach; ?>
                                     </select></div>
                                 <div class="form-group col-md-6"><label>Termination date</label>

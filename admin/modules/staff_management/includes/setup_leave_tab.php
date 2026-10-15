@@ -27,7 +27,7 @@ $drawerOpen = ($edit !== null);
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-sm table-striped table-hover mb-0">
-                <thead><tr><th>#</th><th>Title</th><th class="text-center">Max / year</th><th class="text-center">Carry fwd</th><th>Gender</th><th class="text-center">Active</th><th class="text-right">Actions</th></tr></thead>
+                <thead><tr><th>#</th><th>Title</th><th class="text-center">Max / year</th><th class="text-center">Carry fwd</th><th>Gender</th><th class="text-center">Paid</th><th class="text-center">Active</th><th class="text-right">Actions</th></tr></thead>
                 <tbody>
                 <?php foreach ($rows as $i => $t): ?>
                     <tr>
@@ -36,6 +36,7 @@ $drawerOpen = ($edit !== null);
                         <td class="text-center"><?= (int) $t['max_allowed'] ?></td>
                         <td class="text-center"><?= $t['carry_forward'] ? (int) $t['max_carry_forward'] : '—' ?></td>
                         <td><?= e($t['gender_specific']) ?></td>
+                        <td class="text-center"><span class="badge badge-<?= ($t['is_paid'] ?? 1) ? 'success' : 'warning' ?>"><?= ($t['is_paid'] ?? 1) ? 'Paid' : 'Unpaid' ?></span></td>
                         <td class="text-center"><span class="badge badge-<?= $t['is_active'] ? 'success' : 'secondary' ?>"><?= $t['is_active'] ? 'Yes' : 'No' ?></span></td>
                         <td class="text-right">
                             <button type="button" class="btn btn-xs btn-outline-primary" onclick="openDrawer(<?= (int) $t['id'] ?>)"><i class="fas fa-edit"></i></button>
@@ -115,6 +116,10 @@ $drawerOpen = ($edit !== null);
                     <label class="custom-control-label" for="cfg_documentation">Documentation required</label>
                 </div>
                 <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="cfg_paid" name="is_paid" value="1" <?= old('is_paid', !$edit || ($edit['is_paid'] ?? 1)) ? 'checked' : '' ?>>
+                    <label class="custom-control-label" for="cfg_paid">Paid leave (untick for leave without pay — deducted in payroll)</label>
+                </div>
+                <div class="custom-control custom-checkbox">
                     <input type="checkbox" class="custom-control-input" id="cfg_active" name="is_active" value="1" <?= old('is_active', !$edit || $edit['is_active']) ? 'checked' : '' ?>>
                     <label class="custom-control-label" for="cfg_active">Active</label>
                 </div>
@@ -154,6 +159,7 @@ function openDrawer(editId) {
             document.getElementById('cfg_carry_forward').checked = lt.carry_forward == 1;
             document.getElementById('cfg_documentation').checked = lt.documentation_required == 1;
             document.getElementById('cfg_active').checked = lt.is_active == 1;
+            document.getElementById('cfg_paid').checked = lt.is_paid == 1;
         }
     } else {
         title.innerHTML = '<i class="fas fa-calendar-times"></i>Add Leave Type';
@@ -168,6 +174,7 @@ function openDrawer(editId) {
         document.getElementById('cfg_carry_forward').checked = false;
         document.getElementById('cfg_documentation').checked = false;
         document.getElementById('cfg_active').checked = true;
+        document.getElementById('cfg_paid').checked = true;
     }
 }
 

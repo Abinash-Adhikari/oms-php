@@ -96,6 +96,8 @@ require_once $appRoot . '/functions/api.php';
 require_once $appRoot . '/functions/hr.php';
 require_once $appRoot . '/functions/office.php';
 require_once $appRoot . '/functions/accounting.php';
+require_once $appRoot . '/functions/analytics.php';
+require_once $appRoot . '/functions/payroll.php';
 require_once $appRoot . '/functions/inventory.php';
 require_once $appRoot . '/functions/documents.php';
 require_once $appRoot . '/functions/pdf_helpers.php';

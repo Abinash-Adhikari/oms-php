@@ -19,7 +19,7 @@
 | **Money** | `DECIMAL(18,4)` everywhere. Currency in a separate `CHAR(3)` column. |
 | **FKs** | `ON DELETE RESTRICT` for fiscal/calendar links (must not orphan); `ON DELETE SET NULL` for actor/user links (history must survive). |
 
-**101 tables** total, grouped into 9 domains below. Arrows (→) denote FK
+**113 tables** total, grouped into 12 domains below. Arrows (→) denote FK
 references.
 
 ---
@@ -386,6 +386,91 @@ The CSS is inlined as a PHP heredoc (see PED TD-01).
 | `tbl_calendar` | BS (Vikram Samvat) calendar: `nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`. Seeded with ~200 years. Powers `adToBs()` / `bsMonthName()`. |
 | `tbl_migrations` | `filename`, `executed_on`. The `artisan` registry table. Created first. |
 | `tbl_office_spaces` | Generic resource — used by both meeting-hall booking and desk booking. |
+
+### 2.12 Payroll
+
+```
+tbl_payroll_funds                 ← SSF / PF / CIT / custom funds (default rates)
+tbl_staff_fund_enrollments        → tbl_users_login, tbl_payroll_funds (per-staff opt-in + overrides)
+tbl_payroll_components            ← allowances & deductions catalogue
+tbl_staff_salary_structures       → tbl_users_login (pay from effective_from; history kept)
+tbl_staff_salary_structure_items  → tbl_staff_salary_structures, tbl_payroll_components
+tbl_payroll_tax_years             ← income-tax year settings (retirement cap, rebate)
+tbl_payroll_tax_slabs             → tbl_payroll_tax_years (progressive bands)
+tbl_payroll_runs                  → tbl_payroll_tax_years (one run per BS month)
+tbl_payroll_run_lines             → tbl_payroll_runs, tbl_users_login (one per staff per run)
+tbl_payroll_run_line_items        → tbl_payroll_run_lines (itemised payslip)
+tbl_payroll_settings              → tbl_account_terminals (single row: where payroll posts)
+tbl_staff_advances                → tbl_users_login (salary advances / loans recovered via payroll)
+```
+
+**`tbl_payroll_funds`** — `employee_rate` / `employer_rate` are percentages of
+`contribution_base` (basic | gross), optionally capped by `max_base`.
+`tax_deductible` funds count toward the retirement deduction;
+`waives_social_security_tax` (SSF) exempts members from the 1% band.
+
+**`tbl_staff_fund_enrollments`** — one row per (staff, fund), UNIQUE. NULL
+rates fall back to the fund; `employee_fixed` (e.g. a CIT pledge) replaces the
+employee rate. Optional `start_date` / `end_date` window.
+
+**`tbl_staff_salary_structures`** — UNIQUE (staff_id, effective_from); the row
+in force is the latest `effective_from` ≤ the pay date. `pay_type` Salary |
+Stipend (fixed amount, e.g. interns); `tax_applicable` and
+`deduct_unpaid_days` switch TDS and unpaid-day proration per person.
+
+**`tbl_payroll_tax_years` / `tbl_payroll_tax_slabs`** — one year per Nepal FY
+(AD `start_date`/`end_date`, non-overlapping). Bands run `lower_limit` →
+`upper_limit` (NULL = open) at `rate` %; `filing_status` All | Single | Couple
+(a status's own rows win over All). `is_social_security_tax` marks the band
+SSF members skip. `retirement_fraction` is stored 0..1 (DECIMAL(10,8)).
+Seeded with FY 2083/84 (Finance Act 2083). Maths: `functions/payroll.php`.
+
+**`tbl_payroll_runs`** — `period_key` is the BS month (`2083-06`) with AD
+`period_start`/`period_end` from `tbl_calendar`; only one non-Cancelled run
+per period, enforced by UNIQUE `active_period_key` (a PERSISTENT generated
+column: `period_key`, or NULL once Cancelled). State changes lock the row
+FOR UPDATE; approving recalculates first and refuses if figures changed. `status` Draft → Approved
+(lines frozen, staff notified) → Posted → Paid (P3); Draft/Approved →
+Cancelled. Totals cover non-excluded lines. `months_remaining` = BS months
+from this period to the tax year's end, inclusive.
+
+**`tbl_payroll_run_lines`** — UNIQUE (run_id, staff_id). Name, designation,
+PAN and bank details are snapshots. `unpaid_days` is computed (absent +
+unpaid-type leave + unapproved leave on working days); `unpaid_override` /
+`tds_override` / `excluded` are the preparer's edits and survive
+recalculation. `assessable` and `deductible_funds` feed later months'
+year-to-date tax. `staff_id` is ON DELETE RESTRICT — payroll history stays.
+
+**`tbl_payroll_run_line_items`** — `kind` earning | deduction | fund_employee
+| fund_employer | tax. `is_adjustment = 1` rows are one-off entries (bonus,
+arrears, recovery) that survive recalculation; their extra tax is withheld
+in the month paid.
+
+**`tbl_payroll_settings`** — exactly one row (`id` = 1): terminals for salary
+expense, employer fund contributions, staff payable, TDS payable, staff
+advances (`other_deductions_terminal_id` — advance payouts and recoveries),
+other deductions (`deductions_terminal_id` — canteen, fines, …; seeded to
+Miscellaneous Income), and the default "paid from" account. `tbl_payroll_funds.payable_terminal_id`
+maps each fund's liability. Seeded by `seed-table-account_terminals-payroll`,
+which also creates SSF/PF/CIT Payable, Employer Fund Contributions and Staff
+Advances next to their sibling accounts. Posting (`PayrollPostingService`)
+writes an Auto / Pending journal (`reference_no` `PAYROLL-<period>`) and, on
+payment, an Auto / Pending payment voucher; `tbl_payroll_runs` records them
+in `journal_voucher_id` / `payment_voucher_id` with `posted_*` / `paid_*` stamps.
+
+**`tbl_staff_advances`** — `amount`, `monthly_installment`, optional
+`start_period_key` (first BS month to recover), `status` Active | Closed |
+Cancelled, optional `payment_voucher_id` (Pending payment: Dr Staff Advances /
+Cr bank). Recovered amount is never stored: it is the sum of
+`tbl_payroll_run_line_items` rows with this `advance_id` in Approved /
+Posted / Paid runs, so cancelling a run can't drift it. Each run recovers the
+instalment (the whole balance in the month someone leaves), capped at net
+pay; approval closes advances that reach zero.
+
+Also: `tbl_users_login.employment_type` (Permanent | Contract | Probation |
+Intern), `contract_end_date`, `tax_filing_status` (Single | Couple);
+`tbl_office_leave_configs.is_paid` (0 = leave without pay, deducted in payroll;
+seeded "Unpaid Leave").
 
 ---
 

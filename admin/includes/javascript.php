@@ -638,10 +638,10 @@ function getNepaliDateInput(input) {
 <script src="<?= assetUrl('assets/js/file-gallery.js') ?>"></script>
 <!-- Repopulate forms after a failed submit (window.CMS_OLD_INPUT, server-side) -->
 <script src="<?= assetUrl('assets/js/cms-form-restore.js') ?>?v=<?= @filemtime(__DIR__ . '/../assets/js/cms-form-restore.js') ?: '1' ?>"></script>
-<?php if (($_GET['module'] ?? '') === 'dashboard'): ?>
-<!-- Chart.js — dashboard only -->
+<?php if (in_array($_GET['module'] ?? '', ['dashboard', 'reports'], true)): ?>
+<!-- Chart.js — analytics pages only; renders every <canvas data-chart> -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="<?= assetUrl('assets/js/dashboard-charts.js') ?>"></script>
+<script src="<?= assetUrl('assets/js/analytics-charts.js') ?>?v=<?= @filemtime(__DIR__ . '/../../assets/js/analytics-charts.js') ?: '1' ?>"></script>
 <?php endif; ?>
 <?php if (useBsDates() && bsCalendarAvailable()): ?>
 <!-- Nepali (BS) native date-input upgrade — active when Calendar mode = BS -->

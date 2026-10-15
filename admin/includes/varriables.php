@@ -32,6 +32,7 @@ $icons = [
     'dashboard'        => 'nav-icon fas fa-tachometer-alt',
     'my_office'        => 'nav-icon fas fa-briefcase',
     'staff_management' => 'nav-icon fas fa-users',
+    'payroll'          => 'nav-icon fas fa-money-check-alt',
     'sales'            => 'nav-icon fas fa-handshake',
     'accounts'         => 'nav-icon fas fa-money-bill',
     'inventory'        => 'nav-icon fas fa-boxes',
@@ -45,6 +46,7 @@ $modules = [
     'dashboard',
     'my_office',
     'staff_management',
+    'payroll',
     'sales',
     'webcms',
     'communication',
@@ -58,6 +60,7 @@ $navBars = [
     'dashboard'        => 'Dashboard',
     'my_office'        => 'My Office',
     'staff_management' => 'Staff Management',
+    'payroll'          => 'Payroll',
     'webcms'           => 'Website CMS',
     'sales'            => 'Sales',
     'accounts'         => 'Accounts',
@@ -75,6 +78,7 @@ $subNavBars = [
         'documents'        => 'Documents',
         'warnings'         => 'Warnings',
         'expense_claims'   => 'Expense Claims',
+        'payslips'         => 'My Payslips',
     ],
     'reports' => [
         'overview'     => 'Overview',
@@ -85,6 +89,7 @@ $subNavBars = [
         'finance'      => 'Finance',
         'inventory'    => 'Inventory',
         'staff'        => 'Staff',
+        'payroll'      => 'Payroll',
         'audit'        => 'Audit Log',
     ],
     'staff_management' => [
@@ -95,6 +100,17 @@ $subNavBars = [
         'staff_history'      => 'Staff History',
         'terminated_staffs'  => 'Terminated Staffs',
         'hr_care'            => 'HR Care',
+    ],
+    // Salary data is sensitive: every page also requires manage_payroll.
+    'payroll' => [
+        'runs'         => 'Payroll Runs',
+        'salary_setup' => 'Salary Setup',
+        'funds'        => 'Funds',
+        'components'   => 'Pay Components',
+        'tax_slabs'    => 'Tax Slabs',
+        'advances'     => 'Advances',
+        'remittance'   => 'Remittance',
+        'accounting'   => 'Accounting Setup',
     ],
     // Ordered by the customer lifecycle (docs/SALES_SOP.md).
     'sales' => [
@@ -163,6 +179,8 @@ $specialPermissions = [
     'access_private_documents' => 'Access private documents',
     'view_all_attendance'      => 'View all attendance',
     'audit'                    => 'Audit access',
+    'manage_payroll'           => 'Manage payroll (salaries, funds, tax)',
+    'approve_payroll'          => 'Approve payroll runs',
 ];
 
 /**
@@ -185,6 +203,16 @@ $subIcons = [
     'leave_management'      => 'nav-icon fas fa-plane-departure',
     'staff_history'         => 'nav-icon fas fa-history',
     'terminated_staffs'     => 'nav-icon fas fa-user-slash',
+    // payroll
+    'runs'                  => 'nav-icon fas fa-file-invoice-dollar',
+    'payslips'              => 'nav-icon fas fa-file-alt',
+    'salary_setup'          => 'nav-icon fas fa-money-check-alt',
+    'funds'                 => 'nav-icon fas fa-piggy-bank',
+    'components'            => 'nav-icon fas fa-puzzle-piece',
+    'tax_slabs'             => 'nav-icon fas fa-percentage',
+    'remittance'            => 'nav-icon fas fa-landmark',
+    'advances'              => 'nav-icon fas fa-hand-holding-usd',
+    'accounting'            => 'nav-icon fas fa-book',
     // sales (module-qualified keys win over bare page keys)
     'leads'                 => 'nav-icon fas fa-filter',
     'clients'               => 'nav-icon fas fa-building',
@@ -215,6 +243,7 @@ $subIcons = [
     'finance'               => 'nav-icon fas fa-coins',
     'staff'                 => 'nav-icon fas fa-id-badge',
     'audit'                 => 'nav-icon fas fa-clipboard-check',
+    'reports.payroll'       => 'nav-icon fas fa-money-check-alt',
     // office_setup
     'office_profile'        => 'nav-icon fas fa-building',
     'departments'           => 'nav-icon fas fa-layer-group',
@@ -252,7 +281,7 @@ $navBadgeQueries = [
     'leads' => [
         'module' => 'sales',
         'page' => 'leads',
-        'sql'  => "SELECT COUNT(*) FROM `tbl_leads` WHERE `stage` = 'New' AND (`is_active` = 1 OR `is_active` IS NULL)",
+        'sql'  => "SELECT COUNT(*) FROM `tbl_leads` WHERE `stage` = 'New'",
         'title' => 'New leads',
     ],
     'leave_management' => [
@@ -272,8 +301,9 @@ $navBadgeQueries = [
 /** Valid pages per module (used for sidebar highlighting + page routing). */
 $pages = [
     'dashboard'        => ['home'],
-    'my_office'        => ['office_calendar', 'office_spaces', 'notices', 'documents', 'warnings', 'expense_claims'],
+    'my_office'        => ['office_calendar', 'office_spaces', 'notices', 'documents', 'warnings', 'expense_claims', 'payslips'],
     'staff_management' => ['add_staff', 'permissions', 'staff_daily_tasks', 'leave_management', 'staff_history', 'terminated_staffs', 'hr_care'],
+    'payroll'          => ['runs', 'salary_setup', 'funds', 'components', 'tax_slabs', 'advances', 'remittance', 'accounting'],
     'webcms'           => ['cms_home', 'services', 'projects', 'news', 'notices', 'careers', 'team', 'contact', 'webcms_setup'],
     'leads'            => ['leads', 'client_projects', 'projects'],
     'clients'          => ['clients'],
@@ -281,7 +311,7 @@ $pages = [
     'communication'    => ['email_sms', 'templates', 'logs'],
     'accounts'         => ['postings', 'ledger', 'bank_reconciliation', 'chart_of_account', 'fiscal_years', 'account_reports'],
     'inventory'        => ['items', 'stock', 'movements', 'categories', 'suppliers', 'purchase_requisitions', 'assets', 'reports'],
-    'reports'          => ['overview', 'attendance', 'leave', 'tasks', 'leads', 'finance', 'inventory', 'staff', 'audit'],
+    'reports'          => ['overview', 'attendance', 'leave', 'tasks', 'leads', 'finance', 'inventory', 'staff', 'payroll', 'audit'],
     'office_setup'     => ['office_profile', 'departments', 'designations', 'holidays', 'meeting_halls', 'bank_details', 'document_setup'],
 ];
 
@@ -296,6 +326,7 @@ $pages = [
 $innerPageGrants = [
     'sales'            => ['client_detail' => 'clients', 'legacy_quotation' => 'documents'],
     'staff_management' => ['detail' => 'add_staff'],
+    'payroll'          => ['run' => 'runs', 'payslip' => 'runs'],
 ];
 
 /**
@@ -353,6 +384,7 @@ $navSidebarSections = [
     'dashboard'        => 'MAIN',
     'my_office'        => 'MY OFFICE',
     'staff_management' => 'PEOPLE & HR',
+    'payroll'          => 'PEOPLE & HR',
     'sales'            => 'SALES',
     'webcms'           => 'MARKETING',
     'communication'    => 'MARKETING',

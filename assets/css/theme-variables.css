@@ -100,6 +100,24 @@
     --transition-base:     250ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow:     350ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-spring:   500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* Data-viz palette (validated: adjacent-pair CVD ΔE ≥ 8 on #FFFFFF).
+       Categorical slots are assigned in fixed order, never cycled; status
+       colours mean good/bad only and always ship with an icon + label. */
+    --viz-1:               #2a78d6;
+    --viz-2:               #eb6834;
+    --viz-3:               #1baf7a;
+    --viz-4:               #eda100;
+    --viz-5:               #e87ba4;
+    --viz-6:               #008300;
+    --viz-good:            #0ca30c;
+    --viz-warning:         #fab219;
+    --viz-serious:         #ec835a;
+    --viz-critical:        #d03b3b;
+    --viz-neutral:         #94A3B8;
+    --viz-grid:            #EEF2F6;
+    --viz-delta-good:      #006300;
+    --viz-delta-bad:       #B42318;
 }
 
 /* ── Dark Mode ── */
@@ -155,6 +173,18 @@
     --gradient-hero:       linear-gradient(135deg, #0B1120 0%, #1E293B 50%, #0F172A 100%);
     --gradient-card:       linear-gradient(145deg, #1E293B 0%, #172033 100%);
     --gradient-cta:        linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+
+    /* Data-viz palette, dark steps (validated on #1E293B). */
+    --viz-1:               #3987e5;
+    --viz-2:               #d95926;
+    --viz-3:               #199e70;
+    --viz-4:               #c98500;
+    --viz-5:               #d55181;
+    --viz-6:               #008300;
+    --viz-neutral:         #64748B;
+    --viz-grid:            #2B3648;
+    --viz-delta-good:      #34D399;
+    --viz-delta-bad:       #F87171;
 }
 
 /* ── Accent: Blue (Premium) ── */

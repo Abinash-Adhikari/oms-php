@@ -62,14 +62,8 @@ mode on dark-first loads. No framework JS is loaded before this runs.
 | Info | `alert-info`, KPI `info` | `#0ea5e9` (sky) |
 | Muted | `text-muted` | `--text-muted` |
 
-These map directly to the **KPI card `color` field** in
-`admin/modules/dashboard/home.php`:
-```php
-'pending_leaves' => ['color' => 'warning', …],
-'overdue_tasks'   => ['color' => 'danger',  …],
-```
-→ renders `<div class="small-box bg-<?= e($card['color']) ?>">` (AdminLTE pattern).
-The semantic class is the contract.
+Analytics tiles use the same roles through their `tone` key (see §2.1);
+chart colours come from the `--viz-*` tokens, not these classes.
 
 ### 1.2 Typography
 
@@ -102,18 +96,46 @@ edge coverage in the subcontinent.
 
 ## 2. Component Library
 
-### 2.1 KPI Card (Dashboard — `admin/modules/dashboard/home.php`)
+### 2.1 Analytics surfaces (dashboard, sales/leads, reports)
+
+Shaping maths lives in `functions/analytics.php` (pure, unit-tested in
+`tests/AnalyticsTest.php`); pages only run queries and render. Styles are the
+`ana-*` block in `assets/css/admin.css`.
+
+**Stat tile** — `stat_tile([...])`:
 
 ```
-┌──────────────────┐  bg-info (context)
-│  [icon]          │  value 42          ← h2 .font-weight-bold
-│  Active Staff    │  label             ← small
-└──────────────────┘  link → pageUrl(mod)
+┌───────────────────────────┐
+│ [icon] Label           →  │  label: sentence case, no colon
+│ 1,284                     │  value: pre-formatted (format_compact_money → NPR 1.9L)
+│ (▲ +12%) vs last month    │  delta: icon + signed text, never colour alone
+│ ╱╲__╱‾‾╲_●                │  sparkline: inline SVG, omitted when all zero
+└───────────────────────────┘
 ```
 
-- **Variant by `color` key:** `info|success|warning|danger|teal|primary`.
-- `value` is cast to `(int)` at render — never trust a raw DB count string.
-- Each card links to the *deepest relevant list* (no dead ends: AC-RPT-01.2).
+- `tone`: `primary|info|success|warning|danger|teal|neutral` — tints the icon chip and sparkline only.
+- `delta` comes from `percent_change()`; `higher_is_better => false` flips the tone
+  for "bad when up" metrics (overdue, expenses). Rates compare in points: `delta_unit => ' pp'`.
+- Period comparisons are like-for-like: `month_to_date_windows()` compares
+  1–13 Oct with 1–13 Sep, never a partial month with a full one.
+- A tile with `href` links to the deepest relevant list (AC-RPT-01.2: no dead ends).
+
+**Charts** — `<canvas data-chart="<?= chart_attr([...]) ?>">`, rendered by
+`assets/js/analytics-charts.js` (Chart.js 4, loaded on `dashboard` and `reports`).
+Types: `bar | hbar | line | doughnut`; `stacked`; `format: int|money|pct|hours`;
+`empty` message replaces a chart whose values are all zero.
+
+| Colour job | Token | Rule |
+|---|---|---|
+| Categorical (identity) | `--viz-1 … --viz-6` | fixed order, never cycled; validated CVD-safe on `#FFFFFF` and `#1E293B` |
+| Status (meaning) | `--viz-good / warning / serious / critical / neutral` | only when the colour *means* good/bad (present/absent, won/lost) |
+| Deltas | `--viz-delta-good / --viz-delta-bad` | text colour for the delta pill |
+
+Light slots 3–4 sit under 3:1 contrast on white, so every chart keeps
+tooltips and a table view of the same numbers. One y-axis only — never dual-axis.
+
+**In-table meter** — `meter_bar($pct, 'good|warning|critical')`: the number is
+always printed; the bar is a reading aid.
 
 ### 2.2 Flash Banner (all pages)
 

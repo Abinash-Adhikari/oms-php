@@ -1,31 +1,79 @@
 <?php
 /**
  * SB-Tech — Reports / Finance.
- * Expense summary, voucher register, income vs expense, expense claims status.
+ * Cash in vs out (approved vouchers, active fiscal year), monthly trend,
+ * voucher register, expense-claim pipeline and recent vouchers.
+ *
+ * Cash in  = receipt + sales vouchers
+ * Cash out = payment + purchase vouchers
+ * Only Approved vouchers count toward totals; pending ones are listed apart.
  */
 $db = Database::instance();
 $fy = $db->selectOne("SELECT * FROM tbl_fiscal_years WHERE closing = 'Open' ORDER BY id DESC LIMIT 1");
+$fyId = $fy ? (int) $fy['id'] : 0;
+$months12 = month_keys(date('Y-m'), 12);
 
-// Voucher summary by type
-$types = ['journal', 'receipt', 'payment', 'contra', 'purchase', 'sales'];
-$voucherSummary = [];
-foreach ($types as $t) {
-    $table = "tbl_{$t}_vouchers";
-    $row = $db->selectOne("SELECT COUNT(*) AS c, COALESCE(SUM(total_amount), 0) AS total FROM `{$table}`");
-    $voucherSummary[$t] = ['count' => (int) ($row['c'] ?? 0), 'total' => (float) ($row['total'] ?? 0)];
+$types = ['receipt' => 'in', 'sales' => 'in', 'payment' => 'out', 'purchase' => 'out', 'journal' => null, 'contra' => null];
+
+// Fixed table whitelist — the only interpolated identifiers below.
+$union = implode(' UNION ALL ', array_map(
+    static fn ($t) => "SELECT '{$t}' AS type, voucher_date, total_amount, status, fiscal_year_id FROM `tbl_{$t}_vouchers`",
+    array_keys($types)
+));
+
+$register = [];
+foreach ($db->select(
+    "SELECT type,
+            SUM(status = 'Approved' AND (? = 0 OR fiscal_year_id = ?)) AS approved_count,
+            COALESCE(SUM(CASE WHEN status = 'Approved' AND (? = 0 OR fiscal_year_id = ?) THEN total_amount END), 0) AS approved_total,
+            SUM(status = 'Pending') AS pending_count,
+            COALESCE(SUM(CASE WHEN status = 'Pending' THEN total_amount END), 0) AS pending_total
+     FROM ({$union}) v GROUP BY type",
+    [$fyId, $fyId, $fyId, $fyId]
+) as $r) {
+    $register[$r['type']] = $r;
+}
+$sumBy = static function (string $dir, string $col) use ($types, $register): float {
+    $t = 0.0;
+    foreach ($types as $type => $d) {
+        if ($d === $dir) {
+            $t += (float) ($register[$type][$col] ?? 0);
+        }
+    }
+
+    return $t;
+};
+$cashIn = $sumBy('in', 'approved_total');
+$cashOut = $sumBy('out', 'approved_total');
+$pendingCount = (int) array_sum(array_column($register, 'pending_count'));
+$pendingTotal = (float) array_sum(array_column($register, 'pending_total'));
+
+$monthlyIn = [];
+$monthlyOut = [];
+foreach ($db->select(
+    "SELECT type, DATE_FORMAT(voucher_date, '%Y-%m') AS m, SUM(total_amount) AS v
+     FROM ({$union}) v WHERE status = 'Approved' AND voucher_date >= ? GROUP BY type, m",
+    [$months12[0] . '-01']
+) as $r) {
+    $dir = $types[$r['type']] ?? null;
+    if ($dir === 'in') {
+        $monthlyIn[$r['m']] = ($monthlyIn[$r['m']] ?? 0) + (float) $r['v'];
+    } elseif ($dir === 'out') {
+        $monthlyOut[$r['m']] = ($monthlyOut[$r['m']] ?? 0) + (float) $r['v'];
+    }
 }
 
-// Expense claims summary
-$claimsSummary = $db->select(
-    "SELECT status, COUNT(*) AS c, COALESCE(SUM(amount), 0) AS total
-     FROM tbl_expense_claims GROUP BY status"
-);
+$claimStatuses = ['Draft', 'Submitted', 'Approved', 'Paid', 'Rejected'];
 $claims = [];
-foreach ($claimsSummary as $cs) {
+foreach ($db->select('SELECT status, COUNT(*) AS c, COALESCE(SUM(amount), 0) AS total FROM tbl_expense_claims GROUP BY status') as $cs) {
     $claims[$cs['status']] = ['count' => (int) $cs['c'], 'total' => (float) $cs['total']];
 }
+$claimsOwed = ($claims['Submitted']['total'] ?? 0) + ($claims['Approved']['total'] ?? 0);
+$claimsByCategory = $db->select(
+    "SELECT COALESCE(NULLIF(category, ''), 'Uncategorised') AS category, SUM(amount) AS total
+     FROM tbl_expense_claims WHERE status IN ('Submitted','Approved','Paid') GROUP BY category ORDER BY total DESC LIMIT 6"
+);
 
-// Recent vouchers
 $recentVouchers = $db->select(
     "SELECT 'Journal' AS type, voucher_no, voucher_date, narration, total_amount, status FROM tbl_journal_vouchers
      UNION ALL SELECT 'Receipt', voucher_no, voucher_date, narration, total_amount, status FROM tbl_receipt_vouchers
@@ -33,53 +81,85 @@ $recentVouchers = $db->select(
      UNION ALL SELECT 'Contra', voucher_no, voucher_date, narration, total_amount, status FROM tbl_contra_vouchers
      UNION ALL SELECT 'Purchase', voucher_no, voucher_date, narration, total_amount, status FROM tbl_purchase_vouchers
      UNION ALL SELECT 'Sales', voucher_no, voucher_date, narration, total_amount, status FROM tbl_sales_vouchers
-     ORDER BY voucher_date DESC LIMIT 15"
+     ORDER BY voucher_date DESC LIMIT 12"
 );
-
-$totalReceipts = $voucherSummary['receipt']['total'] + $voucherSummary['sales']['total'];
-$totalPayments = $voucherSummary['payment']['total'] + $voucherSummary['purchase']['total'];
+$statusPill = ['Approved' => 'good', 'Pending' => 'warning', 'Rejected' => 'critical'];
 ?>
 
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-calculator mr-1"></i>Finance Report</h3>
-        <div class="card-tools">
-            <form action="operation.php?module=reports&page=finance" method="post" style="display:inline">
-                <?= csrfField() ?>
-                <input type="hidden" name="action" value="export_finance">
-                <button class="btn btn-success btn-sm"><i class="fas fa-download mr-1"></i>CSV</button>
-            </form>
-        </div>
+<div class="ana-toolbar">
+    <div>
+        <h2 class="ana-toolbar__title">Finance<?= $fy ? ' — ' . e($fy['title']) : '' ?></h2>
+        <p class="ana-toolbar__sub">
+            <?= $fy ? e(formatDateView((string) $fy['starting_date'])) . ' – ' . e(formatDateView((string) $fy['ending_date'])) . ' · ' : 'All fiscal years · ' ?>approved vouchers only
+        </p>
     </div>
-    <div class="card-body">
-        <?php if ($fy): ?>
-            <div class="callout callout-info mb-3"><strong>Active Fiscal Year:</strong> <?= e($fy['title']) ?> (<?= e($fy['starting_date']) ?> — <?= e($fy['ending_date']) ?>)</div>
-        <?php endif; ?>
-
-        <!-- Summary -->
-        <div class="row mb-4">
-            <div class="col-md-3"><div class="callout callout-success"><h6>Total Receipts</h6><h3><?= formatMoney($totalReceipts) ?></h3></div></div>
-            <div class="col-md-3"><div class="callout callout-danger"><h6>Total Payments</h6><h3><?= formatMoney($totalPayments) ?></h3></div></div>
-            <div class="col-md-3"><div class="callout callout-primary"><h6>Net Cash Flow</h6><h3><?= formatMoney($totalReceipts - $totalPayments) ?></h3></div></div>
-            <div class="col-md-3"><div class="callout callout-warning"><h6>Claims Pending</h6><h3><?= formatMoney(($claims['Submitted']['total'] ?? 0) + ($claims['Approved']['total'] ?? 0)) ?></h3></div></div>
-        </div>
+    <div class="ana-toolbar__actions">
+        <form action="operation.php?module=reports&page=finance" method="post">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="export_finance">
+            <button class="btn btn-success btn-sm"><i class="fas fa-download mr-1"></i>CSV</button>
+        </form>
     </div>
 </div>
 
-<div class="row">
-    <!-- Voucher Register -->
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header"><h5 class="card-title">Voucher Register</h5></div>
-            <div class="card-body p-0">
-                <table class="table table-sm table-striped">
-                    <thead><tr><th>Type</th><th class="text-center">Count</th><th class="text-right">Total</th></tr></thead>
+<div class="ana-grid">
+    <?= stat_tile(['label' => 'Cash in', 'icon' => 'fas fa-arrow-down', 'tone' => 'success',
+        'value' => format_compact_money($cashIn, 'NPR', 'NPR 0'), 'sub' => 'receipts + sales',
+        'spark' => fill_series($months12, $monthlyIn)]) ?>
+    <?= stat_tile(['label' => 'Cash out', 'icon' => 'fas fa-arrow-up', 'tone' => 'danger',
+        'value' => format_compact_money($cashOut, 'NPR', 'NPR 0'), 'sub' => 'payments + purchases',
+        'spark' => fill_series($months12, $monthlyOut)]) ?>
+    <?= stat_tile(['label' => 'Net cash flow', 'icon' => 'fas fa-balance-scale', 'tone' => $cashIn - $cashOut >= 0 ? 'teal' : 'danger',
+        'value' => format_compact_money($cashIn - $cashOut, 'NPR', 'NPR 0'),
+        'sub' => $pendingCount > 0 ? $pendingCount . ($pendingCount === 1 ? ' pending voucher (' : ' pending vouchers (') . format_compact_money($pendingTotal) . ') not counted' : 'No pending vouchers']) ?>
+    <?= stat_tile(['label' => 'Claims owed to staff', 'icon' => 'fas fa-receipt', 'tone' => 'warning',
+        'value' => format_compact_money($claimsOwed, 'NPR', 'NPR 0'),
+        'sub' => (($claims['Submitted']['count'] ?? 0) + ($claims['Approved']['count'] ?? 0)) . ' submitted or approved, unpaid',
+        'href' => pageUrl('my_office', 'expense_claims')]) ?>
+</div>
+
+<div class="ana-card">
+    <div class="ana-card__head">
+        <div>
+            <h3 class="ana-card__title">Cash in vs. cash out</h3>
+            <p class="ana-card__hint">Approved vouchers per month, last 12 months</p>
+        </div>
+    </div>
+    <div class="ana-chart">
+        <canvas role="img" aria-label="Bar chart of monthly cash in and cash out"
+                data-chart="<?= chart_attr([
+                    'type' => 'bar', 'format' => 'money',
+                    'labels' => array_map(static fn ($m) => date('M y', strtotime($m . '-01')), $months12),
+                    'series' => [
+                        ['label' => 'Cash in', 'data' => fill_series($months12, $monthlyIn), 'slot' => 1],
+                        ['label' => 'Cash out', 'data' => fill_series($months12, $monthlyOut), 'slot' => 2],
+                    ],
+                    'empty' => 'No approved vouchers in the last 12 months.',
+                ]) ?>"></canvas>
+    </div>
+</div>
+
+<div class="row ana-row">
+    <div class="col-lg-6">
+        <div class="ana-card ana-card--flush">
+            <div class="ana-card__head">
+                <div>
+                    <h3 class="ana-card__title">Voucher register</h3>
+                    <p class="ana-card__hint">Approved<?= $fy ? ' this fiscal year' : '' ?> · pending shown separately</p>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm ana-table">
+                    <thead><tr><th>Type</th><th class="text-right">Approved</th><th class="text-right">Amount</th><th class="text-right">Pending</th></tr></thead>
                     <tbody>
-                    <?php foreach ($voucherSummary as $t => $v): ?>
+                    <?php foreach ($types as $t => $dir):
+                        $r = $register[$t] ?? [];
+                    ?>
                         <tr>
-                            <td><strong><?= ucfirst($t) ?></strong></td>
-                            <td class="text-center"><?= $v['count'] ?></td>
-                            <td class="text-right"><?= formatMoney($v['total']) ?></td>
+                            <td><strong><?= e(ucfirst($t)) ?></strong> <span class="text-muted small"><?= $dir === 'in' ? 'in' : ($dir === 'out' ? 'out' : '') ?></span></td>
+                            <td class="text-right"><?= (int) ($r['approved_count'] ?? 0) ?></td>
+                            <td class="text-right"><?= e(formatMoney($r['approved_total'] ?? 0)) ?></td>
+                            <td class="text-right"><?= (int) ($r['pending_count'] ?? 0) ? '<span class="ana-pill ana-pill--warning">' . (int) $r['pending_count'] . '</span>' : '<span class="text-muted">0</span>' ?></td>
                         </tr>
                     <?php endforeach; ?>
                     </tbody>
@@ -87,48 +167,68 @@ $totalPayments = $voucherSummary['payment']['total'] + $voucherSummary['purchase
             </div>
         </div>
     </div>
-
-    <!-- Expense Claims -->
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header"><h5 class="card-title">Expense Claims</h5></div>
-            <div class="card-body p-0">
-                <table class="table table-sm table-striped">
-                    <thead><tr><th>Status</th><th class="text-center">Count</th><th class="text-right">Amount</th></tr></thead>
+    <div class="col-lg-6">
+        <div class="ana-card ana-card--flush">
+            <div class="ana-card__head">
+                <div>
+                    <h3 class="ana-card__title">Expense claims</h3>
+                    <p class="ana-card__hint">By status · top categories (excl. draft & rejected) below</p>
+                </div>
+                <a class="ana-card__link" href="<?= pageUrl('my_office', 'expense_claims') ?>">Open claims</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm ana-table">
+                    <thead><tr><th>Status</th><th class="text-right">Claims</th><th class="text-right">Amount</th></tr></thead>
                     <tbody>
-                    <?php foreach (['Draft','Submitted','Approved','Rejected','Paid'] as $st): ?>
+                    <?php foreach ($claimStatuses as $st): ?>
                         <tr>
-                            <td><span class="badge badge-<?= ['Draft'=>'secondary','Submitted'=>'warning','Approved'=>'success','Rejected'=>'danger','Paid'=>'info'][$st] ?>"><?= $st ?></span></td>
-                            <td class="text-center"><?= $claims[$st]['count'] ?? 0 ?></td>
-                            <td class="text-right"><?= formatMoney($claims[$st]['total'] ?? 0) ?></td>
+                            <td><span class="ana-dot" style="background:var(--viz-<?= ['Draft' => 'neutral', 'Submitted' => 'warning', 'Approved' => '1', 'Paid' => 'good', 'Rejected' => 'critical'][$st] ?>)"></span><?= e($st) ?></td>
+                            <td class="text-right"><?= (int) ($claims[$st]['count'] ?? 0) ?></td>
+                            <td class="text-right"><?= e(formatMoney($claims[$st]['total'] ?? 0)) ?></td>
                         </tr>
                     <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
+            <?php if ($claimsByCategory):
+                $catMax = (float) max(array_column($claimsByCategory, 'total'));
+            ?>
+                <ul class="ana-list" style="padding:.25rem 1.25rem 1.1rem">
+                    <?php foreach ($claimsByCategory as $c): ?>
+                        <li>
+                            <div class="ana-list__main">
+                                <span class="ana-list__title"><?= e($c['category']) ?></span>
+                                <?= meter_bar(percent_of((float) $c['total'], $catMax)) ?>
+                            </div>
+                            <span class="ana-pill"><?= e(format_compact_money((float) $c['total'])) ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
         </div>
     </div>
 </div>
 
-<!-- Recent Vouchers -->
-<div class="card">
-    <div class="card-header"><h5 class="card-title">Recent Vouchers</h5></div>
-    <div class="card-body p-0">
-        <table class="table table-sm table-striped">
-            <thead><tr><th>Type</th><th>Voucher No</th><th>Date</th><th>Narration</th><th class="text-right">Amount</th><th>Status</th></tr></thead>
+<div class="ana-card ana-card--flush">
+    <div class="ana-card__head">
+        <div><h3 class="ana-card__title">Recent vouchers</h3></div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm ana-table">
+            <thead><tr><th>Type</th><th>Voucher no</th><th>Date</th><th>Narration</th><th class="text-right">Amount</th><th>Status</th></tr></thead>
             <tbody>
             <?php foreach ($recentVouchers as $v): ?>
                 <tr>
-                    <td><span class="badge badge-primary"><?= e($v['type']) ?></span></td>
+                    <td><?= e($v['type']) ?></td>
                     <td><strong><?= e($v['voucher_no']) ?></strong></td>
-                    <td class="small"><?= e($v['voucher_date']) ?></td>
-                    <td class="small" style="max-width:250px;overflow:hidden;text-overflow:ellipsis"><?= e($v['narration']) ?></td>
-                    <td class="text-right"><?= formatMoney($v['total_amount']) ?></td>
-                    <td><span class="badge badge-<?= $v['status'] === 'Approved' ? 'success' : 'warning' ?>"><?= e($v['status']) ?></span></td>
+                    <td class="text-muted"><?= e(formatDateView((string) $v['voucher_date'])) ?></td>
+                    <td class="text-muted" style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><?= e($v['narration']) ?></td>
+                    <td class="text-right"><?= e(formatMoney($v['total_amount'])) ?></td>
+                    <td><span class="ana-pill ana-pill--<?= e($statusPill[$v['status']] ?? '') ?>"><?= e($v['status']) ?></span></td>
                 </tr>
             <?php endforeach; ?>
             <?php if (!$recentVouchers): ?>
-                <tr><td colspan="6" class="text-muted text-center">No vouchers yet.</td></tr>
+                <tr><td colspan="6" class="text-muted text-center py-4">No vouchers yet.</td></tr>
             <?php endif; ?>
             </tbody>
         </table>

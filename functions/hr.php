@@ -37,6 +37,28 @@ function currentLeaveYear(): int
     return $year;
 }
 
+/**
+ * Does an office holiday apply to this person? A holiday scoped to a
+ * department or a gender skips everyone else; with no person given
+ * (office-wide question) every holiday applies. Pure — the single rule
+ * shared by leave counting and payroll.
+ *
+ * @param array<string, mixed>      $holiday tbl_office_holidays row (department_id, gender_to)
+ * @param array<string, mixed>|null $person  ['department_id' => …, 'gender' => …]
+ */
+function holiday_applies_to(array $holiday, ?array $person): bool
+{
+    if (!$person) {
+        return true;
+    }
+    if (!empty($holiday['department_id']) && (int) $holiday['department_id'] !== (int) ($person['department_id'] ?? 0)) {
+        return false;
+    }
+    $gender = (string) ($holiday['gender_to'] ?? 'Both');
+
+    return $gender === 'Both' || strcasecmp($gender, (string) ($person['gender'] ?? '')) === 0;
+}
+
 /** Is $date (Y-m-d) an office holiday scoped to $userId (dept/gender)? */
 function isOfficeHoliday(string $date, ?int $userId = null): bool
 {
@@ -53,13 +75,7 @@ function isOfficeHoliday(string $date, ?int $userId = null): bool
         [$date, $date]
     );
     foreach ($holidays as $h) {
-        if (!empty($h['department_id']) && $user
-            && (int) $h['department_id'] !== (int) ($user['department_id'] ?? 0)) {
-            continue;
-        }
-        $gender = (string) ($h['gender_to'] ?? 'Both');
-        if ($gender !== 'Both' && $user
-            && strcasecmp($gender, (string) ($user['gender'] ?? '')) !== 0) {
+        if (!holiday_applies_to($h, $user)) {
             continue;
         }
         return true;
@@ -102,13 +118,7 @@ function countLeaveDays(string $from, string $to, bool $halfDay, ?int $userId = 
         [$toDate, $fromDate]
     );
     foreach ($holidays as $h) {
-        if (!empty($h['department_id']) && $user
-            && (int) $h['department_id'] !== (int) ($user['department_id'] ?? 0)) {
-            continue;
-        }
-        $gender = (string) ($h['gender_to'] ?? 'Both');
-        if ($gender !== 'Both' && $user
-            && strcasecmp($gender, (string) ($user['gender'] ?? '')) !== 0) {
+        if (!holiday_applies_to($h, $user)) {
             continue;
         }
         // Expand the holiday range into individual dates.
@@ -204,8 +214,8 @@ function syncStaffLeaveAllocationUsedDays(int $staffId, int $leaveTypeId): void
     );
 }
 
-/** In-app notification + optional email/SMS via CommunicationService. */
-function notifyUser(?int $receiver, string $details, string $type = 'general', $refId = null, ?int $actor = null): void
+/** In-app notification + optional email/SMS via CommunicationService. $url (optional) is where clicking it leads. */
+function notifyUser(?int $receiver, string $details, string $type = 'general', $refId = null, ?int $actor = null, ?string $url = null): void
 {
     if (!$receiver) {
         return;
@@ -222,7 +232,7 @@ function notifyUser(?int $receiver, string $details, string $type = 'general', $
             'ref_id'   => $refId === null ? null : (string) $refId,
             'receiver' => (int) $receiver,
             'type'     => $type,
-            'url'      => null,
+            'url'      => $url,
             'viewed'   => 0,
             'added_by' => $actor,
         ]);
@@ -347,6 +357,7 @@ function notification_type_meta($type = '')
         'leave request' => ['icon' => 'fas fa-calendar-plus', 'color' => 'green', 'label' => 'Leave Request'],
         'expense'    => ['icon' => 'fas fa-money-bill-wave', 'color' => 'amber', 'label' => 'Expense'],
         'notice'     => ['icon' => 'fas fa-bullhorn', 'color' => 'teal', 'label' => 'Notice'],
+        'payroll'    => ['icon' => 'fas fa-file-invoice-dollar', 'color' => 'green', 'label' => 'Payroll'],
         'system'     => ['icon' => 'fas fa-bell', 'color' => 'slate', 'label' => 'System'],
         'general'    => ['icon' => 'fas fa-info-circle', 'color' => 'slate', 'label' => 'General'],
     ];

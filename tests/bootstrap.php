@@ -52,3 +52,5 @@ require_once __DIR__ . '/../functions/api.php';
 require_once __DIR__ . '/../functions/hr.php';
 require_once __DIR__ . '/../functions/office.php';
 require_once __DIR__ . '/../functions/accounting.php';
+require_once __DIR__ . '/../functions/analytics.php';
+require_once __DIR__ . '/../functions/payroll.php';
