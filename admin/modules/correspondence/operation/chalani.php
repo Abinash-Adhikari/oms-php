@@ -21,7 +21,9 @@ try {
         $ccRecipients = trim((string) ($_POST['cc_recipients'] ?? ''));
         $dispatchMode = (string) ($_POST['dispatch_mode'] ?? 'Hand');
         $subject = trim((string) ($_POST['subject'] ?? ''));
-        $description = trim((string) ($_POST['description'] ?? ''));
+        // Rich text (Summernote): strip unsafe tags/attributes before storing —
+        // it is reloaded into the editor as live HTML on edit.
+        $description = trim(sanitizeRichHtml(trim((string) ($_POST['description'] ?? ''))));
         if ($description !== '' && trim(strip_tags($description)) === '' && stripos($description, '<img') === false) {
             $description = '';
         }

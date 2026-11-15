@@ -217,7 +217,8 @@ foreach ($chalaniRows as $r) {
         'cc_recipients'    => (string) ($r['cc_recipients'] ?? ''),
         'dispatch_mode'    => (string) $r['dispatch_mode'],
         'subject'          => (string) $r['subject'],
-        'description'      => (string) ($r['description'] ?? ''),
+        // Sanitized: loaded into the Summernote editor as live HTML.
+        'description'      => sanitizeRichHtml((string) ($r['description'] ?? '')),
         'ref_darta_id'     => $r['ref_darta_id'] !== null ? (int) $r['ref_darta_id'] : '',
         'ref_darta_label'  => ($r['ref_darta_id'] !== null && $r['ref_darta_no'] !== null)
             ? correspondence_display_no('darta', (int) $r['ref_darta_no'], (string) $r['ref_darta_fy_title'])
