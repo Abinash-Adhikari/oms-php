@@ -58,6 +58,54 @@ function leadFormatValue($val) {
     return format_compact_money($val === null ? null : (float) $val);
 }
 
+// ── Shared contact-repeater + referral JS (emitted by the full form and drawer) ──
+$leadContactJs = <<<'LEADJS'
+function escAttr(s) {
+    return String(s === null || s === undefined ? '' : s)
+        .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function contactRowHtml(name, email, phone) {
+    return '<div class="contact-row border rounded p-2 mb-2">'
+        + '<div class="d-flex">'
+        + '<input type="text" name="contact_name[]" class="form-control form-control-sm mr-1" placeholder="Full name *" value="' + escAttr(name) + '">'
+        + '<button type="button" class="btn btn-sm btn-outline-danger" title="Remove" onclick="this.closest(\'.contact-row\').remove()"><i class="fas fa-times"></i></button>'
+        + '</div>'
+        + '<div class="d-flex mt-1">'
+        + '<input type="email" name="email[]" class="form-control form-control-sm mr-1" placeholder="email@example.com" value="' + escAttr(email) + '">'
+        + '<input type="text" name="phone[]" class="form-control form-control-sm" placeholder="Phone" style="max-width:42%" value="' + escAttr(phone) + '">'
+        + '</div>'
+        + '</div>';
+}
+function setContacts(containerId, contacts) {
+    var box = document.getElementById(containerId);
+    if (!box) { return; }
+    if (!contacts || !contacts.length) { contacts = [{ name: '', email: '', phone: '' }]; }
+    box.innerHTML = contacts.map(function (c) { return contactRowHtml(c.name, c.email, c.phone); }).join('');
+}
+function addContactRow(containerId) {
+    var box = document.getElementById(containerId);
+    if (box) { box.insertAdjacentHTML('beforeend', contactRowHtml('', '', '')); }
+}
+function toggleReferralFields() {
+    var fullSource = document.getElementById('sourceSelectFull');
+    if (fullSource) {
+        var showFull = fullSource.value === 'Referral';
+        var fullBox = document.getElementById('fullReferralFields');
+        if (fullBox) { fullBox.style.display = showFull ? '' : 'none'; }
+        var fullName = document.getElementById('referrerNameFull');
+        if (fullName) { fullName.required = showFull; }
+    }
+    var drawerSource = document.getElementById('leadSource');
+    if (drawerSource) {
+        var showDrawer = drawerSource.value === 'Referral';
+        var drawerBox = document.getElementById('drawerReferralFields');
+        if (drawerBox) { drawerBox.style.display = showDrawer ? '' : 'none'; }
+        var drawerName = document.getElementById('leadReferrer');
+        if (drawerName) { drawerName.required = showDrawer; }
+    }
+}
+LEADJS;
+
 // ================================================================== detail
 if (isset($_GET['id'])) {
     // All clients for manual linking in detail view
@@ -84,6 +132,11 @@ if (isset($_GET['id'])) {
         [(int) $lead['id']]
     );
     $files = $db->select('SELECT * FROM `tbl_lead_files` WHERE lead_id = ? ORDER BY added_on DESC', [(int) $lead['id']]);
+    $leadContacts = $db->select(
+        'SELECT `name`, `email`, `phone`, `is_primary` FROM `tbl_lead_contacts`
+         WHERE `lead_id` = ? ORDER BY `is_primary` DESC, `id` ASC',
+        [(int) $lead['id']]
+    );
     $leadTrials = $db->select(
         'SELECT `id`, `title`, `url`, `end_date`, `status` FROM `tbl_client_projects`
          WHERE `lead_id` = ? AND `is_won` = 0 ORDER BY `id` DESC',
@@ -118,14 +171,14 @@ if (isset($_GET['id'])) {
             <?php if ($lead['project_name']): ?>
                 <li class="breadcrumb-item"><a href="<?= pageUrl('sales', 'products') ?>"><?= e($lead['project_name']) ?></a></li>
             <?php endif; ?>
-            <li class="breadcrumb-item active"><?= e($lead['company'] ?: $lead['contact_name']) ?></li>
+            <li class="breadcrumb-item active"><?= e($lead['company'] ?: $lead['contact_name'] ?: $lead['referrer_name']) ?></li>
         </ol>
     </nav>
     <div class="d-flex align-items-center mb-3">
         <a href="<?= pageUrl('sales', 'leads') ?>" class="btn btn-sm btn-outline-secondary mr-2"><i class="fas fa-arrow-left"></i></a>
         <div>
-            <h4 class="mb-0 font-weight-bold"><?= e($lead['company'] ?: $lead['contact_name']) ?></h4>
-            <small class="text-muted"><?= e($lead['contact_name'] ?: '—') ?> · <?= e($lead['email'] ?: '—') ?></small>
+            <h4 class="mb-0 font-weight-bold"><?= e($lead['company'] ?: $lead['contact_name'] ?: $lead['referrer_name']) ?></h4>
+            <small class="text-muted"><?= e($lead['contact_name'] ?: $lead['referrer_name'] ?: '—') ?> · <?= e($lead['email'] ?: '—') ?></small>
         </div>
         <div class="ml-auto d-flex align-items-center">
             <span class="badge badge-pill badge-<?= $stageBadges[$lead['stage']] ?? 'secondary' ?> mr-2" style="font-size:.82rem;padding:.4em .8em">
@@ -169,7 +222,7 @@ if (isset($_GET['id'])) {
                             <i class="fas fa-clone mr-2"></i>
                             <div class="flex-grow-1">
                                 <strong>Possible duplicate:</strong>
-                                <a href="<?= pageUrl('sales', 'leads') ?>&id=<?= (int) $dup['id'] ?>"><?= e($dup['company'] ?: $dup['contact_name']) ?></a>
+                                <a href="<?= pageUrl('sales', 'leads') ?>&id=<?= (int) $dup['id'] ?>"><?= e($dup['company'] ?: $dup['contact_name'] ?: $dup['referrer_name']) ?></a>
                                 shares the same email/phone.
                             </div>
                             <?php if ($canManage): ?>
@@ -187,9 +240,37 @@ if (isset($_GET['id'])) {
                     <div class="row">
                         <div class="col-md-6">
                             <table class="table table-sm table-borderless mb-0">
-                                <tr><th class="text-muted" style="width:45%">Contact</th><td class="font-weight-bold"><?= e($lead['contact_name'] ?: '—') ?></td></tr>
-                                <tr><th class="text-muted">Email</th><td><?= $lead['email'] ? '<a href="mailto:' . e($lead['email']) . '">' . e($lead['email']) . '</a>' : '—' ?></td></tr>
-                                <tr><th class="text-muted">Phone</th><td><?= $lead['phone'] ? '<a href="tel:' . e($lead['phone']) . '">' . e($lead['phone']) . '</a>' : '—' ?></td></tr>
+                                <tr><th class="text-muted" style="width:45%">Contact</th>
+                                    <td>
+                                        <?php if ($leadContacts): ?>
+                                            <?php foreach ($leadContacts as $lc): ?>
+                                                <div class="mb-1">
+                                                    <span class="<?= $lc['is_primary'] ? 'font-weight-bold' : '' ?>"><?= e($lc['name']) ?><?= $lc['is_primary'] ? ' <span class="badge badge-light border" style="font-size:.6rem">primary</span>' : '' ?></span><br>
+                                                    <small class="text-muted">
+                                                        <?php if ($lc['email']): ?><a href="mailto:<?= e($lc['email']) ?>"><?= e($lc['email']) ?></a><?php endif; ?>
+                                                        <?php if ($lc['email'] && $lc['phone']): ?> · <?php endif; ?>
+                                                        <?php if ($lc['phone']): ?><a href="tel:<?= e($lc['phone']) ?>"><?= e($lc['phone']) ?></a><?php endif; ?>
+                                                        <?php if (!$lc['email'] && !$lc['phone']): ?>—<?php endif; ?>
+                                                    </small>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>—<?php endif; ?>
+                                    </td>
+                                </tr>
+                                <?php if ($lead['source'] === 'Referral'): ?>
+                                    <tr><th class="text-muted">Referred by</th>
+                                        <td>
+                                            <span class="font-weight-bold"><?= e($lead['referrer_name'] ?: '—') ?></span>
+                                            <?php if ($lead['referrer_email'] || $lead['referrer_phone']): ?>
+                                                <br><small class="text-muted">
+                                                    <?php if ($lead['referrer_email']): ?><a href="mailto:<?= e($lead['referrer_email']) ?>"><?= e($lead['referrer_email']) ?></a><?php endif; ?>
+                                                    <?php if ($lead['referrer_email'] && $lead['referrer_phone']): ?> · <?php endif; ?>
+                                                    <?php if ($lead['referrer_phone']): ?><a href="tel:<?= e($lead['referrer_phone']) ?>"><?= e($lead['referrer_phone']) ?></a><?php endif; ?>
+                                                </small>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
                                 <tr><th class="text-muted">Service Interest</th><td><?= e($lead['service_interest'] ?: '—') ?></td></tr>
                                 <tr><th class="text-muted">Product</th><td><?= $lead['project_name'] ? '<a href="' . pageUrl('sales', 'products') . '">' . e($lead['project_name']) . '</a>' : '—' ?></td></tr>
                                 <tr><th class="text-muted">Source</th><td><span class="badge badge-light border"><?= e($lead['source']) ?></span></td></tr>
@@ -644,8 +725,19 @@ if (isset($_GET['id'])) {
 // ============================================================ add / edit (full-page fallback)
 if (isset($_GET['add']) || isset($_GET['edit'])) {
     $edit = null;
+    $editContacts = [];
     if (isset($_GET['edit'])) {
         $edit = $db->selectOne('SELECT * FROM `tbl_leads` WHERE `id` = ?', [(int) $_GET['edit']]);
+        if ($edit) {
+            $editContacts = $db->select(
+                'SELECT `name`, `email`, `phone` FROM `tbl_lead_contacts`
+                 WHERE `lead_id` = ? ORDER BY `is_primary` DESC, `id` ASC',
+                [(int) $edit['id']]
+            );
+        }
+    }
+    if (!$editContacts) {
+        $editContacts = [['name' => '', 'email' => '', 'phone' => '']];
     }
 ?>
     <div class="d-flex align-items-center mb-3">
@@ -684,6 +776,24 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
                             </select>
                         </div>
                         <div class="form-group"><label>Message</label><textarea name="message" class="form-control" rows="3"><?= e(old_scoped($leadSaveScope, 'message', $edit ? $edit['message'] : '')) ?></textarea></div>
+                        <div class="form-group">
+                            <label>Contact person(s)</label>
+                            <div id="fullContacts">
+                                <?php foreach ($editContacts as $ec): ?>
+                                    <div class="contact-row border rounded p-2 mb-2">
+                                        <div class="d-flex">
+                                            <input type="text" name="contact_name[]" class="form-control form-control-sm mr-1" placeholder="Full name *" value="<?= e($ec['name']) ?>">
+                                            <button type="button" class="btn btn-sm btn-outline-danger" title="Remove" onclick="this.closest('.contact-row').remove()"><i class="fas fa-times"></i></button>
+                                        </div>
+                                        <div class="d-flex mt-1">
+                                            <input type="email" name="email[]" class="form-control form-control-sm mr-1" placeholder="email@example.com" value="<?= e($ec['email']) ?>">
+                                            <input type="text" name="phone[]" class="form-control form-control-sm" placeholder="Phone" style="max-width:42%" value="<?= e($ec['phone']) ?>">
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addContactRow('fullContacts')"><i class="fas fa-plus mr-1"></i>Add person</button>
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <div class="row">
@@ -699,10 +809,10 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
                         </div>
                         <div class="form-group"><label>Estimated value (NPR)</label><input type="number" name="estimated_value" class="form-control" step="0.01" min="0" value="<?= e(old_scoped($leadSaveScope, 'estimated_value', $edit && $edit['estimated_value'] !== null ? $edit['estimated_value'] : '')) ?>"></div>
                         <div id="fullReferralFields"<?= $edit && $edit['source'] === 'Referral' ? '' : ' style="display:none"' ?>>
-                            <div class="form-group"><label>Source name *</label><input type="text" name="contact_name" id="contactNameFull" class="form-control" <?= $edit && $edit['source'] === 'Referral' ? 'required' : '' ?> value="<?= e(old_scoped($leadSaveScope, 'contact_name', $edit ? $edit['contact_name'] : '')) ?>"></div>
+                            <div class="form-group"><label>Referred by *</label><input type="text" name="referrer_name" id="referrerNameFull" class="form-control" placeholder="Full name" <?= $edit && $edit['source'] === 'Referral' ? 'required' : '' ?> value="<?= e(old_scoped($leadSaveScope, 'referrer_name', $edit ? $edit['referrer_name'] : '')) ?>"></div>
                             <div class="row">
-                                <div class="col-6 form-group"><label>Email</label><input type="email" name="email" class="form-control" value="<?= e(old_scoped($leadSaveScope, 'email', $edit ? $edit['email'] : '')) ?>"></div>
-                                <div class="col-6 form-group"><label>Phone</label><input type="text" name="phone" class="form-control" value="<?= e(old_scoped($leadSaveScope, 'phone', $edit ? $edit['phone'] : '')) ?>"></div>
+                                <div class="col-6 form-group"><label>Email</label><input type="email" name="referrer_email" id="referrerEmailFull" class="form-control" placeholder="email@example.com" value="<?= e(old_scoped($leadSaveScope, 'referrer_email', $edit ? $edit['referrer_email'] : '')) ?>"></div>
+                                <div class="col-6 form-group"><label>Phone</label><input type="text" name="referrer_phone" id="referrerPhoneFull" class="form-control" placeholder="+977-9800000000" value="<?= e(old_scoped($leadSaveScope, 'referrer_phone', $edit ? $edit['referrer_phone'] : '')) ?>"></div>
                             </div>
                         </div>
                         <div class="form-group"><label>Owner</label>
@@ -715,6 +825,9 @@ if (isset($_GET['add']) || isset($_GET['edit'])) {
             </form>
         </div>
     </div>
+    <script>
+    <?= $leadContactJs ?>
+    </script>
 <?php
     return;
 }
@@ -741,9 +854,12 @@ if ($ownerFilter) {
     $params[] = $ownerFilter;
 }
 if ($keyword !== '') {
-    $where[] = '(l.company LIKE ? OR l.contact_name LIKE ? OR l.email LIKE ? OR l.phone LIKE ? OR l.service_interest LIKE ?)';
+    $where[] = '(l.company LIKE ? OR l.contact_name LIKE ? OR l.email LIKE ? OR l.phone LIKE ? OR l.service_interest LIKE ?
+        OR l.referrer_name LIKE ?
+        OR EXISTS (SELECT 1 FROM `tbl_lead_contacts` lc WHERE lc.lead_id = l.id
+                   AND (lc.name LIKE ? OR lc.email LIKE ? OR lc.phone LIKE ?)))';
     $kw = '%' . $db->escapeLike($keyword) . '%';
-    array_push($params, $kw, $kw, $kw, $kw, $kw);
+    array_push($params, $kw, $kw, $kw, $kw, $kw, $kw, $kw, $kw, $kw);
 }
 if (!empty($_GET['unassigned'])) {
     $where[] = 'l.assigned_to IS NULL';
@@ -761,6 +877,24 @@ $leads = $db->select(
      ORDER BY FIELD(l.stage, "New", "Contacted", "Qualified", "Proposal", "Won", "Lost"), l.added_on DESC',
     $params
 );
+
+// Contact persons per lead (for the drawer's repeater)
+$leadContactsByLead = [];
+$leadIds = array_map('intval', array_column($leads, 'id'));
+if ($leadIds) {
+    $ph = implode(',', array_fill(0, count($leadIds), '?'));
+    foreach ($db->select(
+        'SELECT `lead_id`, `name`, `email`, `phone` FROM `tbl_lead_contacts`
+         WHERE `lead_id` IN (' . $ph . ') ORDER BY `is_primary` DESC, `id` ASC',
+        $leadIds
+    ) as $lc) {
+        $leadContactsByLead[(int) $lc['lead_id']][] = $lc;
+    }
+}
+foreach ($leads as &$l) {
+    $l['contacts'] = $leadContactsByLead[(int) $l['id']] ?? [];
+}
+unset($l);
 
 // ── KPI data ──
 $mtd = month_to_date_windows(date('Y-m-d'));
@@ -937,7 +1071,7 @@ $pageUrl = pageUrl('sales', 'leads');
                     ?>
                     <a href="<?= $pageUrl ?>&id=<?= (int) $l['id'] ?>" class="pipeline-card <?= $isAging ? 'pipeline-card-aging' : '' ?>">
                         <div class="d-flex justify-content-between align-items-start mb-1">
-                            <span class="font-weight-bold" style="font-size:.82rem;line-height:1.3"><?= e($l['company'] ?: $l['contact_name']) ?></span>
+                            <span class="font-weight-bold" style="font-size:.82rem;line-height:1.3"><?= e($l['company'] ?: $l['contact_name'] ?: $l['referrer_name']) ?></span>
                             <span class="badge badge-<?= $priorityColors[$l['priority']] ?? 'secondary' ?>" style="font-size:.65rem;padding:.2em .45em;flex-shrink:0;margin-left:4px"><?= e($l['priority']) ?></span>
                         </div>
                         <?php if ($l['contact_name'] && $l['company']): ?>
@@ -998,8 +1132,8 @@ $pageUrl = pageUrl('sales', 'leads');
                         <tr>
                             <td class="text-muted"><?= $i + 1 ?></td>
                             <td>
-                                <a href="<?= $pageUrl ?>&id=<?= (int) $l['id'] ?>" class="font-weight-bold text-decoration-none"><?= e($l['company'] ?: $l['contact_name']) ?></a><br>
-                                <small class="text-muted"><?= e($l['contact_name'] ?: '—') ?><?= $l['email'] ? ' · ' . e($l['email']) : '' ?></small>
+                                <a href="<?= $pageUrl ?>&id=<?= (int) $l['id'] ?>" class="font-weight-bold text-decoration-none"><?= e($l['company'] ?: $l['contact_name'] ?: $l['referrer_name']) ?></a><br>
+                                <small class="text-muted"><?= e($l['contact_name'] ?: $l['referrer_name'] ?: '—') ?><?= $l['email'] ? ' · ' . e($l['email']) : '' ?></small>
                             </td>
                             <td><small><?= e($l['service_interest'] ?: '—') ?></small></td>
                             <td><span class="badge badge-<?= $priorityColors[$l['priority']] ?? 'secondary' ?>"><?= e($l['priority']) ?></span></td>
@@ -1063,6 +1197,11 @@ $pageUrl = pageUrl('sales', 'leads');
                     <?php endforeach; ?>
                 </select>
             </div>
+            <div class="form-group">
+                <label class="small font-weight-bold">Contact Person(s)</label>
+                <div id="drawerContacts"></div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addContactRow('drawerContacts')"><i class="fas fa-plus mr-1"></i>Add person</button>
+            </div>
 
             <hr class="my-3">
             <h6 class="text-muted text-uppercase mb-2" style="font-size:.7rem;letter-spacing:.05em">Lead Details</h6>
@@ -1117,17 +1256,17 @@ $pageUrl = pageUrl('sales', 'leads');
             </div>
             <div id="drawerReferralFields" style="display:none">
                 <div class="form-group">
-                    <label class="small font-weight-bold">Source Name *</label>
-                    <input type="text" name="contact_name" id="leadContact" class="form-control form-control-sm" placeholder="Full name" value="<?= e(old_scoped('save_lead:0', 'contact_name')) ?>" required>
+                    <label class="small font-weight-bold">Referred by *</label>
+                    <input type="text" name="referrer_name" id="leadReferrer" class="form-control form-control-sm" placeholder="Full name" value="">
                 </div>
                 <div class="row">
                     <div class="col-6 form-group">
                         <label class="small font-weight-bold">Email</label>
-                        <input type="email" name="email" id="leadEmail" class="form-control form-control-sm" placeholder="email@example.com" value="<?= e(old_scoped('save_lead:0', 'email')) ?>">
+                        <input type="email" name="referrer_email" id="leadRefEmail" class="form-control form-control-sm" placeholder="email@example.com" value="">
                     </div>
                     <div class="col-6 form-group">
                         <label class="small font-weight-bold">Phone</label>
-                        <input type="text" name="phone" id="leadPhone" class="form-control form-control-sm" placeholder="+977-9800000000" value="<?= e(old_scoped('save_lead:0', 'phone')) ?>">
+                        <input type="text" name="referrer_phone" id="leadRefPhone" class="form-control form-control-sm" placeholder="+977-9800000000" value="">
                     </div>
                 </div>
             </div>
@@ -1153,24 +1292,7 @@ $pageUrl = pageUrl('sales', 'leads');
 <script>
 var leadsData = <?= json_encode(array_values($leads)) ?>;
 
-function toggleReferralFields() {
-    var fullSource = document.getElementById('sourceSelectFull');
-    if (fullSource) {
-        var fullBox = document.getElementById('fullReferralFields');
-        var fullContact = document.getElementById('contactNameFull');
-        var showFull = fullSource.value === 'Referral';
-        fullBox.style.display = showFull ? '' : 'none';
-        fullContact.required = showFull;
-    }
-    var drawerSource = document.getElementById('leadSource');
-    if (drawerSource) {
-        var drawerBox = document.getElementById('drawerReferralFields');
-        var drawerContact = document.getElementById('leadContact');
-        var showDrawer = drawerSource.value === 'Referral';
-        drawerBox.style.display = showDrawer ? '' : 'none';
-        drawerContact.required = showDrawer;
-    }
-}
+<?= $leadContactJs ?>
 
 function openLeadDrawer(editId) {
     var drawer = document.getElementById('leadDrawer');
@@ -1189,9 +1311,10 @@ function openLeadDrawer(editId) {
             submitText.textContent = 'Update Lead';
             document.getElementById('leadId').value = lead.id;
             document.getElementById('leadClient').value = lead.client_id || '';
-            document.getElementById('leadContact').value = lead.contact_name || '';
-            document.getElementById('leadEmail').value = lead.email || '';
-            document.getElementById('leadPhone').value = lead.phone || '';
+            setContacts('drawerContacts', lead.contacts || []);
+            document.getElementById('leadReferrer').value = lead.referrer_name || '';
+            document.getElementById('leadRefEmail').value = lead.referrer_email || '';
+            document.getElementById('leadRefPhone').value = lead.referrer_phone || '';
             document.getElementById('leadService').value = lead.service_interest || '';
             document.getElementById('leadProject').value = lead.project_id || '';
             document.getElementById('leadMessage').value = lead.message || '';
@@ -1207,11 +1330,15 @@ function openLeadDrawer(editId) {
         submitText.textContent = 'Save Lead';
         document.getElementById('leadId').value = '0';
         document.getElementById('leadForm').reset();
+        setContacts('drawerContacts', []);
         toggleReferralFields();
     }
 }
 
-document.addEventListener('DOMContentLoaded', toggleReferralFields);
+document.addEventListener('DOMContentLoaded', function () {
+    setContacts('drawerContacts', []);
+    toggleReferralFields();
+});
 
 function closeLeadDrawer() {
     document.getElementById('leadDrawer').classList.remove('open');

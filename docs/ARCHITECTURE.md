@@ -173,7 +173,14 @@ events on a chunked response. It is deliberately the only long-lived endpoint.
 | Submodule | `Auth::hasSubmodule($mod, $sub)` | `permitted_submodules[module]` list |
 | Action | `Auth::hasSpecial($key)` | `special_permission` list |
 
-Super Admin: `permitted_modules = 'All'` OR role `Super Admin`. The check is
+Super Admin: `permitted_modules = 'All'` OR role `Super Admin` OR
+`staff_type = 'Admin'`. The Admin staff type is an intentional bypass — so
+`staff_type` **defaults to `Service`** (column default; the
+`alter-table-users_login-staff_type-service-default` migration backfilled
+existing rows that were not super admins), the add_staff form defaults new
+staff to Service, and only a super admin may grant or revoke `Admin` (the
+field is hidden from everyone else and the operation handler enforces it
+server-side; changes are audited in `tbl_staff_history`). The check is
 **live** (DB read every request via `Auth::user()`, cached only within the
 request) — permission changes take effect on the *next request*, no cache-bust
 needed. `clearUserCache()` exists for when you mutate permissions mid-request.

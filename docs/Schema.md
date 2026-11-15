@@ -19,7 +19,7 @@
 | **Money** | `DECIMAL(18,4)` everywhere. Currency in a separate `CHAR(3)` column. |
 | **FKs** | `ON DELETE RESTRICT` for fiscal/calendar links (must not orphan); `ON DELETE SET NULL` for actor/user links (history must survive). |
 
-**113 tables** total, grouped into 12 domains below. Arrows (→) denote FK
+**118 tables** total, grouped into 13 domains below. Arrows (→) denote FK
 references.
 
 ---
@@ -46,7 +46,7 @@ tbl_audit_log            — every significant action (immutable)
 | `password` | VARCHAR(191) | bcrypt (60 chars) or legacy sha512 |
 | `salt` | VARCHAR(255) | legacy field, empty after bcrypt upgrade |
 | `role` | VARCHAR(100) | Admin / Manager / Finance / Sales / Employee |
-| `staff_type` | ENUM('Admin','Service') | |
+| `staff_type` | ENUM('Admin','Service') NOT NULL **DEFAULT 'Service'** | `Admin` = Super Admin bypass (`Auth::isSuperAdmin`); `Service` = ordinary RBAC. Only a super admin may grant/revoke `Admin` (add_staff operation) — grants are audited in `tbl_staff_history` as `Privilege Level Changed`. Migration `alter-table-users_login-staff_type-service-default` backfilled existing rows that were not super admins. |
 | `permitted_modules` | JSON | `['leads','accounts',…]` or `'All'` (Super Admin) |
 | `permitted_submodules` | JSON | `{'my_office':['tasks','meetings'],…}` |
 | `special_permission` | JSON | `['approve_vouchers','audit',…]` |
@@ -201,6 +201,7 @@ from all voucher tables: you cannot delete a FY in use.
 
 ```
 tbl_leads             ← primary sales pipeline entity
+tbl_lead_contacts     → tbl_leads (contact persons, one primary)
 tbl_lead_files        → tbl_leads
 tbl_lead_activities   → tbl_leads
 tbl_clients            ← organizations/individuals the sales team works with
@@ -252,6 +253,20 @@ are kept in sync on conversion; unlinking clears both), `project_id` →
 `tbl_projects` (the catalog item the lead is pursuing, `ON DELETE SET NULL`),
 `lost_reason`, `last_activity_on` (bumped on every logged activity). The public
 website's contact/quote forms write here (source = Website).
+
+Referrer vs contacts: `referrer_name` / `referrer_email` / `referrer_phone`
+hold the **external person who referred the lead** (kept only while
+`source = 'Referral'`, nulled otherwise, never copied into
+`tbl_clients.contact_person`), while `contact_name` / `email` / `phone` are a
+read-fast **mirror of the primary row** in `tbl_lead_contacts` — maintained by
+`sync_lead_contacts()` in `functions/sales.php`.
+
+**`tbl_lead_contacts`** — the people at the lead's organization (or the
+inquirer themselves for website/phone leads). `name`, `email`, `phone`,
+`is_primary` TINYINT(1); exactly one primary whenever any row exists. The
+form posts repeatable contact rows; save replaces the lead's set. On conversion
+the rows are copied into `tbl_client_contacts` (the convert form's typed
+contact person wins as primary); deleting a lead cascades its contacts.
 
 Reaching **Won auto-provisions** the won Client Project row (and, when
 missing, the Business Source) via `provisionWonLead()` in
@@ -471,6 +486,46 @@ Also: `tbl_users_login.employment_type` (Permanent | Contract | Probation |
 Intern), `contract_end_date`, `tax_filing_status` (Single | Couple);
 `tbl_office_leave_configs.is_paid` (0 = leave without pay, deducted in payroll;
 seeded "Unpaid Leave").
+
+### 2.13 Correspondence (Darta / Chalani registers)
+
+```
+tbl_correspondence_counters   → tbl_fiscal_years (PK register+fiscal_year_id, number source)
+tbl_darta_entries             → tbl_fiscal_years, tbl_users_login (inward register)
+tbl_chalani_entries           → tbl_fiscal_years, tbl_darta_entries, tbl_users_login (outward register)
+tbl_correspondence_files      (attachments: register + entry_id, no FK — two parent tables)
+```
+
+**`tbl_correspondence_counters`** — the per-fiscal-year number source for both
+registers (PK `register` ENUM('darta','chalani') + `fiscal_year_id`, no
+AUTO_INCREMENT). Numbers come from an atomic
+`INSERT … VALUES (LAST_INSERT_ID(1)) ON DUPLICATE KEY UPDATE
+last_no = LAST_INSERT_ID(last_no + 1)` upsert inside the save transaction
+(`correspondence_allocate_no()` in `functions/correspondence.php`) — row-locks
+serialize concurrent saves, a rollback releases the number. Display format
+`D-12/2082-83` / `C-7/2082-83` is render-only (`correspondence_display_no()`).
+
+**`tbl_darta_entries`** — inward register. `darta_no` is the per-FY sequence
+(UNIQUE with `fiscal_year_id` as the backstop). `sender_ref_no` /
+`sender_chalani_no` are the incoming letter's own पत्र संख्या / चलानी नं.
+Status ENUM Pending → In Progress → Disposed (कारबाही) | Filed (तामेली) |
+Cancelled — no delete: Cancelled keeps the number visible so the register has
+no gaps. `disposed_on`/`disposed_by` stamp Disposed/Filed/Cancelled.
+
+**`tbl_chalani_entries`** — outward register. `chalani_no` is the per-FY
+sequence (UNIQUE with `fiscal_year_id`). Number-first workflow: Reserved →
+Dispatched (`dispatched_on`, `sent_by`) | Cancelled. `cc_recipients` TEXT is
+the बोधार्थ list (one per line, free text in v1). `ref_darta_id` →
+`tbl_darta_entries` (SET NULL) links a reply to the darta it answers — one
+darta may have many replies; the darta side derives them from this FK.
+
+**`tbl_correspondence_files`** — scanned letters / dispatch copies (P2),
+mirrors `tbl_expense_claim_files` with a polymorphic key: `register`
+ENUM('darta','chalani') + `entry_id` (no FK — one table serves both parents;
+the operations validate the entry and its editability before any write).
+Files land in `user_uploads/correspondence/` via `validateUpload()` +
+`storeUpload()` (PDF/JPG/PNG, 10 MB cap); deletion unlinks the file and is
+only allowed while the entry is still editable.
 
 ---
 

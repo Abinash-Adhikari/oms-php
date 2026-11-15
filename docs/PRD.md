@@ -34,7 +34,7 @@ Give SB-Tech one internal system to run the office: staff & HR operations (atten
 ### 1.4 Permission model
 - Module + submodule allowlists per user (JSON on the user row, as in the reference).
 - Special permissions (granular actions): `manage_staff_leaves`, `approve_vouchers`, `approve_expense_claims`, `manage_leads`, `access_private_documents`, `audit`, `view_all_attendance`.
-- Super Admin bypasses all checks.
+- Super Admin bypasses all checks (`Auth::isSuperAdmin()`): `permitted_modules = 'All'`, role `Super Admin`/`Superadmin`, or `staff_type = 'Admin'`. `tbl_users_login.staff_type` defaults to **`Service`** (column default + backfill of existing non-permitted rows), and only a super admin may grant or revoke `Admin` — the add/edit form hides the field otherwise and the operation handler enforces it server-side. Grants/revocations are audited in `tbl_staff_history` (`Privilege Level Changed`).
 
 ---
 

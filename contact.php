@@ -29,6 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'stage'             => 'New',
                 'added_by'          => null,
             ]);
+            // The inquirer is the lead's primary contact person (the referrer
+            // fields only exist for source = Referral).
+            sync_lead_contacts($db, $leadId, normalize_lead_contacts([$name], [$email], [$phone]));
             // Source of truth (AC-LE-01.2): raw inquiry + inbox copy.
             $db->insert('tbl_cms_contacts_us', [
                 'name' => $name, 'email' => $email ?: null, 'phone' => $phone ?: null,

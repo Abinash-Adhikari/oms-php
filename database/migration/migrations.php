@@ -236,5 +236,23 @@ $files = [
     'alter-table-payroll_runs-add-active_period_key',
     'alter-table-payroll_settings-add-deductions_terminal_id',
 
+    // --- Correspondence: darta (inward) & chalani (outward) registers ---
+    'create-table-correspondence_counters',
+    'create-table-darta_entries',
+    'create-table-chalani_entries',
+
+    // --- Correspondence P2: scanned-letter attachments per entry ---
+    'create-table-correspondence_files',
+
+    // --- RBAC: staff_type 'Admin' must not be the accidental super-admin default ---
+    'alter-table-users_login-staff_type-service-default',
+
+    // --- Leads: referrer split from contact person + multi contact persons ---
+    'alter-table-leads-add-referrer',
+    'create-table-lead_contacts',
+
+    // --- BS calendar: correct month lengths for 2081, 2082, 2083 ---
+    'seed-table-calendar-fix-2081-2083',
+
     // Append new migration filenames below only (do not insert in the middle).
 ];

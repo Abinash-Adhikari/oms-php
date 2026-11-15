@@ -25,17 +25,20 @@ $kw  = '%' . $db->escapeLike($q) . '%';
 $out = [];
 
 foreach ($db->select(
-    'SELECT id, company, contact_name, email, stage, priority
+    'SELECT id, company, contact_name, referrer_name, email, stage, priority
      FROM `tbl_leads`
      WHERE `company` LIKE ? OR `contact_name` LIKE ? OR `email` LIKE ? OR `phone` LIKE ? OR `service_interest` LIKE ?
+        OR `referrer_name` LIKE ?
+        OR EXISTS (SELECT 1 FROM `tbl_lead_contacts` lc WHERE lc.lead_id = tbl_leads.id
+                   AND (lc.name LIKE ? OR lc.email LIKE ? OR lc.phone LIKE ?))
      ORDER BY FIELD(stage, "New","Contacted","Qualified","Proposal","Won","Lost"), id DESC LIMIT 8',
-    [$kw, $kw, $kw, $kw, $kw]
+    [$kw, $kw, $kw, $kw, $kw, $kw, $kw, $kw, $kw]
 ) as $r) {
     $out[] = [
         'type'  => 'lead',
         'group' => 'Leads',
         'icon'  => 'fas fa-funnel-dollar text-primary',
-        'title' => $r['company'] ?: $r['contact_name'],
+        'title' => $r['company'] ?: $r['contact_name'] ?: $r['referrer_name'],
         'sub'   => $r['stage'] . ($r['email'] ? ' · ' . $r['email'] : ''),
         'url'   => pageUrl('sales', 'leads') . '&id=' . (int) $r['id'],
     ];

@@ -19,9 +19,9 @@ $query = [
 ];
 
 $rollbackQuery = [
+    "ALTER TABLE `tbl_client_projects` DROP COLUMN `url`;",
+
     "ALTER TABLE `tbl_client_projects`
      ADD COLUMN `db_name` VARCHAR(191) DEFAULT NULL
      AFTER `package`;",
-
-    "ALTER TABLE `tbl_client_projects` DROP COLUMN `url`;",
 ];

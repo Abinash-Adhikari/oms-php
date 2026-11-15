@@ -24,7 +24,7 @@ $query = [
 ];
 
 $rollbackQuery = [
-    "ALTER TABLE `tbl_leads` DROP FOREIGN KEY `fk_lead_project`;",
-    "ALTER TABLE `tbl_leads` DROP INDEX `idx_lead_project`;",
     "ALTER TABLE `tbl_leads` DROP COLUMN `project_id`;",
+    "ALTER TABLE `tbl_leads` DROP INDEX `idx_lead_project`;",
+    "ALTER TABLE `tbl_leads` DROP FOREIGN KEY `fk_lead_project`;",
 ];

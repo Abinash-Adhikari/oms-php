@@ -349,6 +349,28 @@ class BusinessLogicTest extends TestCase
         }
     }
 
+    /**
+     * Regression: 2081/2082/2083 shipped with wrong month lengths, which made
+     * every conversion inside the affected windows one day early (Ashoj 2083
+     * was 30 days instead of 31). See seed-table-calendar-fix-2081-2083.
+     */
+    public function testBsCalendarKnownMonthBoundaries()
+    {
+        $this->requireCalendar();
+        // Ashoj (month 6) 2083 has 31 days: 2026-09-17 .. 2026-10-17.
+        $this->assertSame('2026-10-17', bsToAd('2083-06-31'));
+        $this->assertSame('2083-06-31', adToBs('2026-10-17'));
+        $this->assertNull(bsToAd('2083-06-32'));
+        // Kartik 2083 starts the next day; Mangsir 2083 has 29 days.
+        $this->assertSame('2026-10-18', bsToAd('2083-07-01'));
+        $this->assertSame('2026-12-15', bsToAd('2083-08-29'));
+        $this->assertNull(bsToAd('2083-08-30'));
+        // 2082 Ashoj also has 31 days; 2081 Jestha has 32.
+        $this->assertSame('2025-10-17', bsToAd('2082-06-31'));
+        $this->assertSame('2024-06-14', bsToAd('2081-02-32'));
+        $this->assertSame('2081-02-32', adToBs('2024-06-14'));
+    }
+
     public function testFormatBsDate()
     {
         $this->assertSame('2083 Baisakh 1', formatBsDate('2083-01-01'));

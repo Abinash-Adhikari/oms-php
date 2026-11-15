@@ -138,11 +138,14 @@ if ($mode === 'list'):
                         <div class="card-header"><h3 class="card-title">Employment</h3></div>
                         <div class="card-body">
                             <div class="row">
+                                <?php if (Auth::isSuperAdmin()): /* 'Admin' = super-admin bypass; only super admins may grant it */ ?>
                                 <div class="form-group col-md-6"><label>Staff type</label>
                                     <select name="staff_type" class="form-control">
                                         <option value="Admin" <?= old('staff_type', $edit['staff_type'] ?? '') === 'Admin' ? 'selected' : '' ?>>Admin</option>
-                                        <option value="Service" <?= old('staff_type', $edit['staff_type'] ?? '') === 'Service' ? 'selected' : '' ?>>Service</option>
-                                    </select></div>
+                                        <option value="Service" <?= old('staff_type', $edit['staff_type'] ?? 'Service') === 'Service' ? 'selected' : '' ?>>Service</option>
+                                    </select>
+                                    <small class="form-text text-muted"><b>Admin</b> = full Super Admin access to every module. <b>Service</b> = access only via Permissions.</small></div>
+                                <?php endif; ?>
                                 <div class="form-group col-md-6"><label>Employment type</label>
                                     <select name="employment_type" class="form-control">
                                         <?php foreach (['Permanent', 'Contract', 'Probation', 'Intern'] as $et): ?>

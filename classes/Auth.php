@@ -153,7 +153,17 @@ class Auth
 
     // ---------------------------------------------------------------- RBAC
 
-    /** Is this user a super admin (full bypass)? */
+    /**
+     * Is this user a super admin (full bypass)?
+     *
+     * Three equivalent identities, all granting unlimited access:
+     *   - permitted_modules = 'All'            (legacy/bootstrap super admin)
+     *   - role = 'Super Admin' / 'Superadmin'  (explicit role)
+     *   - staff_type = 'Admin'                 (HR designation = full access)
+     *
+     * Because staff_type 'Admin' bypasses RBAC entirely, ordinary staff must
+     * be created as 'Service' (the add_staff form default).
+     */
     public static function isSuperAdmin(?array $user = null): bool
     {
         $user = $user ?? self::user();
@@ -162,7 +172,8 @@ class Auth
         }
         return ($user['permitted_modules'] ?? '') === 'All'
             || strcasecmp((string) ($user['role'] ?? ''), 'superadmin') === 0
-            || strcasecmp((string) ($user['role'] ?? ''), 'super admin') === 0;
+            || strcasecmp((string) ($user['role'] ?? ''), 'super admin') === 0
+            || ($user['staff_type'] ?? '') === 'Admin';
     }
 
     /** Module-level permission (AC-AUTH-01.4). */

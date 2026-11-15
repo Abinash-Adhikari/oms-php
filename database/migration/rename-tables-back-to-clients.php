@@ -83,24 +83,31 @@ $query = [
 ];
 
 $rollbackQuery = [
-    // ── Drop tbl_client_contacts FK + index ──
-    "ALTER TABLE `tbl_client_contacts` DROP FOREIGN KEY `fk_client_contacts_source`;",
-    "ALTER TABLE `tbl_client_contacts` DROP INDEX `idx_client_contacts_source`;",
+    // ── tbl_leads: restore business-source FKs + indexes ──
+    "ALTER TABLE `tbl_leads`
+     ADD CONSTRAINT `fk_lead_business_source`
+     FOREIGN KEY (`business_source_id`) REFERENCES `tbl_business_sources` (`id`)
+     ON DELETE SET NULL ON UPDATE CASCADE;",
+    "ALTER TABLE `tbl_leads`
+     ADD CONSTRAINT `fk_lead_won_business_source`
+     FOREIGN KEY (`won_business_source_id`) REFERENCES `tbl_business_sources` (`id`)
+     ON DELETE SET NULL ON UPDATE CASCADE;",
+    "ALTER TABLE `tbl_leads` ADD INDEX `idx_lead_business_source` (`business_source_id`);",
+    "ALTER TABLE `tbl_leads` ADD INDEX `idx_lead_won_business_source` (`won_business_source_id`);",
 
-    // ── tbl_client_contacts: rename column back ──
-    "ALTER TABLE `tbl_client_contacts`
-     CHANGE COLUMN `client_id` `business_source_id` INT NOT NULL
-     COMMENT 'The business source this contact belongs to';",
+    // ── tbl_client_projects: restore business-source FK + index ──
+    "ALTER TABLE `tbl_client_projects`
+     ADD CONSTRAINT `fk_project_business_source`
+     FOREIGN KEY (`business_source_id`) REFERENCES `tbl_business_sources` (`id`)
+     ON DELETE SET NULL ON UPDATE CASCADE;",
+    "ALTER TABLE `tbl_client_projects` ADD INDEX `idx_project_business_source` (`business_source_id`);",
 
-    // ── Drop tbl_leads new FKs + indexes ──
-    "ALTER TABLE `tbl_leads` DROP FOREIGN KEY `fk_lead_client`;",
-    "ALTER TABLE `tbl_leads` DROP FOREIGN KEY `fk_lead_won`;",
-    "ALTER TABLE `tbl_leads` DROP INDEX `idx_lead_client`;",
-    "ALTER TABLE `tbl_leads` DROP INDEX `idx_lead_won`;",
-
-    // ── Drop tbl_client_projects new FK + index ──
-    "ALTER TABLE `tbl_client_projects` DROP FOREIGN KEY `fk_project_client`;",
-    "ALTER TABLE `tbl_client_projects` DROP INDEX `idx_project_client`;",
+    // ── tbl_business_source_contacts: restore old FK + index ──
+    "ALTER TABLE `tbl_business_source_contacts`
+     ADD CONSTRAINT `fk_bs_contacts_source`
+     FOREIGN KEY (`business_source_id`) REFERENCES `tbl_business_sources` (`id`)
+     ON DELETE CASCADE ON UPDATE CASCADE;",
+    "ALTER TABLE `tbl_business_source_contacts` ADD INDEX `idx_bs_contacts_source` (`business_source_id`);",
 
     // ── Rename tables back ──
     "RENAME TABLE `tbl_clients` TO `tbl_business_sources`;",
@@ -110,40 +117,29 @@ $rollbackQuery = [
     "ALTER TABLE `tbl_leads`
      CHANGE COLUMN `client_id` `business_source_id` INT DEFAULT NULL
      COMMENT 'Business source being pursued';",
-
     "ALTER TABLE `tbl_leads`
      CHANGE COLUMN `won_client_id` `won_business_source_id` INT DEFAULT NULL
      COMMENT 'Business source that won the deal';",
 
-    "ALTER TABLE `tbl_leads` ADD INDEX `idx_lead_business_source` (`business_source_id`);",
-    "ALTER TABLE `tbl_leads` ADD INDEX `idx_lead_won_business_source` (`won_business_source_id`);",
+    // ── Drop tbl_leads new indexes + FKs (before column renames) ──
+    "ALTER TABLE `tbl_leads` DROP INDEX `idx_lead_client`;",
+    "ALTER TABLE `tbl_leads` DROP INDEX `idx_lead_won`;",
+    "ALTER TABLE `tbl_leads` DROP FOREIGN KEY `fk_lead_client`;",
+    "ALTER TABLE `tbl_leads` DROP FOREIGN KEY `fk_lead_won`;",
 
-    "ALTER TABLE `tbl_leads`
-     ADD CONSTRAINT `fk_lead_business_source`
-     FOREIGN KEY (`business_source_id`) REFERENCES `tbl_business_sources` (`id`)
-     ON DELETE SET NULL ON UPDATE CASCADE;",
-    "ALTER TABLE `tbl_leads`
-     ADD CONSTRAINT `fk_lead_won_business_source`
-     FOREIGN KEY (`won_business_source_id`) REFERENCES `tbl_business_sources` (`id`)
-     ON DELETE SET NULL ON UPDATE CASCADE;",
-
-    // ── tbl_client_projects: rename column back ──
+    // ── tbl_client_projects: rename column back, then drop new index + FK ──
     "ALTER TABLE `tbl_client_projects`
      CHANGE COLUMN `client_id` `business_source_id` INT DEFAULT NULL
-     COMMENT 'The business source this won project provisions';",
+     COMMENT 'The client this won project provisions';",
+    "ALTER TABLE `tbl_client_projects` DROP INDEX `idx_project_client`;",
+    "ALTER TABLE `tbl_client_projects` DROP FOREIGN KEY `fk_project_client`;",
 
-    "ALTER TABLE `tbl_client_projects` ADD INDEX `idx_project_business_source` (`business_source_id`);",
-    "ALTER TABLE `tbl_client_projects`
-     ADD CONSTRAINT `fk_project_business_source`
-     FOREIGN KEY (`business_source_id`) REFERENCES `tbl_business_sources` (`id`)
-     ON DELETE SET NULL ON UPDATE CASCADE;",
-
-    // ── Recreate old tbl_business_source_contacts indexes + FK ──
-    "ALTER TABLE `tbl_business_source_contacts` ADD INDEX `idx_bs_contacts_source` (`business_source_id`);",
-    "ALTER TABLE `tbl_business_source_contacts`
-     ADD CONSTRAINT `fk_bs_contacts_source`
-     FOREIGN KEY (`business_source_id`) REFERENCES `tbl_business_sources` (`id`)
-     ON DELETE CASCADE ON UPDATE CASCADE;",
+    // ── tbl_client_contacts: rename column back, then drop new index + FK ──
+    "ALTER TABLE `tbl_client_contacts`
+     CHANGE COLUMN `client_id` `business_source_id` INT NOT NULL
+     COMMENT 'The client this contact belongs to';",
+    "ALTER TABLE `tbl_client_contacts` DROP INDEX `idx_client_contacts_source`;",
+    "ALTER TABLE `tbl_client_contacts` DROP FOREIGN KEY `fk_client_contacts_source`;",
 
     // ── Rewrite user grants back to the old module key ──
     "UPDATE `tbl_users_login`

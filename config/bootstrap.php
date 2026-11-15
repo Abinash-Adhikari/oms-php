@@ -100,6 +100,8 @@ require_once $appRoot . '/functions/analytics.php';
 require_once $appRoot . '/functions/payroll.php';
 require_once $appRoot . '/functions/inventory.php';
 require_once $appRoot . '/functions/documents.php';
+require_once $appRoot . '/functions/sales.php';
+require_once $appRoot . '/functions/correspondence.php';
 require_once $appRoot . '/functions/pdf_helpers.php';
 
 // --- Preserve submitted form values across a failed POST (old input) ---

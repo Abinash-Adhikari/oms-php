@@ -26,9 +26,9 @@ $query = [
 ];
 
 $rollbackQuery = [
-    "ALTER TABLE `tbl_cms_services` DROP KEY `idx_services_slug`;",
-    "ALTER TABLE `tbl_cms_services` DROP COLUMN `slug`;",
-
-    "ALTER TABLE `tbl_cms_projects` DROP KEY `idx_projects_slug`;",
     "ALTER TABLE `tbl_cms_projects` DROP COLUMN `slug`;",
+    "ALTER TABLE `tbl_cms_projects` DROP KEY `idx_projects_slug`;",
+
+    "ALTER TABLE `tbl_cms_services` DROP COLUMN `slug`;",
+    "ALTER TABLE `tbl_cms_services` DROP KEY `idx_services_slug`;",
 ];

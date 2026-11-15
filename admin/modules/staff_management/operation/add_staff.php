@@ -33,7 +33,9 @@ $loginData = [
     'address'           => trim((string) ($_POST['address'] ?? '')),
     'citizenship'       => trim((string) ($_POST['citizenship'] ?? '')),
     'marital_status'    => in_array($maritalIn, ['Married', 'Unmarried', 'Divorced'], true) ? $maritalIn : '',
-    'staff_type'        => ($_POST['staff_type'] ?? 'Admin') === 'Service' ? 'Service' : 'Admin',
+    // Default 'Service': staff_type 'Admin' is a super-admin bypass in
+    // Auth::isSuperAdmin(), so it must never be the accidental default.
+    'staff_type'        => ($_POST['staff_type'] ?? 'Service') === 'Admin' ? 'Admin' : 'Service',
     'department_id'     => ($_POST['department_id'] ?? '') !== '' ? (int) $_POST['department_id'] : null,
     'designation_id'    => ($_POST['designation_id'] ?? '') !== '' ? (int) $_POST['designation_id'] : null,
     'employment_type'   => in_array($_POST['employment_type'] ?? '', ['Permanent', 'Contract', 'Probation', 'Intern'], true) ? $_POST['employment_type'] : 'Permanent',
@@ -119,6 +121,22 @@ try {
             ]);
         }
 
+        // staff_type 'Admin' is the Auth::isSuperAdmin() bypass, so only a
+        // super admin may grant or revoke it; the form hides the field from
+        // everyone else, and an omitted field must never silently demote an
+        // existing Admin to Service.
+        $staffTypePosted = trim((string) ($_POST['staff_type'] ?? ''));
+        if ($staffTypePosted === '' || !Auth::isSuperAdmin()) {
+            $loginData['staff_type'] = (string) ($old['staff_type'] ?? 'Service');
+        }
+        if ((string) $old['staff_type'] !== (string) $loginData['staff_type']) {
+            $db->insert('tbl_staff_history', [
+                'staff_id' => $id, 'event_type' => 'Privilege Level Changed',
+                'details' => 'Staff type changed from ' . $old['staff_type'] . ' to ' . $loginData['staff_type'],
+                'event_date' => date('Y-m-d'), 'actor_id' => Auth::id(),
+            ]);
+        }
+
         $loginData['updated_by'] = Auth::id();
         $db->update('tbl_users_login', $loginData, '`id` = ?', [$id]);
 
@@ -154,6 +172,11 @@ try {
         $loginData['permitted_submodules'] = '{}';
         $loginData['special_permission'] = '[]';
         $loginData['added_by'] = Auth::id();
+        // Same privilege rule as edit: creating an 'Admin' (super-admin
+        // bypass) account is reserved for super admins.
+        if (!Auth::isSuperAdmin()) {
+            $loginData['staff_type'] = 'Service';
+        }
 
         $newId = $db->insert('tbl_users_login', $loginData);
 

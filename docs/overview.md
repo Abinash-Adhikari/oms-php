@@ -13,9 +13,9 @@ A single-deployable modular monolith with **two faces sharing one database**: a 
 codegenexis/
 ├── config/              # Bootstrap + environment config (setup.php is git-ignored)
 ├── classes/             # Domain: Database, Auth, CommunicationService, RateLimiter
-├── functions/           # 72 pure PHP business-logic functions across 5 files
-├── database/migration/  # 102 ordered migrations + migrations.php registry
-├── admin/               # Admin panel (OMS): 11 modules × display+operation pages
+├── functions/           # 163 business-logic functions across 12 files
+├── database/migration/  # 162 ordered migrations + migrations.php registry
+├── admin/               # Admin panel (OMS): 12 modules × display+operation pages
 ├── website/includes/    # Public site bootstrap + theme partials
 ├── assets/{css,js}/     # AdminLTE overrides + site theme + theme-switcher
 ├── tests/               # PHPUnit unit tests for pure functions
@@ -50,8 +50,8 @@ codegenexis/
 - All tables prefixed `tbl_`, charset `utf8mb4`, money stored `DECIMAL(18,4)` (X-07).
 - Applied migrations tracked in `tbl_migrations` table.
 
-**Module map (11 admin modules, sidebar order per `vars.php`):**
-`dashboard · my_office · staff_management · leads · accounts · inventory · reports · office_setup · communication · webcms · settings`
+**Module map (12 admin modules, sidebar order per `varriables.php`):**
+`dashboard · my_office · correspondence · staff_management · payroll · sales · webcms · communication · accounts · inventory · reports · office_setup`
 
 Each module follows a **display+operation split** (`pages/` for forms/lists, `operation/` for write handlers) + `includes/` for shared partials. Examples: `admin/modules/office_setup/operation/holidays.php`, `admin/modules/communication/operation/templates.php`.
 
@@ -84,7 +84,7 @@ Each module follows a **display+operation split** (`pages/` for forms/lists, `op
 ### Auth & Access Control
 - **Password:** bcrypt (`password_hash`, cost 12) w/ **auto-upgrade**: legacy `sha512(salt)` stored hashes are transparently re-hashed to bcrypt on successful login.
 - **RBAC:** module + submodule allowlists (JSON on user row, AC-AUTH-01.4); special permissions (granular actions) like `manage_staff_leaves`, `approve_vouchers`, `audit`.
-- **Super Admin** bypass: `permitted_modules='All'` OR role `Super Admin`/`Superadmin`.
+- **Super Admin** bypass: `permitted_modules='All'` OR role `Super Admin`/`Superadmin` OR `staff_type='Admin'` (new staff default to `Service` so ordinary employees never inherit the bypass).
 - **IP allow-list:** read from `tbl_office_profiles.allow_ips`; `127.0.0.1/::1/0.0.0.0` always allowed (never blocks dev/admin).
 - **Session fix:** `session_regenerate_id(true)` on login.
 - **Brute force:** file-based token-bucket `RateLimiter` + failed-attempt logging to `tbl_login_attempts`.

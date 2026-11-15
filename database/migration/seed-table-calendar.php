@@ -7,6 +7,10 @@
  *   - BS 2000-2100: official Nepal Panchanga Nirnayak Samiti month lengths,
  *     via sonill/nepali-dates (community-maintained, 1400+ tests).
  *   - BS 1975-1999: historically aggregated data, via amitgaru/nepali-datetime.
+ *   - BS 2081-2083: the upstream dataset was wrong for these three years;
+ *     lengths below follow the published patro (Hamro Patro / Panchanga
+ *     Nirnayak Samiti). Existing installs get the same fix from
+ *     seed-table-calendar-fix-2081-2083.
  * BS 2000/1/1 anchors to AD 1943-04-14; dates chain continuously across all years.
  */
 
@@ -1285,8 +1289,8 @@ $query = [
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2080, 11, \'2024-02-13\', \'2024-03-13\', 30);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2080, 12, \'2024-03-14\', \'2024-04-12\', 30);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 1, \'2024-04-13\', \'2024-05-13\', 31);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 2, \'2024-05-14\', \'2024-06-13\', 31);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 3, \'2024-06-14\', \'2024-07-15\', 32);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 2, \'2024-05-14\', \'2024-06-14\', 32);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 3, \'2024-06-15\', \'2024-07-15\', 31);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 4, \'2024-07-16\', \'2024-08-16\', 32);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 5, \'2024-08-17\', \'2024-09-16\', 31);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 6, \'2024-09-17\', \'2024-10-16\', 30);',
@@ -1294,18 +1298,18 @@ $query = [
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 8, \'2024-11-16\', \'2024-12-15\', 30);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 9, \'2024-12-16\', \'2025-01-13\', 29);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 10, \'2025-01-14\', \'2025-02-12\', 30);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 11, \'2025-02-13\', \'2025-03-14\', 30);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 12, \'2025-03-15\', \'2025-04-13\', 30);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 1, \'2025-04-14\', \'2025-05-13\', 30);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 2, \'2025-05-14\', \'2025-06-14\', 32);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 3, \'2025-06-15\', \'2025-07-15\', 31);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 4, \'2025-07-16\', \'2025-08-16\', 32);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 11, \'2025-02-13\', \'2025-03-13\', 29);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2081, 12, \'2025-03-14\', \'2025-04-13\', 31);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 1, \'2025-04-14\', \'2025-05-14\', 31);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 2, \'2025-05-15\', \'2025-06-14\', 31);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 3, \'2025-06-15\', \'2025-07-16\', 32);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 4, \'2025-07-17\', \'2025-08-16\', 31);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 5, \'2025-08-17\', \'2025-09-16\', 31);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 6, \'2025-09-17\', \'2025-10-16\', 30);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 7, \'2025-10-17\', \'2025-11-15\', 30);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 8, \'2025-11-16\', \'2025-12-15\', 30);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 9, \'2025-12-16\', \'2026-01-13\', 29);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 10, \'2026-01-14\', \'2026-02-12\', 30);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 6, \'2025-09-17\', \'2025-10-17\', 31);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 7, \'2025-10-18\', \'2025-11-16\', 30);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 8, \'2025-11-17\', \'2025-12-15\', 29);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 9, \'2025-12-16\', \'2026-01-14\', 30);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 10, \'2026-01-15\', \'2026-02-12\', 29);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 11, \'2026-02-13\', \'2026-03-14\', 30);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2082, 12, \'2026-03-15\', \'2026-04-13\', 30);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 1, \'2026-04-14\', \'2026-05-14\', 31);',
@@ -1313,11 +1317,11 @@ $query = [
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 3, \'2026-06-15\', \'2026-07-16\', 32);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 4, \'2026-07-17\', \'2026-08-16\', 31);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 5, \'2026-08-17\', \'2026-09-16\', 31);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 6, \'2026-09-17\', \'2026-10-16\', 30);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 7, \'2026-10-17\', \'2026-11-15\', 30);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 8, \'2026-11-16\', \'2026-12-15\', 30);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 9, \'2026-12-16\', \'2027-01-13\', 29);',
-    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 10, \'2027-01-14\', \'2027-02-12\', 30);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 6, \'2026-09-17\', \'2026-10-17\', 31);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 7, \'2026-10-18\', \'2026-11-16\', 30);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 8, \'2026-11-17\', \'2026-12-15\', 29);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 9, \'2026-12-16\', \'2027-01-14\', 30);',
+    'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 10, \'2027-01-15\', \'2027-02-12\', 29);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 11, \'2027-02-13\', \'2027-03-14\', 30);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2083, 12, \'2027-03-15\', \'2027-04-13\', 30);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2084, 1, \'2027-04-14\', \'2027-05-14\', 31);',
@@ -1524,4 +1528,8 @@ $query = [
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2100, 10, \'2044-01-16\', \'2044-02-13\', 29);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2100, 11, \'2044-02-14\', \'2044-03-14\', 30);',
     'INSERT INTO `tbl_calendar` (`nepali_year`, `month_code`, `eng_start_date`, `eng_end_date`, `no_days`) VALUES (2100, 12, \'2044-03-15\', \'2044-04-13\', 30);',
+];
+
+$rollbackQuery = [
+    'DELETE FROM `tbl_calendar`;',
 ];

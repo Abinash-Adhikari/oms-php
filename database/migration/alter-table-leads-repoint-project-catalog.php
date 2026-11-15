@@ -46,12 +46,12 @@ $query = [
 ];
 
 $rollbackQuery = [
-    "ALTER TABLE `tbl_leads` DROP FOREIGN KEY `fk_lead_project_catalog`;",
-    "ALTER TABLE `tbl_leads` DROP INDEX `idx_lead_project`;",
-    "UPDATE `tbl_leads` SET `project_id` = NULL;",
-    "ALTER TABLE `tbl_leads` ADD INDEX `idx_lead_project` (`project_id`);",
     "ALTER TABLE `tbl_leads`
      ADD CONSTRAINT `fk_lead_project`
      FOREIGN KEY (`project_id`) REFERENCES `tbl_client_projects` (`id`)
      ON DELETE SET NULL ON UPDATE CASCADE;",
+    "ALTER TABLE `tbl_leads` ADD INDEX `idx_lead_project` (`project_id`);",
+    "UPDATE `tbl_leads` SET `project_id` = NULL;",
+    "ALTER TABLE `tbl_leads` DROP INDEX `idx_lead_project`;",
+    "ALTER TABLE `tbl_leads` DROP FOREIGN KEY `fk_lead_project_catalog`;",
 ];

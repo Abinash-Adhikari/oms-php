@@ -141,7 +141,7 @@ if ($edit['added_by']) {
 }
 $originLead = null;
 if ($edit['lead_id']) {
-    $originLead = $db->selectOne('SELECT `id`, `company`, `contact_name` FROM `tbl_leads` WHERE `id` = ?', [(int) $edit['lead_id']]);
+    $originLead = $db->selectOne('SELECT `id`, `company`, `contact_name`, `referrer_name` FROM `tbl_leads` WHERE `id` = ?', [(int) $edit['lead_id']]);
 }
 ?>
 <div id="cl-detail">
@@ -166,7 +166,7 @@ if ($edit['lead_id']) {
                     <span class="badge-soft badge-soft--light" title="Customer = has a won project"><?= e(client_lifecycle($wonCount)) ?></span>
                     <span class="badge-soft badge-soft--light"><i class="fas fa-<?= $edit['type'] === 'Individual' ? 'user' : 'building' ?> mr-1" aria-hidden="true"></i><?= e($edit['type']) ?></span>
                     <?php if ($originLead): ?>
-                        <a href="<?= pageUrl('sales', 'leads') ?>&id=<?= (int) $originLead['id'] ?>" class="badge-soft badge-soft--light text-decoration-none" title="Origin lead"><i class="fas fa-funnel-dollar mr-1" aria-hidden="true"></i><?= e($originLead['company'] ?: $originLead['contact_name']) ?></a>
+                        <a href="<?= pageUrl('sales', 'leads') ?>&id=<?= (int) $originLead['id'] ?>" class="badge-soft badge-soft--light text-decoration-none" title="Origin lead"><i class="fas fa-funnel-dollar mr-1" aria-hidden="true"></i><?= e($originLead['company'] ?: $originLead['contact_name'] ?: ($originLead['referrer_name'] ?? '')) ?></a>
                     <?php endif; ?>
                 </div>
                 <div class="cl-hero-contact">
@@ -438,8 +438,8 @@ if ($edit['lead_id']) {
                                 <?php foreach ($sourceLeads as $l): ?>
                                     <tr>
                                         <td>
-                                            <span class="cl-cell-main"><?= e($l['company'] ?: $l['contact_name']) ?></span>
-                                            <br><span class="cl-cell-sub"><?= e($l['contact_name'] ?: '—') ?> · <?= e($l['email'] ?: '—') ?></span>
+                                            <span class="cl-cell-main"><?= e($l['company'] ?: $l['contact_name'] ?: $l['referrer_name']) ?></span>
+                                            <br><span class="cl-cell-sub"><?= e($l['contact_name'] ?: $l['referrer_name'] ?: '—') ?> · <?= e($l['email'] ?: '—') ?></span>
                                         </td>
                                         <td><?= e($l['service_interest'] ?: '—') ?></td>
                                         <td><span class="badge-soft badge-soft--<?= $stageSoft[$l['stage']] ?? 'muted' ?>"><?= e($l['stage']) ?></span></td>
@@ -447,14 +447,14 @@ if ($edit['lead_id']) {
                                         <td><?= e($l['owner_name'] ?: '—') ?></td>
                                         <td><?= e(date('M j, Y', strtotime($l['added_on']))) ?></td>
                                         <td class="text-right">
-                                            <a href="<?= pageUrl('sales', 'leads') ?>&id=<?= (int) $l['id'] ?>" class="btn btn-xs btn-outline-primary" aria-label="View lead <?= e($l['company'] ?: $l['contact_name']) ?>"><i class="fas fa-eye" aria-hidden="true"></i></a>
+                                            <a href="<?= pageUrl('sales', 'leads') ?>&id=<?= (int) $l['id'] ?>" class="btn btn-xs btn-outline-primary" aria-label="View lead <?= e($l['company'] ?: $l['contact_name'] ?: $l['referrer_name']) ?>"><i class="fas fa-eye" aria-hidden="true"></i></a>
                                             <?php if ($canManage): ?>
                                                 <form action="operation.php?module=sales&page=leads" method="post" class="d-inline">
                                                     <?= csrfField() ?>
                                                     <input type="hidden" name="action" value="delete_lead">
                                                     <input type="hidden" name="id" value="<?= (int) $l['id'] ?>">
                                                     <input type="hidden" name="from_client_id" value="<?= (int) $edit['id'] ?>">
-                                                    <button type="submit" class="btn btn-xs btn-outline-danger confirm-submit" title="Delete" aria-label="Delete lead <?= e($l['company'] ?: $l['contact_name']) ?>?" data-confirm="Delete this lead? Files and activities are removed."><i class="fas fa-trash" aria-hidden="true"></i></button>
+                                                    <button type="submit" class="btn btn-xs btn-outline-danger confirm-submit" title="Delete" aria-label="Delete lead <?= e($l['company'] ?: $l['contact_name'] ?: $l['referrer_name']) ?>?" data-confirm="Delete this lead? Files and activities are removed."><i class="fas fa-trash" aria-hidden="true"></i></button>
                                                 </form>
                                             <?php endif; ?>
                                         </td>
@@ -570,7 +570,7 @@ if ($edit['lead_id']) {
                                 <span class="cl-fact-icon"><i class="fas fa-route" aria-hidden="true"></i></span>
                                 <div class="cl-fact-body">
                                     <span class="cl-fact-label">Origin Lead</span>
-                                    <span class="cl-fact-value"><a href="<?= pageUrl('sales', 'leads') ?>&id=<?= (int) $originLead['id'] ?>"><?= e($originLead['company'] ?: $originLead['contact_name']) ?></a></span>
+                                    <span class="cl-fact-value"><a href="<?= pageUrl('sales', 'leads') ?>&id=<?= (int) $originLead['id'] ?>"><?= e($originLead['company'] ?: $originLead['contact_name'] ?: ($originLead['referrer_name'] ?? '')) ?></a></span>
                                 </div>
                             </div>
                         <?php endif; ?>

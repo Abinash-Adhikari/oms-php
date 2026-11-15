@@ -40,16 +40,6 @@ $query = [
 ];
 
 $rollbackQuery = [
-    "ALTER TABLE `tbl_leads` DROP FOREIGN KEY `fk_lead_business_source`;",
-    "ALTER TABLE `tbl_leads` DROP FOREIGN KEY `fk_lead_won_business_source`;",
-    "ALTER TABLE `tbl_leads` DROP INDEX `idx_lead_business_source`;",
-    "ALTER TABLE `tbl_leads` DROP INDEX `idx_lead_won_business_source`;",
-    "ALTER TABLE `tbl_leads`
-     CHANGE COLUMN `business_source_id` `client_id` INT DEFAULT NULL;",
-    "ALTER TABLE `tbl_leads`
-     CHANGE COLUMN `won_business_source_id` `won_client_id` INT DEFAULT NULL;",
-    "ALTER TABLE `tbl_leads` ADD INDEX `idx_lead_client` (`client_id`);",
-    "ALTER TABLE `tbl_leads` ADD INDEX `idx_lead_won` (`won_client_id`);",
     "ALTER TABLE `tbl_leads`
      ADD CONSTRAINT `fk_lead_client`
      FOREIGN KEY (`client_id`) REFERENCES `tbl_business_sources` (`id`)
@@ -58,4 +48,16 @@ $rollbackQuery = [
      ADD CONSTRAINT `fk_lead_won`
      FOREIGN KEY (`won_client_id`) REFERENCES `tbl_business_sources` (`id`)
      ON DELETE SET NULL ON UPDATE CASCADE;",
+    "ALTER TABLE `tbl_leads` ADD INDEX `idx_lead_client` (`client_id`);",
+    "ALTER TABLE `tbl_leads` ADD INDEX `idx_lead_won` (`won_client_id`);",
+    "ALTER TABLE `tbl_leads`
+     CHANGE COLUMN `business_source_id` `client_id` INT DEFAULT NULL
+     COMMENT 'Client being pursued';",
+    "ALTER TABLE `tbl_leads`
+     CHANGE COLUMN `won_business_source_id` `won_client_id` INT DEFAULT NULL
+     COMMENT 'Client that won the deal';",
+    "ALTER TABLE `tbl_leads` DROP INDEX `idx_lead_business_source`;",
+    "ALTER TABLE `tbl_leads` DROP INDEX `idx_lead_won_business_source`;",
+    "ALTER TABLE `tbl_leads` DROP FOREIGN KEY `fk_lead_business_source`;",
+    "ALTER TABLE `tbl_leads` DROP FOREIGN KEY `fk_lead_won_business_source`;",
 ];

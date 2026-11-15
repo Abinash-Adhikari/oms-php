@@ -99,11 +99,18 @@ try {
             $source = 'Website';
         }
         $isReferral = $source === 'Referral';
-        $contactName = trim((string) ($_POST['contact_name'] ?? ''));
-        if ($isReferral && $contactName === '') {
-            setFlash('error', 'Source name is required.');
+        // The referrer is an external person (never a contact person of the
+        // client org); its fields post even when hidden — only Referral keeps them.
+        $referrerName = trim((string) ($_POST['referrer_name'] ?? ''));
+        if ($isReferral && $referrerName === '') {
+            setFlash('error', 'Referrer name is required.');
             redirect($back);
         }
+        $contacts = normalize_lead_contacts(
+            (array) ($_POST['contact_name'] ?? []),
+            (array) ($_POST['email'] ?? []),
+            (array) ($_POST['phone'] ?? [])
+        );
         $stage = (string) ($_POST['stage'] ?? 'New');
         if (!in_array($stage, ['New', 'Contacted', 'Qualified', 'Proposal', 'Won', 'Lost'], true)) {
             $stage = 'New';
@@ -115,9 +122,9 @@ try {
         $data = [
             'source'            => $source,
             'company'           => trim((string) ($_POST['company'] ?? '')) ?: null,
-            'contact_name'      => $isReferral ? $contactName : null,
-            'email'             => $isReferral ? (trim((string) ($_POST['email'] ?? '')) ?: null) : null,
-            'phone'             => $isReferral ? (trim((string) ($_POST['phone'] ?? '')) ?: null) : null,
+            'referrer_name'     => $isReferral ? $referrerName : null,
+            'referrer_email'    => $isReferral ? (trim((string) ($_POST['referrer_email'] ?? '')) ?: null) : null,
+            'referrer_phone'    => $isReferral ? (trim((string) ($_POST['referrer_phone'] ?? '')) ?: null) : null,
             'service_interest'  => trim((string) ($_POST['service_interest'] ?? '')) ?: null,
             'message'           => trim((string) ($_POST['message'] ?? '')) ?: null,
             'priority'          => $priority,
@@ -135,41 +142,46 @@ try {
             $data['company'] = $client['name'] ?? null;
         }
 
+        $existing = null;
         if ($id) {
             $existing = $db->selectOne('SELECT * FROM `tbl_leads` WHERE `id` = ?', [$id]);
             if (!$existing) {
                 setFlash('error', 'Lead not found.');
                 redirect($back);
             }
-            if ($data['stage'] !== $existing['stage']) {
-                logLeadActivity($db, $id, 'Status Change', 'Stage changed from ' . $existing['stage'] . ' to ' . $data['stage'], $me);
-            } elseif (!empty($data['assigned_to']) && (int) $data['assigned_to'] !== (int) $existing['assigned_to']) {
-                logLeadActivity($db, $id, 'Note', 'Owner reassigned', $me);
-            }
-            $db->update('tbl_leads', $data, '`id` = ?', [$id]);
-            if ($data['stage'] === 'Lost' && $existing['stage'] !== 'Lost') {
-                cancelLeadTrials($db, $id, $me);
-            }
-            $wonClientId = (int) ($existing['won_client_id'] ?: $data['client_id']);
-            if ($data['stage'] === 'Won' && $existing['stage'] !== 'Won' && $wonClientId) {
-                $db->transaction(function () use ($db, $id, $existing, $data, $wonClientId, $me) {
+        }
+
+        $isNew = $existing === null;
+        $db->transaction(function () use ($db, $existing, $id, $isNew, $data, $contacts, $stage, $source, $me) {
+            if (!$isNew) {
+                if ($data['stage'] !== $existing['stage']) {
+                    logLeadActivity($db, $id, 'Status Change', 'Stage changed from ' . $existing['stage'] . ' to ' . $data['stage'], $me);
+                } elseif (!empty($data['assigned_to']) && (int) $data['assigned_to'] !== (int) $existing['assigned_to']) {
+                    logLeadActivity($db, $id, 'Note', 'Owner reassigned', $me);
+                }
+                $db->update('tbl_leads', $data, '`id` = ?', [$id]);
+                // Contact persons: replace + refresh the primary mirror.
+                sync_lead_contacts($db, $id, $contacts, $me);
+                if ($data['stage'] === 'Lost' && $existing['stage'] !== 'Lost') {
+                    cancelLeadTrials($db, $id, $me);
+                }
+                $wonClientId = (int) ($existing['won_client_id'] ?: $data['client_id']);
+                if ($data['stage'] === 'Won' && $existing['stage'] !== 'Won' && $wonClientId) {
                     $db->update('tbl_leads', ['won_client_id' => $wonClientId, 'updated_by' => $me], '`id` = ?', [$id]);
                     autoProvisionClientProject($db, array_merge($existing, $data, ['id' => $id]), $wonClientId, $me);
-                });
-            }
-            setFlash('success', 'Lead updated.');
-        } else {
-            $newId = (int) $db->insert('tbl_leads', array_merge($data, ['added_by' => $me]));
-            logLeadActivity($db, $newId, 'Note', 'Lead created (source: ' . $source . ')', $me);
-            if ($stage === 'Won' && $data['client_id']) {
-                $db->transaction(function () use ($db, $newId, $data, $me) {
+                }
+            } else {
+                $newId = (int) $db->insert('tbl_leads', array_merge($data, ['added_by' => $me]));
+                sync_lead_contacts($db, $newId, $contacts, $me);
+                logLeadActivity($db, $newId, 'Note', 'Lead created (source: ' . $source . ')', $me);
+                if ($stage === 'Won' && $data['client_id']) {
                     $db->update('tbl_leads', ['won_client_id' => $data['client_id'], 'updated_by' => $me], '`id` = ?', [$newId]);
-                    $row = array_merge($data, ['id' => $newId, 'company' => $data['company'], 'contact_name' => $data['contact_name'], 'estimated_value' => $data['estimated_value'], 'project_id' => $data['project_id']]);
+                    $row = $db->selectOne('SELECT * FROM `tbl_leads` WHERE `id` = ?', [$newId]);
                     autoProvisionClientProject($db, $row, (int) $data['client_id'], $me);
-                });
+                }
             }
-            setFlash('success', 'Lead created.');
-        }
+        });
+        setFlash('success', $isNew ? 'Lead created.' : 'Lead updated.');
         redirect($back);
     }
 
@@ -298,8 +310,8 @@ try {
             redirect($back . '&id=' . $id);
         }
         $assigned = (int) ($_POST['assigned_to'] ?? 0) ?: ($lead['assigned_to'] ?: null);
-        $note = trim((string) ($_POST['note'] ?? '')) ?: 'Follow-up on lead: ' . ($lead['company'] ?: $lead['contact_name']);
-        $title = 'Follow-up: ' . ($lead['company'] ?: $lead['contact_name']);
+        $note = trim((string) ($_POST['note'] ?? '')) ?: 'Follow-up on lead: ' . ($lead['company'] ?: $lead['contact_name'] ?: $lead['referrer_name']);
+        $title = 'Follow-up: ' . ($lead['company'] ?: $lead['contact_name'] ?: $lead['referrer_name']);
 
         $taskId = $db->insert('tbl_office_tasks', [
             'assignment_id' => uniqid('asn'),
@@ -369,18 +381,22 @@ try {
             });
             setFlash('success', 'Lead linked to existing client: ' . $existingClient['name']);
         } else {
-            // Create new client
-            $clientId = $db->insert('tbl_clients', [
-                'name'           => $name,
-                'contact_person' => trim((string) ($_POST['contact_person'] ?? '')) ?: $lead['contact_name'],
-                'email'          => $lead['email'],
-                'phone'          => $lead['phone'],
-                'address'        => trim((string) ($_POST['address'] ?? '')) ?: null,
-                'pan_num'        => trim((string) ($_POST['pan_num'] ?? '')) ?: null,
-                'lead_id'        => $id,
-                'added_by'       => $me,
-            ]);
-            $db->transaction(function () use ($db, $me, $lead, $id, $clientId, $name) {
+            // Create new client: client row, contact-person copy and lead link
+            // in ONE transaction (referrer data never becomes a contact person).
+            $postContact = trim((string) ($_POST['contact_person'] ?? ''));
+            $clientId = 0;
+            $db->transaction(function () use ($db, $me, $lead, $id, $name, $postContact, &$clientId) {
+                $clientId = (int) $db->insert('tbl_clients', [
+                    'name'           => $name,
+                    'contact_person' => $postContact ?: $lead['contact_name'],
+                    'email'          => $lead['email'],
+                    'phone'          => $lead['phone'],
+                    'address'        => trim((string) ($_POST['address'] ?? '')) ?: null,
+                    'pan_num'        => trim((string) ($_POST['pan_num'] ?? '')) ?: null,
+                    'lead_id'        => $id,
+                    'added_by'       => $me,
+                ]);
+                copy_lead_contacts_to_client($db, $id, $clientId, $postContact ?: null, $me);
                 $db->update('tbl_leads', [
                     'won_client_id' => $clientId,
                     'client_id' => $clientId,
@@ -461,9 +477,10 @@ try {
                 if ($existing) {
                     $clientId = (int) $existing['id'];
                 } else {
+                    $postContact = trim((string) ($_POST['contact_person'] ?? ''));
                     $clientId = (int) $db->insert('tbl_clients', [
                         'name'           => $name,
-                        'contact_person' => trim((string) ($_POST['contact_person'] ?? '')) ?: $lead['contact_name'],
+                        'contact_person' => $postContact ?: $lead['contact_name'],
                         'email'          => $email,
                         'phone'          => $lead['phone'],
                         'address'        => trim((string) ($_POST['address'] ?? '')) ?: null,
@@ -471,6 +488,7 @@ try {
                         'lead_id'        => $id,
                         'added_by'       => $me,
                     ]);
+                    copy_lead_contacts_to_client($db, $id, $clientId, $postContact ?: null, $me);
                 }
             }
 
@@ -631,10 +649,10 @@ try {
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="leads_' . date('Ymd') . '.csv"');
         $out = fopen('php://output', 'w');
-        fputcsv($out, ['Company', 'Contact', 'Email', 'Phone', 'Interest', 'Priority', 'Value', 'Stage', 'Source', 'Owner', 'Added']);
+        fputcsv($out, ['Company', 'Contact', 'Referred by', 'Email', 'Phone', 'Interest', 'Priority', 'Value', 'Stage', 'Source', 'Owner', 'Added']);
         foreach ($rows as $r) {
             fputcsv($out, [
-                $r['company'], $r['contact_name'], $r['email'], $r['phone'],
+                $r['company'], $r['contact_name'], $r['referrer_name'], $r['email'], $r['phone'],
                 $r['service_interest'], $r['priority'], (float) $r['estimated_value'],
                 $r['stage'], $r['source'], $r['owner_name'], $r['added_on'],
             ]);

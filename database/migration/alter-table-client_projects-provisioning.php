@@ -74,29 +74,29 @@ $query = [
 ];
 
 $rollbackQuery = [
-    "ALTER TABLE `tbl_business_sources`
-     ADD COLUMN `permitted_modules` TEXT DEFAULT NULL AFTER `notes`;",
-    "ALTER TABLE `tbl_business_sources`
-     ADD COLUMN `permitted_submodules` TEXT DEFAULT NULL AFTER `permitted_modules`;",
-    "ALTER TABLE `tbl_business_sources`
-     ADD COLUMN `db_name` VARCHAR(191) DEFAULT NULL AFTER `permitted_submodules`;",
-    "ALTER TABLE `tbl_business_sources`
-     ADD COLUMN `module_databases` TEXT DEFAULT NULL AFTER `db_name`;",
-    "ALTER TABLE `tbl_client_projects` DROP COLUMN `permitted_submodules`;",
-    "ALTER TABLE `tbl_client_projects` DROP COLUMN `permitted_modules`;",
-    "ALTER TABLE `tbl_client_projects` DROP FOREIGN KEY `fk_project_catalog`;",
-    "ALTER TABLE `tbl_client_projects` DROP INDEX `idx_project_catalog`;",
-    "ALTER TABLE `tbl_client_projects` DROP COLUMN `project_id`;",
-    "ALTER TABLE `tbl_client_projects` DROP FOREIGN KEY `fk_project_lead`;",
-    "ALTER TABLE `tbl_client_projects` DROP INDEX `idx_project_lead`;",
-    "ALTER TABLE `tbl_client_projects` DROP COLUMN `lead_id`;",
-    "ALTER TABLE `tbl_client_projects` DROP FOREIGN KEY `fk_project_business_source`;",
-    "ALTER TABLE `tbl_client_projects` DROP INDEX `idx_project_business_source`;",
-    "ALTER TABLE `tbl_client_projects`
-     CHANGE COLUMN `business_source_id` `client_id` INT DEFAULT NULL;",
-    "ALTER TABLE `tbl_client_projects` ADD INDEX `idx_project_client` (`client_id`);",
     "ALTER TABLE `tbl_client_projects`
      ADD CONSTRAINT `fk_project_client`
      FOREIGN KEY (`client_id`) REFERENCES `tbl_business_sources` (`id`)
      ON DELETE SET NULL ON UPDATE CASCADE;",
+    "ALTER TABLE `tbl_client_projects` ADD INDEX `idx_project_client` (`client_id`);",
+    "ALTER TABLE `tbl_client_projects`
+     CHANGE COLUMN `business_source_id` `client_id` INT DEFAULT NULL;",
+    "ALTER TABLE `tbl_client_projects` DROP INDEX `idx_project_business_source`;",
+    "ALTER TABLE `tbl_client_projects` DROP FOREIGN KEY `fk_project_business_source`;",
+    "ALTER TABLE `tbl_client_projects` DROP COLUMN `lead_id`;",
+    "ALTER TABLE `tbl_client_projects` DROP INDEX `idx_project_lead`;",
+    "ALTER TABLE `tbl_client_projects` DROP FOREIGN KEY `fk_project_lead`;",
+    "ALTER TABLE `tbl_client_projects` DROP COLUMN `project_id`;",
+    "ALTER TABLE `tbl_client_projects` DROP INDEX `idx_project_catalog`;",
+    "ALTER TABLE `tbl_client_projects` DROP FOREIGN KEY `fk_project_catalog`;",
+    "ALTER TABLE `tbl_client_projects` DROP COLUMN `permitted_modules`;",
+    "ALTER TABLE `tbl_client_projects` DROP COLUMN `permitted_submodules`;",
+    "ALTER TABLE `tbl_business_sources`
+     ADD COLUMN `module_databases` TEXT DEFAULT NULL AFTER `db_name`;",
+    "ALTER TABLE `tbl_business_sources`
+     ADD COLUMN `db_name` VARCHAR(191) DEFAULT NULL AFTER `permitted_submodules`;",
+    "ALTER TABLE `tbl_business_sources`
+     ADD COLUMN `permitted_submodules` TEXT DEFAULT NULL AFTER `permitted_modules`;",
+    "ALTER TABLE `tbl_business_sources`
+     ADD COLUMN `permitted_modules` TEXT DEFAULT NULL AFTER `notes`;",
 ];

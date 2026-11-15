@@ -59,6 +59,7 @@ SETTINGS  Office Profile · Permissions · Users
 | 13 | Authentication & RBAC | Secure access | Login, sessions, permissions, login attempts, devices |
 | 14 | Website CMS | Public site content | Pages, projects, team, news, notices, careers, contact, template setup |
 | 15 | Public Website | Visitor experience | Template packages, SEO, contact/quote/careers forms → OMS |
+| 16 | Correspondence (Darta / Chalani) | Inward & outward registers | दर्ता auto-numbering → dispose/file/cancel, चलानी reserve → dispatch, per-FY counters, darta↔chalani reply links, filters/search, BS date input |
 
 ---
 
@@ -243,7 +244,7 @@ SETTINGS  Office Profile · Permissions · Users
 
 **Pipeline:**
 - Stages: **New → Contacted → Qualified → Proposal → Won / Lost**; list or kanban view.
-- Fields: company, contact name, email, phone, service interest, priority (Hot/Warm/Cold), estimated value (NPR), assigned owner, source, lost reason.
+- Fields: company, contact persons (repeatable, one primary — name/email/phone), referrer (name/email/phone, required when source = Referral), service interest, priority (Hot/Warm/Cold), estimated value (NPR), assigned owner, source, lost reason.
 
 **Ownership & activity:**
 - Claim/assign from shared queue; reassignment recorded.
@@ -256,10 +257,10 @@ SETTINGS  Office Profile · Permissions · Users
 **Dedupe & conversion:**
 - Duplicate flag on same email/phone vs existing non-lost lead; merge by owner.
 - Lost leads reopenable without data loss.
-- Won → create client record (name, contact, address, PAN); optional project record (title, value, start/end, status) later.
+- Won → create client record (name, contact, address, PAN); the lead's contact persons are copied into `tbl_client_contacts` (typed contact wins as primary), the referrer is not; optional project record (title, value, start/end, status) later.
 
 **Reports:** pipeline value by stage, conversion by source, aging, owner performance; CSV export.
-- **Tables:** `tbl_leads`, `tbl_lead_activities`, `tbl_lead_files`, `tbl_clients`, `tbl_client_projects` (v2), `tbl_cms_contacts_us`.
+- **Tables:** `tbl_leads`, `tbl_lead_contacts`, `tbl_lead_activities`, `tbl_lead_files`, `tbl_clients`, `tbl_client_projects` (v2), `tbl_cms_contacts_us`.
 
 ---
 
@@ -325,7 +326,7 @@ SETTINGS  Office Profile · Permissions · Users
 - Login with username/password (hashed + salt; upgrade path to bcrypt/argon2).
 - Session keys: `userId`, `username`, `fullname`; status gates (Block/Terminated).
 - Failed-attempt throttling via `tbl_login_attempts`.
-- Permission checks on every page: module → submodule → special permission; Super Admin bypass.
+- Permission checks on every page: module → submodule → special permission; Super Admin bypass (`permitted_modules='All'`, role `Super Admin`, or `staff_type='Admin'`; column default `Service`, grant/revoke super-admin-only and audited in `tbl_staff_history`).
 - Optional registered-device enforcement.
 - **Tables:** `tbl_users_login`, `tbl_login_attempts`, `tbl_user_registered_devices`, `tbl_notifications`.
 
@@ -351,6 +352,51 @@ SETTINGS  Office Profile · Permissions · Users
 - Forms: contact + quote/service inquiry → auto-create lead (see 3.10); careers application → careers inbox.
 - SEO fields, responsive layouts, Google Maps embed.
 - **Tables:** CMS tables (read), `tbl_cms_contacts_us` (write), `tbl_leads` (write).
+
+---
+
+### 3.16 Correspondence (Darta / Chalani)
+
+- **Purpose:** digitise the two registers every Nepali office keeps by hand —
+  inward (दर्ता) and outward (चलानी).
+
+**Features:**
+- **Darta register:** per-FY दर्ता number auto-assigned inside the save
+  transaction, letter date (BS/AD input), sender, subject, priority,
+  assignment; dispose (कारबाही) / file (तामेली) / cancel. **No delete** —
+  Cancelled keeps the number so the sequence has no gaps.
+- **Chalani register:** number reserved *first* (it goes on the letter), then
+  marked dispatched with date + mode; बोधार्थ (CC) list.
+- **Links:** one darta → many chalanis via `ref_darta_id`; the dispose action
+  offers "reserve reply चलानी number now" with the darta pre-linked. Any
+  non-Cancelled darta may be linked (closed dartas included); a Cancelled
+  darta never can. Dispatching a linked reply chalani *offers* to mark the
+  darta Disposed too (never automatic).
+- **Print & export (P2):** each register prints as a traditional A4-landscape ledger
+  (`?print=1`, bilingual English/Devanagari headers, BS/AD date pair, cancelled
+  rows struck through, entry-count footer); any row prints a single-entry slip
+  (`?entry=ID&print=1`) with office stamp area and the बोधार्थ list. Both
+  views also export — `?pdf=1` streams a PDF (ledger landscape, slip portrait,
+  paper size from Document Setup) and `?word=1` a `.docx` through the
+  document-setup Word pipeline (letterhead/meta header; toolbar + row buttons;
+  added 2026-10-25). A
+  screen-only toggle switches all printed numbers/dates to Devanagari digits
+  (`?nep=1`, P3 — Latin stays in the DB; hidden inside exports).
+- **Attachments (P2):** PDF/JPG/PNG scans per entry via
+  `tbl_correspondence_files` (expense-claim-files pattern); removable only
+  while the entry is still editable.
+- **Notifications (P3):** assignment changes notify the handler; disposal
+  (manual or via the dispatch offer) notifies the registrar + handler, never
+  the actor. Dashboard shows a grant-gated "Darta pending disposal" tile.
+- **Rules:** numbers allocate only into an **Open** fiscal year; new entries
+  cannot enter a Closed FY; closed entries open the drawer read-only.
+- Filters/search per register: FY, status, month, free text (party / subject /
+  sender's ref no.).
+- **Tables:** `tbl_darta_entries`, `tbl_chalani_entries`,
+  `tbl_correspondence_counters`, `tbl_correspondence_files`.
+- **Plan / status:** `docs/DARTA_CHALANI_PLAN.md` — P1 + P2 + P3 built; the
+  optional `manage_correspondence` special stays deliberately unbuilt until
+  the office asks for it (plan §10 review note 2).
 
 ---
 
@@ -381,9 +427,10 @@ See `docs/SB_TECH_SYSTEM_ANALYSIS.md` §6.4 for the full ER-style listing. Summa
 - **Meetings:** `tbl_office_events`, `tbl_office_event_schedules`
 - **Grievances:** `tbl_office_grievances`, `tbl_office_grievance_files`
 - **Documents:** `tbl_office_document_category`, `tbl_office_documents`, `tbl_office_document_files`
-- **Leads:** `tbl_leads`, `tbl_lead_activities`, `tbl_lead_files`, `tbl_clients`, `tbl_client_projects` (v2), `tbl_cms_contacts_us`
+- **Leads:** `tbl_leads`, `tbl_lead_contacts`, `tbl_lead_activities`, `tbl_lead_files`, `tbl_clients`, `tbl_client_projects` (v2), `tbl_cms_contacts_us`
 - **Finance:** `tbl_fiscal_years`, `tbl_account_groups/sub_groups/terminals/sub_terminals`, `tbl_{journal,receipt,payment,contra,purchase,sales}_vouchers`, `tbl_ledger_particulars`, `tbl_sub_ledger_particulars`, `tbl_voucher_logs`, `tbl_bank_reconciliation`, `tbl_account_tds_types`, `tbl_account_tds_report_entries`, `tbl_account_dr_cr_notes`, `tbl_account_confirmation_letters`, `tbl_expense_claims`, `tbl_expense_claim_files`
 - **Communication:** templates, campaigns, logs (ported)
+- **Correspondence:** `tbl_darta_entries`, `tbl_chalani_entries`, `tbl_correspondence_counters`
 - **Auth/notifications:** `tbl_login_attempts`, `tbl_notifications`, `tbl_calendar`
 - **CMS:** `tbl_cms_*` (home, services, projects, team, news, notices, testimonials, contact, careers)
 

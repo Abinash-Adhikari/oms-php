@@ -115,7 +115,7 @@ $activeFy = $db->selectOne("SELECT `title` FROM `tbl_fiscal_years` WHERE `closin
 
 // ── Recent activity: lead touches + task updates, newest first ───────────
 $activity = $db->select(
-    "(SELECT 'lead' AS kind, a.`type` AS label, COALESCE(NULLIF(l.`company`, ''), l.`contact_name`) AS title,
+    "(SELECT 'lead' AS kind, a.`type` AS label, COALESCE(NULLIF(l.`company`, ''), l.`contact_name`, l.`referrer_name`) AS title,
              a.`note` AS detail, u.`fullname` AS actor, a.`added_on` AS at, l.`id` AS ref_id
       FROM `tbl_lead_activities` a
       JOIN `tbl_leads` l ON l.`id` = a.`lead_id`
@@ -141,6 +141,14 @@ $contractsEnding = (int) ($contracts['ending'] ?? 0);
 $contractsOverdue = (int) ($contracts['overdue'] ?? 0);
 $payrollDrafts = (Auth::hasSpecial('manage_payroll') || Auth::hasSpecial('approve_payroll'))
     ? (int) ($db->selectOne("SELECT COUNT(*) AS c FROM `tbl_payroll_runs` WHERE `status` = 'Draft'")['c'] ?? 0)
+    : 0;
+
+// ── Correspondence: darta waiting for disposal (grant-gated, P3 §7) ────────
+$showDartaTile = Auth::can('correspondence', 'darta');
+$pendingDartaCount = $showDartaTile
+    ? (int) ($db->selectOne(
+        "SELECT COUNT(*) AS c FROM `tbl_darta_entries` WHERE `status` IN ('Pending','In Progress')"
+    )['c'] ?? 0)
     : 0;
 
 // ── Derived display values ───────────────────────────────────────────────
@@ -192,6 +200,15 @@ $tiles = [
         'href'  => pageUrl('sales', 'leads'),
     ],
 ];
+if ($showDartaTile) {
+    $tiles[] = [
+        'label' => 'Darta pending disposal', 'icon' => 'fas fa-inbox',
+        'tone'  => $pendingDartaCount > 0 ? 'warning' : 'success',
+        'value' => number_format($pendingDartaCount),
+        'sub'   => 'inward register · कारबाही pending',
+        'href'  => pageUrl('correspondence', 'darta'),
+    ];
+}
 
 $stageMax = max(1, ...array_map(static fn ($s) => $stageRows[$s]['count'] ?? 0, LEAD_OPEN_STAGES));
 ?>
@@ -214,7 +231,7 @@ $stageMax = max(1, ...array_map(static fn ($s) => $stageRows[$s]['count'] ?? 0, 
     </div>
 </div>
 
-<div class="ana-grid">
+<div class="ana-grid"<?= $showDartaTile ? ' style="--ana-cols:5"' : '' ?>>
     <?php foreach ($tiles as $t): ?>
         <?= stat_tile($t) ?>
     <?php endforeach; ?>

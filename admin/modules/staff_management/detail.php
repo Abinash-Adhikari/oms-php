@@ -73,7 +73,7 @@ $badge = static function (string $status): string {
             $leaveAlloc = $db->select('SELECT a.`year`, a.`allocated_days`, a.`used_days`, a.`carry_forward_days`, lc.`title` AS leave_title FROM `tbl_office_staff_leave_allocation` a LEFT JOIN `tbl_office_leave_configs` lc ON lc.id = a.`leave_id` WHERE a.`staff_id` = ? ORDER BY a.`year` DESC', [$uid]);
 
             $leadsOpen = $db->selectOne("SELECT COUNT(*) AS c FROM `tbl_leads` WHERE `assigned_to` = ? AND `stage` NOT IN ('Won','Lost')", [$uid]);
-            $leads = $db->select('SELECT `id`, `company`, `contact_name`, `stage`, `priority`, `estimated_value` FROM `tbl_leads` WHERE `assigned_to` = ? ORDER BY `updated_on` DESC LIMIT 5', [$uid]);
+            $leads = $db->select('SELECT `id`, `company`, `contact_name`, `referrer_name`, `stage`, `priority`, `estimated_value` FROM `tbl_leads` WHERE `assigned_to` = ? ORDER BY `updated_on` DESC LIMIT 5', [$uid]);
 
             $tasksAuthored = $db->select('SELECT `id`, `title`, `status`, `deadline` FROM `tbl_office_tasks` WHERE `author` = ? ORDER BY `added_on` DESC LIMIT 5', [$uid]);
             $tasksAssigned = $db->select('SELECT t.`id`, t.`title`, ta.`status` AS assignee_status, t.`deadline` FROM `tbl_office_tasks` t JOIN `tbl_office_task_assignees` ta ON ta.task_id = t.`id` WHERE ta.`staff_id` = ? ORDER BY t.`added_on` DESC, ta.`id` DESC LIMIT 5', [$uid]);
@@ -330,7 +330,7 @@ $badge = static function (string $status): string {
                         <?php foreach ($leads as $lead): ?>
                             <tr>
                                 <td><a href="<?= pageUrl('sales', 'leads') ?>&lead_id=<?= (int) $lead['id'] ?>"><?= e($lead['company']) ?></a></td>
-                                <td><?= e($lead['contact_name'] ?: '—') ?></td>
+                                <td><?= e($lead['contact_name'] ?: $lead['referrer_name'] ?: '—') ?></td>
                                 <td><span class="badge badge-<?= $badge((string) $lead['stage']) ?>"><?= e($lead['stage'] ?: 'New') ?></span></td>
                                 <td><?= $lead['priority'] ? '<span class="badge badge-' . $badge((string) $lead['priority']) . '">' . e($lead['priority']) . '</span>' : '—' ?></td>
                                 <td><?= $lead['estimated_value'] !== null ? e(number_format((float) $lead['estimated_value'], 2)) : '—' ?></td>

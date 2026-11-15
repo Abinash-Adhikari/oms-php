@@ -25,13 +25,13 @@ $query = [
 ];
 
 $rollbackQuery = [
-    "ALTER TABLE `tbl_client_projects` DROP FOREIGN KEY `fk_project_client`;",
-
-    "ALTER TABLE `tbl_client_projects`
-     MODIFY COLUMN `client_id` INT NOT NULL;",
-
     "ALTER TABLE `tbl_client_projects`
      ADD CONSTRAINT `fk_project_client`
      FOREIGN KEY (`client_id`) REFERENCES `tbl_clients` (`id`)
      ON DELETE CASCADE ON UPDATE CASCADE;",
+
+    "ALTER TABLE `tbl_client_projects`
+     MODIFY COLUMN `client_id` INT NOT NULL;",
+
+    "ALTER TABLE `tbl_client_projects` DROP FOREIGN KEY `fk_project_client`;",
 ];

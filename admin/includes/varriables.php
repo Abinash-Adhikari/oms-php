@@ -40,11 +40,15 @@ $icons = [
     'office_setup'     => 'nav-icon fas fa-building',
     'communication'    => 'nav-icon fas fa-envelope',
     'webcms'           => 'nav-icon fas fa-globe',
+    'correspondence'   => 'nav-icon fas fa-book-open',
 ];
 
 $modules = [
     'dashboard',
     'my_office',
+    // Directly under my_office: both belong to the MY OFFICE sidebar section,
+    // so the section header is emitted once (see $navSidebarSections).
+    'correspondence',
     'staff_management',
     'payroll',
     'sales',
@@ -68,6 +72,7 @@ $navBars = [
     'reports'          => 'Reports',
     'office_setup'     => 'Setup',
     'communication'    => 'Communication',
+    'correspondence'   => 'Correspondence',
 ];
 
 $subNavBars = [
@@ -150,6 +155,10 @@ $subNavBars = [
         'email_sms'   => 'Email/SMS',
         'templates'   => 'Templates',
         'logs'        => 'Logs',
+    ],
+    'correspondence' => [
+        'darta'   => 'Darta (Inward)',
+        'chalani' => 'Chalani (Outward)',
     ],
     'webcms' => [
         'cms_home'     => 'Home',
@@ -260,6 +269,9 @@ $subIcons = [
     'email_sms'             => 'nav-icon far fa-envelope',
     'templates'             => 'nav-icon fas fa-clone',
     'logs'                  => 'nav-icon far fa-file-code',
+    // correspondence
+    'darta'                 => 'nav-icon fas fa-inbox',
+    'chalani'               => 'nav-icon fas fa-share-square',
     // webcms
     'cms_home'              => 'nav-icon fas fa-home',
     'services'              => 'nav-icon fas fa-concierge-bell',
@@ -309,6 +321,7 @@ $pages = [
     'clients'          => ['clients'],
     'sales'            => ['leads', 'clients', 'client_projects', 'documents', 'products'],
     'communication'    => ['email_sms', 'templates', 'logs'],
+    'correspondence'   => ['darta', 'chalani'],
     'accounts'         => ['postings', 'ledger', 'bank_reconciliation', 'chart_of_account', 'fiscal_years', 'account_reports'],
     'inventory'        => ['items', 'stock', 'movements', 'categories', 'suppliers', 'purchase_requisitions', 'assets', 'reports'],
     'reports'          => ['overview', 'attendance', 'leave', 'tasks', 'leads', 'finance', 'inventory', 'staff', 'payroll', 'audit'],
@@ -388,6 +401,7 @@ $navSidebarSections = [
     'sales'            => 'SALES',
     'webcms'           => 'MARKETING',
     'communication'    => 'MARKETING',
+    'correspondence'   => 'MY OFFICE',
     'accounts'         => 'FINANCE',
     'inventory'        => 'INVENTORY',
     'reports'          => 'REPORTS',

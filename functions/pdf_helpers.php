@@ -408,7 +408,8 @@ function wordExtractBody(string $html): string
     $startTag = '<div class="doc-body">';
     $begin   = strpos($html, $startTag);
     if ($begin === false) {
-        $body = preg_replace('#<style[^>]*>.*?</style>#is', '', $html);
+        $body = preg_replace('#<head[^>]*>.*?</head>#is', '', $html);
+        $body = preg_replace('#<style[^>]*>.*?</style>#is', '', $body);
         $body = preg_replace('#<div class="doc-watermark"[^>]*>.*?</div>#is', '', $body);
         $body = preg_replace('#<div class="doc-header">.*?</div>#is', '', $body);
         $body = preg_replace('#<div class="doc-footer">.*?</div>#is', '', $body);
