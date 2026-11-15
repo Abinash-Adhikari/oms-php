@@ -72,6 +72,13 @@ try {
             setFlash('error', 'Staff not found.');
             redirect($back);
         }
+        // A super-admin account (permitted_modules 'All', Super Admin role or
+        // staff_type 'Admin') may only be edited by a super admin — otherwise
+        // a staff manager could reset its password/username and take it over.
+        if (Auth::isSuperAdmin($old) && !Auth::isSuperAdmin()) {
+            setFlash('error', 'Only a super admin can edit a super-admin account.');
+            redirect($back);
+        }
 
         // Password change (optional) — bcrypt on every change.
         if ($password !== '') {

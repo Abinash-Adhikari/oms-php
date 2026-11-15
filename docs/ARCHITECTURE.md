@@ -180,7 +180,9 @@ Super Admin: `permitted_modules = 'All'` OR role `Super Admin` OR
 existing rows that were not super admins), the add_staff form defaults new
 staff to Service, and only a super admin may grant or revoke `Admin` (the
 field is hidden from everyone else and the operation handler enforces it
-server-side; changes are audited in `tbl_staff_history`). The check is
+server-side; changes are audited in `tbl_staff_history`). Likewise only a
+super admin may edit a super-admin account at all (password, username,
+status) — this blocks a staff manager from taking one over. The check is
 **live** (DB read every request via `Auth::user()`, cached only within the
 request) — permission changes take effect on the *next request*, no cache-bust
 needed. `clearUserCache()` exists for when you mutate permissions mid-request.
