@@ -31,18 +31,15 @@ if ($data['name'] === '') {
     redirect(pageUrl('office_setup', 'office_profile'));
 }
 
-// Logo upload (X-03 whitelist).
+// Logo upload (X-03 whitelist: JPG/PNG only — the logo is also rendered in PDFs).
 if (!empty($_FILES['logo']['name'])) {
-    $check = validateUpload($_FILES['logo'], ['jpg', 'jpeg', 'png']);
-    if (!$check['ok']) {
-        setFlash('error', $check['message']);
+    // Validates, stores and re-encodes (strips EXIF, caps size) — functions/images.php.
+    $img = store_image_upload($_FILES['logo'], 'office_setup', 1024, ['jpg', 'jpeg', 'png']);
+    if (!$img['ok']) {
+        setFlash('error', 'Logo: ' . $img['message']);
         redirect(pageUrl('office_setup', 'office_profile'));
     }
-    $stored = storeUpload($_FILES['logo'], 'office_setup', $check['extension']);
-    if (!$stored) {
-        setFlash('error', 'Logo upload failed.');
-        redirect(pageUrl('office_setup', 'office_profile'));
-    }
+    $stored = $img['path'];
     // Remove previous logo file(s): current path, plus any legacy
     // `<id>.<extension>` file left by older versions of this handler.
     $old = $db->selectOne('SELECT `logo`, `logo_extension` FROM `tbl_office_profiles` WHERE `id` = ?', [$id]);
@@ -60,7 +57,7 @@ if (!empty($_FILES['logo']['name'])) {
         }
     }
     $data['logo'] = $stored;
-    $data['logo_extension'] = $check['extension'];
+    $data['logo_extension'] = strtolower(pathinfo($stored, PATHINFO_EXTENSION));
 }
 
 try {

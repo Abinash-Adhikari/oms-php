@@ -103,6 +103,7 @@ require_once $appRoot . '/functions/documents.php';
 require_once $appRoot . '/functions/sales.php';
 require_once $appRoot . '/functions/correspondence.php';
 require_once $appRoot . '/functions/pdf_helpers.php';
+require_once $appRoot . '/functions/images.php';
 
 // --- Preserve submitted form values across a failed POST (old input) ---
 age_old_input();

@@ -174,6 +174,44 @@ link. Rationale: the admin URL must not appear in the public DOM (security
 through obscurity as a *layer*, not a wall — the real protection is
 `Auth::check()` + IP allow-list + rate limiter).
 
+### 2.6 Image field with editor (admin)
+
+Filament-style image upload: drop zone + preview, and an editor modal
+(Cropper.js 1.6.2, vendored at `admin/assets/plugins/cropperjs/`) with crop,
+aspect presets (Free · 1:1 · 4:3 · 3:2 · 16:9 · 3:4, plus the field default),
+rotate, flip, zoom and reset. "Edit" also works on an already-saved image.
+
+```php
+<?= image_field_html('photo', [
+    'current' => $url,          // saved image URL ('' = none)
+    'aspect'  => 1,             // default crop ratio; omit/null = free
+    'shape'   => 'circle',      // 'rect' (default) or 'circle' (avatars)
+    'max'     => 800,           // longest output side in px
+    'types'   => ['jpg', 'jpeg', 'png'], // default adds webp, gif
+]) ?>
+```
+
+```php
+// operation handler
+$img = store_image_upload($_FILES['photo'], 'staff', 800 /*, $types */);
+if (!$img['ok']) { setFlash('error', $img['message']); redirect($back); }
+$data['photo'] = $img['path'];   // relative to user_uploads/
+```
+
+- The edited image is written back into the plain `<input type="file">`, so
+  the form posts normally (PRG + CSRF unchanged, form needs
+  `enctype="multipart/form-data"`). Without JS it degrades to a file input.
+- The server never trusts the browser: `store_image_upload()` validates the
+  extension/size, checks the bytes are a real image, applies EXIF rotation,
+  resizes to `max` and re-encodes (strips EXIF/GPS). GIFs are checked but not
+  re-encoded.
+- Images that also appear in PDFs (office logo) pass `types` JPG/PNG only.
+- Drawers that refill one form per row call `ImageField.reset(input, url)`.
+- In use: office logo, Website CMS image fields (`aspect`/`shape`/`max` per
+  field in `cms_config.php`), staff photo (Employees form).
+- Files: `functions/images.php`, `assets/js/image-field.js`, CSS block
+  "Image field + editor (imgf-*)" in `assets/css/admin.css`.
+
 ## 3. Motion & Interaction
 
 | Element | Behavior | Timing |

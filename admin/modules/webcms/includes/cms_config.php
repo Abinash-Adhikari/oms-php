@@ -4,7 +4,17 @@
  * SB-Tech — Website CMS section definitions.
  * Each section maps to a table + typed fields. Field types:
  *   text, textarea, longtext, date, number, select, checkbox,
- *   image(name_col, loc_col), file(name_col, loc_col).
+ *   image(name_col, loc_col[, aspect, shape, max]), file(name_col, loc_col),
+ *   — image fields use the editor field (image_field_html): 'aspect' = default
+ *   crop ratio (omit = free), 'shape' => 'circle' for avatars, 'max' = longest
+ *   side in px (default 1600); the server re-encodes via store_image_upload().
+ *   clients(link_table, link_fk) — zero/one/many clients stored in a link
+ *   table: website clients (tbl_cms_clients) and/or free-text names.
+ * Optional 'link_projects' => true adds a "Link portfolio items" row action
+ * (used by the 'client' section; links live in tbl_cms_project_clients).
+ * Optional 'order' is a static ORDER BY clause for the admin list; it
+ * defaults to "`position`, `id` DESC" when the section has a 'position'
+ * field, else "`id` DESC".
  * Used by the CRUD renderer and the operation handler (single source of
  * truth, so field whitelisting is automatic).
  */
@@ -20,7 +30,7 @@ function cmsSections(): array
                 'title'       => ['type' => 'text'],
                 'subtitle'    => ['type' => 'text'],
                 'description' => ['type' => 'textarea'],
-                'photo'       => ['type' => 'image', 'name' => 'photo_name', 'loc' => 'photo_location'],
+                'photo'       => ['type' => 'image', 'name' => 'photo_name', 'loc' => 'photo_location', 'aspect' => 16 / 9, 'max' => 2000],
                 'button_text' => ['type' => 'text'],
                 'button_link' => ['type' => 'text'],
                 'position'    => ['type' => 'number'],
@@ -79,7 +89,7 @@ function cmsSections(): array
             'fa'    => 'fa-project-diagram',
             'fields' => [
                 'title'             => ['type' => 'text'],
-                'client_name'       => ['type' => 'text'],
+                'clients'           => ['type' => 'clients', 'link_table' => 'tbl_cms_project_clients', 'link_fk' => 'project_id', 'hint' => 'Pick website clients or type a new name; leave empty for none'],
                 'category'          => ['type' => 'text'],
                 'short_description' => ['type' => 'textarea'],
                 'description'       => ['type' => 'longtext'],
@@ -91,7 +101,23 @@ function cmsSections(): array
                 'position'          => ['type' => 'number'],
                 'is_active'         => ['type' => 'checkbox'],
             ],
-            'list' => ['title', 'client_name', 'category', 'position', 'is_active'],
+            'list' => ['title', 'clients', 'category', 'position', 'is_active'],
+        ],
+        'client' => [
+            'table' => 'tbl_cms_clients',
+            'label' => 'Client',
+            'fa'    => 'fa-handshake',
+            'fields' => [
+                'name'         => ['type' => 'text'],
+                'company_name' => ['type' => 'text'],
+                'logo'         => ['type' => 'image', 'name' => 'logo_name', 'loc' => 'logo_location', 'hint' => 'PNG with transparent background works best', 'max' => 800],
+                'description'  => ['type' => 'textarea'],
+                'website_url'  => ['type' => 'text', 'hint' => 'https://…'],
+                'position'     => ['type' => 'number'],
+                'is_active'    => ['type' => 'checkbox'],
+            ],
+            'list' => ['name', 'company_name', 'position', 'is_active'],
+            'link_projects' => true,
         ],
         'staff' => [
             'table' => 'tbl_cms_staffs',
@@ -101,7 +127,7 @@ function cmsSections(): array
                 'name'       => ['type' => 'text'],
                 'designation'=> ['type' => 'text'],
                 'short_bio'  => ['type' => 'longtext'],
-                'image'      => ['type' => 'image', 'name' => 'image_name', 'loc' => 'image_location'],
+                'image'      => ['type' => 'image', 'name' => 'image_name', 'loc' => 'image_location', 'aspect' => 1, 'shape' => 'circle', 'max' => 800],
                 'position'   => ['type' => 'number'],
                 'is_active'  => ['type' => 'checkbox'],
             ],
@@ -115,11 +141,12 @@ function cmsSections(): array
                 'title'     => ['type' => 'text'],
                 'slug'      => ['type' => 'text', 'hint' => 'Leave blank to auto-generate'],
                 'description'=> ['type' => 'longtext'],
-                'image'     => ['type' => 'image', 'name' => 'image_name', 'loc' => 'image_location'],
+                'image'     => ['type' => 'image', 'name' => 'image_name', 'loc' => 'image_location', 'aspect' => 16 / 9],
                 'news_date' => ['type' => 'date'],
                 'is_active' => ['type' => 'checkbox'],
             ],
             'list' => ['title', 'news_date', 'is_active'],
+            'order' => '`news_date` DESC, `id` DESC',
             'slug_from' => 'title',
         ],
         'notice' => [
@@ -134,6 +161,7 @@ function cmsSections(): array
                 'is_active'   => ['type' => 'checkbox'],
             ],
             'list' => ['title', 'notice_date', 'is_active'],
+            'order' => '`notice_date` DESC, `id` DESC',
         ],
         'career' => [
             'table' => 'tbl_cms_careers',
@@ -171,4 +199,41 @@ function slugify(string $text): string
     $text = preg_replace('/[^a-z0-9]+/', '-', $text);
     $text = trim((string) $text, '-');
     return $text ?: 'item-' . substr(bin2hex(random_bytes(4)), 0, 8);
+}
+
+/**
+ * Clients of the given rows for a 'clients' field, keyed by row id.
+ * Website clients show their current name (falls back to the stored snapshot).
+ * Table/column names come from cms_config.php only (never request input).
+ *
+ * @param array<int, int> $rowIds
+ * @return array<int, list<array{client_id: ?int, name: string}>>
+ */
+function cmsLinkedClients(Database $db, array $field, array $rowIds): array
+{
+    if ($rowIds === []) {
+        return [];
+    }
+    $rows = $db->select(
+        'SELECT l.`' . $field['link_fk'] . '` AS row_id, l.`cms_client_id` AS client_id, COALESCE(c.`name`, l.`client_name`) AS name
+         FROM `' . $field['link_table'] . '` l
+         LEFT JOIN `tbl_cms_clients` c ON c.`id` = l.`cms_client_id`
+         WHERE l.`' . $field['link_fk'] . '` IN (' . implode(',', array_fill(0, count($rowIds), '?')) . ')
+         ORDER BY l.`position`, l.`id`',
+        array_values(array_map('intval', $rowIds))
+    );
+    $map = [];
+    foreach ($rows as $r) {
+        $map[(int) $r['row_id']][] = [
+            'client_id' => $r['client_id'] !== null ? (int) $r['client_id'] : null,
+            'name'      => (string) $r['name'],
+        ];
+    }
+    return $map;
+}
+
+/** Form value for a linked client: "client:<id>" for website clients, else the name. */
+function cmsClientValue(array $client): string
+{
+    return $client['client_id'] !== null ? 'client:' . $client['client_id'] : $client['name'];
 }

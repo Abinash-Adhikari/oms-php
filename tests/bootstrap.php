@@ -85,3 +85,4 @@ require_once __DIR__ . '/../functions/accounting.php';
 require_once __DIR__ . '/../functions/analytics.php';
 require_once __DIR__ . '/../functions/payroll.php';
 require_once __DIR__ . '/../functions/correspondence.php';
+require_once __DIR__ . '/../functions/images.php';

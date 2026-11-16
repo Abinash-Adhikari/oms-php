@@ -220,4 +220,43 @@ class SalesTest extends TestCase
             $db->delete('tbl_leads', '`id` = ?', [$leadId]);
         }
     }
+
+    // --- normalize_portfolio_clients (pure) --------------------------------
+
+    public function testPortfolioClientsMixSalesAndFreeTextInOrder(): void
+    {
+        $out = normalize_portfolio_clients(
+            ['client:7', '  Ministry of Agriculture  ', 'client:9'],
+            [7 => 'Himalayan Bank Ltd.', 9 => 'Nepal Tourism Board']
+        );
+        $this->assertSame([
+            ['client_id' => 7, 'client_name' => 'Himalayan Bank Ltd.'],
+            ['client_id' => null, 'client_name' => 'Ministry of Agriculture'],
+            ['client_id' => 9, 'client_name' => 'Nepal Tourism Board'],
+        ], $out);
+    }
+
+    public function testPortfolioClientsEmptyMeansNoClients(): void
+    {
+        $this->assertSame([], normalize_portfolio_clients([], [7 => 'X']));
+        $this->assertSame([], normalize_portfolio_clients(['', '   ', null], [7 => 'X']));
+    }
+
+    public function testPortfolioClientsDropsUnknownIdsAndDuplicates(): void
+    {
+        $out = normalize_portfolio_clients(
+            ['client:7', 'client:7', 'client:999', 'Acme', 'ACME ', ['nested']],
+            [7 => 'Himalayan Bank Ltd.']
+        );
+        $this->assertSame([
+            ['client_id' => 7, 'client_name' => 'Himalayan Bank Ltd.'],
+            ['client_id' => null, 'client_name' => 'Acme'],
+        ], $out);
+    }
+
+    public function testPortfolioClientsCapsNameLength(): void
+    {
+        $out = normalize_portfolio_clients([str_repeat('a', 300)], []);
+        $this->assertSame(191, mb_strlen($out[0]['client_name']));
+    }
 }

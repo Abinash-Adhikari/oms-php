@@ -210,6 +210,26 @@ if ($showDartaTile) {
     ];
 }
 
+// Self check-in/out for regular staff (super admins don't log attendance).
+// Posts to dashboard/operation/home.php, which reuses the HR Care handler.
+$showSelfAttendance = !Auth::isSuperAdmin();
+$myAttendance = null;
+$myShift = null;
+$myElapsedSec = 0;
+if ($showSelfAttendance) {
+    $myAttendance = $db->selectOne(
+        'SELECT `checkin`, `checkout`, `late_checkin`, `late_checkin_minutes`, `working_hours`
+         FROM `tbl_staff_attendances` WHERE `user_id` = ? AND `date` = ?',
+        [(int) Auth::id(), $today]
+    );
+    $myShift = $db->selectOne('SELECT `checkin`, `checkout` FROM `tbl_users_login` WHERE `id` = ?', [(int) Auth::id()]);
+    if (!empty($myAttendance['checkin']) && empty($myAttendance['checkout'])) {
+        $myElapsedSec = max(0, time() - (int) strtotime($today . ' ' . $myAttendance['checkin']));
+    }
+}
+$punchState = empty($myAttendance['checkin']) ? 'out' : (empty($myAttendance['checkout']) ? 'in' : 'done');
+$hhmm = static fn ($t): string => $t ? date('g:i A', (int) strtotime('2000-01-01 ' . $t)) : '';
+
 $stageMax = max(1, ...array_map(static fn ($s) => $stageRows[$s]['count'] ?? 0, LEAD_OPEN_STAGES));
 ?>
 
@@ -218,17 +238,80 @@ $stageMax = max(1, ...array_map(static fn ($s) => $stageRows[$s]['count'] ?? 0, 
         <h2 class="ana-hello__title"><?= e($greeting . ($firstName !== '' ? ', ' . $firstName : '')) ?></h2>
         <span class="ana-hello__date"><?= e(formatDateViewLong($today)) ?><?= $activeFy ? ' · ' . e($activeFy) : '' ?></span>
     </div>
-    <div class="ana-chips" aria-label="Needs attention">
-        <?php if ($attention): ?>
-            <?php foreach ($attention as $a): ?>
-                <a href="<?= e($a['href']) ?>" class="ana-chip ana-chip--<?= e($a['tone']) ?>">
-                    <i class="<?= e($a['icon']) ?>" aria-hidden="true"></i><strong><?= (int) $a['n'] ?></strong> <?= e($a['label']) ?>
-                </a>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <span class="ana-chip ana-chip--good"><i class="fas fa-check-circle" aria-hidden="true"></i>Nothing needs attention</span>
+
+    <?php if ($showSelfAttendance): ?>
+        <?php
+        $shiftLabel = (!empty($myShift['checkin']) && !empty($myShift['checkout']))
+            ? 'Shift ' . $hhmm($myShift['checkin']) . ' – ' . $hhmm($myShift['checkout'])
+            : 'No shift set';
+        ?>
+        <section class="ana-punch ana-punch--<?= e($punchState) ?>" aria-label="My attendance today">
+            <span class="ana-punch__icon" aria-hidden="true">
+                <i class="fas <?= $punchState === 'done' ? 'fa-check' : ($punchState === 'in' ? 'fa-user-clock' : 'fa-fingerprint') ?>"></i>
+            </span>
+            <div class="ana-punch__body">
+                <?php if ($punchState === 'out'): ?>
+                    <span class="ana-punch__title">You haven't checked in yet</span>
+                    <span class="ana-punch__meta"><?= e($shiftLabel) ?></span>
+                <?php elseif ($punchState === 'in'): ?>
+                    <span class="ana-punch__title">
+                        On the clock · <span class="ana-punch__timer" data-elapsed="<?= (int) $myElapsedSec ?>"><?= e(sprintf('%dh %02dm', intdiv($myElapsedSec, 3600), intdiv($myElapsedSec % 3600, 60))) ?></span>
+                    </span>
+                    <span class="ana-punch__meta">
+                        In at <?= e($hhmm($myAttendance['checkin'])) ?>
+                        <?php if (!empty($myAttendance['late_checkin'])): ?>
+                            <span class="ana-pill ana-pill--warning ml-1"><?= (int) $myAttendance['late_checkin_minutes'] ?>m late</span>
+                        <?php endif; ?>
+                    </span>
+                <?php else: ?>
+                    <span class="ana-punch__title">Day complete</span>
+                    <span class="ana-punch__meta">
+                        <?= e($hhmm($myAttendance['checkin'])) ?> – <?= e($hhmm($myAttendance['checkout'])) ?>
+                        · <?= e(number_format((float) $myAttendance['working_hours'], 1)) ?> h worked
+                    </span>
+                <?php endif; ?>
+            </div>
+            <?php if ($punchState !== 'done'): ?>
+                <form action="operation.php?module=dashboard&page=home" method="post" class="ana-punch__form">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="<?= $punchState === 'out' ? 'checkin' : 'checkout' ?>">
+                    <?php if ($punchState === 'out'): ?>
+                        <button type="submit" class="btn btn-primary ana-punch__btn"><i class="fas fa-sign-in-alt mr-1" aria-hidden="true"></i>Check in</button>
+                    <?php else: ?>
+                        <button type="submit" class="btn btn-outline-secondary ana-punch__btn confirm-submit" data-confirm="Check out for today? You can only check out once."><i class="fas fa-sign-out-alt mr-1" aria-hidden="true"></i>Check out</button>
+                    <?php endif; ?>
+                </form>
+            <?php endif; ?>
+        </section>
+        <?php if ($punchState === 'in'): ?>
+            <script>
+            // Live "on the clock" timer; server supplies the starting offset.
+            (function () {
+                var el = document.querySelector('.ana-punch__timer');
+                if (!el) { return; }
+                var start = Date.now() - (parseInt(el.getAttribute('data-elapsed'), 10) || 0) * 1000;
+                function tick() {
+                    var s = Math.floor((Date.now() - start) / 1000);
+                    var m = Math.floor(s / 60) % 60;
+                    el.textContent = Math.floor(s / 3600) + 'h ' + (m < 10 ? '0' : '') + m + 'm';
+                }
+                setInterval(tick, 30000);
+            })();
+            </script>
         <?php endif; ?>
-    </div>
+    <?php endif; ?>
+</div>
+
+<div class="ana-chips ana-chips--row" aria-label="Needs attention">
+    <?php if ($attention): ?>
+        <?php foreach ($attention as $a): ?>
+            <a href="<?= e($a['href']) ?>" class="ana-chip ana-chip--<?= e($a['tone']) ?>">
+                <i class="<?= e($a['icon']) ?>" aria-hidden="true"></i><strong><?= (int) $a['n'] ?></strong> <?= e($a['label']) ?>
+            </a>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <span class="ana-chip ana-chip--good"><i class="fas fa-check-circle" aria-hidden="true"></i>Nothing needs attention</span>
+    <?php endif; ?>
 </div>
 
 <div class="ana-grid"<?= $showDartaTile ? ' style="--ana-cols:5"' : '' ?>>

@@ -254,5 +254,18 @@ $files = [
     // --- BS calendar: correct month lengths for 2081, 2082, 2083 ---
     'seed-table-calendar-fix-2081-2083',
 
+    // --- Website CMS: logo + favicon on site setup ---
+    'alter-table-cms_setup-add-logo-favicon',
+
+    // --- Website CMS: portfolio items with zero/one/many clients ---
+    'create-table-cms_project_clients',
+    'alter-table-cms_projects-drop-client_name',
+
+    // --- Website CMS: showcase clients (logo carousel) linked to portfolio ---
+    'create-table-cms_clients',
+    'alter-table-cms_project_clients-link-cms-clients',
+
+    'alter-table-users_login-add-photo',
+
     // Append new migration filenames below only (do not insert in the middle).
 ];

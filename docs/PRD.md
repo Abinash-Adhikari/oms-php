@@ -134,7 +134,7 @@ Give SB-Tech one internal system to run the office: staff & HR operations (atten
 - AC-STF-03.3: Terminated staff remain visible in a "Terminated staffs" list and in historical records (leave, tasks, attendance).
 
 **US-STF-04** — As a staff member, I want to record my daily tasks so that managers can see what I did.
-- AC-STF-04.1: Daily task entry: date + free-text tasks; editable same day; visible to admin/manager; monthly view.
+- AC-STF-04.1: Daily task entry: date + rich-text tasks (Summernote, sanitized on save); editable same day; visible to admin/manager; monthly view.
 
 ### 4.4 Attendance (ATT)
 
@@ -143,6 +143,7 @@ Give SB-Tech one internal system to run the office: staff & HR operations (atten
 - AC-ATT-01.2: Check-in stamps current time; if `checkin > config_checkin`, `checkin_delay` (minutes) and `late_checkin` flag are computed; optional reason field.
 - AC-ATT-01.3: Check-out stamps time, computes `checkout_early` and `working_hours`; optional reason field.
 - AC-ATT-01.4: A user can check in/out only once per day unless admin adjusts; `allow_checkin_by_other` (per staff) permits a colleague to record on their behalf.
+- AC-ATT-01.6: Non-super-admin staff can check in / check out for themselves directly from the dashboard (no HR Care grant needed; `dashboard/operation/home.php`).
 - AC-ATT-01.5: Status auto-set: present (checked in), absent (no check-in by EOD), leave (approved leave covers date), holiday (office holiday).
 
 **US-ATT-02** — As an admin, I want to view all attendance so that I can monitor punctuality and hours.

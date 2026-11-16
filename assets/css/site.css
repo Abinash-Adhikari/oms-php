@@ -619,8 +619,19 @@ blockquote p {
 }
 
 .section-intro h2 {
-    display: inline-block;
+    display: block;
     margin-bottom: 1rem;
+}
+
+/* Eyebrow above a section heading: always on its own line (badge on top,
+   heading below). display:table keeps the pill shrink-wrapped and lets
+   text-align/auto margins centre it inside .section-intro. */
+.eyebrow-badge.mb-3 {
+    display: table;
+}
+.section-intro .eyebrow-badge {
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* ── Service / project card internals ── */
@@ -963,4 +974,84 @@ a.feed-title:hover {
         color: #000;
         background: #fff;
     }
+}
+/* ── Clients: home logo carousel (CSS marquee) + /clients cards ── */
+.client-strip {
+    background: var(--bg-body);
+    overflow: hidden;
+}
+.client-marquee {
+    position: relative;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+.client-marquee-track {
+    display: flex;
+    width: max-content;
+    animation: client-marquee 40s linear infinite;
+}
+.client-marquee:hover .client-marquee-track,
+.client-marquee:focus-within .client-marquee-track {
+    animation-play-state: paused;
+}
+.client-marquee-list {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+    list-style: none;
+    margin: 0;
+    padding: 0 1.5rem;
+}
+.client-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 64px;
+    min-width: 120px;
+    filter: grayscale(1);
+    opacity: 0.7;
+    transition: filter 0.2s, opacity 0.2s;
+}
+.client-logo:hover,
+.client-logo:focus {
+    filter: none;
+    opacity: 1;
+}
+.client-logo img {
+    max-height: 56px;
+    max-width: 160px;
+    object-fit: contain;
+}
+.client-logo-text {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+@keyframes client-marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .client-marquee { -webkit-mask-image: none; mask-image: none; }
+    .client-marquee-track { animation: none; width: auto; }
+    .client-marquee-list { flex-wrap: wrap; justify-content: center; row-gap: 1.5rem; }
+    .client-marquee-list[aria-hidden="true"],
+    .client-marquee-list .is-dup { display: none; }
+}
+.client-card-logo {
+    height: 72px;
+    display: flex;
+    align-items: center;
+}
+.client-card-logo img {
+    max-height: 72px;
+    max-width: 180px;
+    object-fit: contain;
+}
+.client-card:target,
+:target > .client-card {
+    box-shadow: 0 0 0 3px var(--accent);
 }

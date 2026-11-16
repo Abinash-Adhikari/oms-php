@@ -64,6 +64,50 @@ function siteRows(string $table, string $orderBy = '`id`', string $columns = '*'
     );
 }
 
+/**
+ * Clients of a public portfolio item (tbl_cms_project_clients), in order.
+ * Website clients show their current name and, when active, their id (so the
+ * caller can link to /clients#client-<id>); free-text names have id null.
+ *
+ * @return list<array{id: ?int, name: string}> empty when the item has no clients.
+ */
+function siteProjectClients(int $projectId): array
+{
+    $rows = Database::instance()->select(
+        'SELECT IF(c.`is_active` = 1, c.`id`, NULL) AS id, COALESCE(c.`name`, pc.`client_name`) AS name
+         FROM `tbl_cms_project_clients` pc
+         LEFT JOIN `tbl_cms_clients` c ON c.`id` = pc.`cms_client_id`
+         WHERE pc.`project_id` = ?
+         ORDER BY pc.`position`, pc.`id`',
+        [$projectId]
+    );
+    return array_map(static fn ($r) => [
+        'id'   => $r['id'] !== null ? (int) $r['id'] : null,
+        'name' => (string) $r['name'],
+    ], $rows);
+}
+
+/**
+ * Active portfolio items per active website client, for the /clients page.
+ *
+ * @return array<int, list<array{slug: string, title: string}>> keyed by client id.
+ */
+function siteClientProjects(): array
+{
+    $rows = Database::instance()->select(
+        'SELECT pc.`cms_client_id`, p.`slug`, p.`title`
+         FROM `tbl_cms_project_clients` pc
+         JOIN `tbl_cms_projects` p ON p.`id` = pc.`project_id` AND p.`is_active` = 1
+         WHERE pc.`cms_client_id` IS NOT NULL
+         ORDER BY p.`position`, p.`id` DESC'
+    );
+    $map = [];
+    foreach ($rows as $r) {
+        $map[(int) $r['cms_client_id']][] = ['slug' => (string) $r['slug'], 'title' => (string) $r['title']];
+    }
+    return $map;
+}
+
 /** Current page key for nav highlighting. */
 $sitePage = basename($_SERVER['PHP_SELF'], '.php');
 if ($sitePage === 'index') {

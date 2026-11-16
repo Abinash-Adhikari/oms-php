@@ -83,6 +83,23 @@ if ($mode === 'list'):
                     <div class="card card-primary">
                         <div class="card-header"><h3 class="card-title">Personal Details</h3></div>
                         <div class="card-body">
+                            <?php $photoUrl = ($edit && !empty($edit['photo'])) ? assetUrl('user_uploads/' . ltrim((string) $edit['photo'], '/')) : ''; ?>
+                            <div class="form-group">
+                                <label class="d-block text-center">Photo</label>
+                                <?= image_field_html('photo', [
+                                    'current' => $photoUrl,
+                                    'aspect'  => 1,
+                                    'shape'   => 'circle',
+                                    'max'     => 800,
+                                    'empty'   => 'Add photo',
+                                ]) ?>
+                                <?php if ($photoUrl !== ''): ?>
+                                    <div class="custom-control custom-checkbox text-center mt-1">
+                                        <input type="checkbox" class="custom-control-input" id="removePhoto" name="remove_photo" value="1">
+                                        <label class="custom-control-label small text-muted" for="removePhoto">Remove photo</label>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                             <div class="form-group"><label>Full name *</label>
                                 <input type="text" name="fullname" class="form-control" required value="<?= e(old('fullname', $edit ? $edit['fullname'] : '')) ?>"></div>
                             <div class="row">

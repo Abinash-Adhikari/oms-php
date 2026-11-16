@@ -135,6 +135,24 @@ foreach (($navBadgeQueries ?? []) as $key => $b) {
                         continue;
                     }
 
+                    // Flat module: each submodule is its own top-level item
+                    // (same URLs/permissions, no collapsible parent).
+                    if (in_array($m, $flatNavModules ?? [], true)) {
+                        foreach ($subs as $subKey => $subLabel) {
+                            $subActive = $moduleActive && (strcasecmp($activePage, (string) $subKey) === 0);
+                            $subIcon = $subIcons[$m . '.' . $subKey] ?? $subIcons[(string) $subKey] ?? 'nav-icon far fa-circle';
+                            $badge = $navBadges[(string) $subKey] ?? null;
+                            echo '<li class="nav-item cms-nav-flat" data-search="' . e(strtolower($subLabel . ' ' . $label)) . '">';
+                            echo '<a href="' . pageUrl($m, (string) $subKey) . '" class="nav-link' . ($subActive ? ' active' : '') . '">';
+                            echo '<i class="' . e($subIcon) . '"></i><p>' . e($subLabel);
+                            if ($badge !== null) {
+                                echo '<span class="nav-badge-count" title="' . e($badge['title']) . '">' . ($badge['count'] > 99 ? '99+' : (int) $badge['count']) . '</span>';
+                            }
+                            echo '</p></a></li>';
+                        }
+                        continue;
+                    }
+
                     // Treeview module with submodule children.
                     $searchHaystack = strtolower($label . ' ' . implode(' ', $subs));
                     echo '<li class="nav-item' . ($moduleActive ? ' menu-open' : '') . '" data-search="' . e($searchHaystack) . '">';

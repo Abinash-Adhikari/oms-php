@@ -13,6 +13,7 @@ screen owns each step.
 | **Sales Document** | Quotation, invoice, contract… | Sales → Sales Documents | `tbl_documents` |
 | **Product** | Something we sell (ERP, POS, Website…) | Sales → Products | `tbl_projects` |
 | **Portfolio** | Work shown on the public website (marketing only) | Website CMS → Portfolio | `tbl_cms_projects` |
+| **Website Client** | A client shown publicly (logo carousel, /clients page), linkable to Portfolio items. Separate from Sales Clients — add one here only if the client agreed to be showcased | Website CMS → Clients | `tbl_cms_clients` |
 
 A Client is a **Customer** once it has at least one won Client Project.
 Until then it is a **Prospect**.
@@ -23,7 +24,7 @@ Until then it is a **Prospect**.
 SALES
   Sales             Leads · Clients · Client Projects · Sales Documents · Products
 MARKETING
-  Website CMS       (… Portfolio …)
+  Website CMS       (… Portfolio · Clients …)
   Communication
 ```
 

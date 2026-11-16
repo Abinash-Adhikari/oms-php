@@ -5,6 +5,7 @@ $heroes = siteRows('tbl_cms_hero', '`position`, `id`', '`id`, `title`, `subtitle
 $services = siteRows('tbl_cms_services', '`position`, `id`', '`id`, `slug`, `title`, `short_description`, `icon`');
 $projects = siteRows('tbl_cms_projects', '`position`, `id` DESC', '`id`, `slug`, `title`, `short_description`, `image_location`');
 $abouts = siteRows('tbl_cms_abouts', '`id`', '`id`, `title`, `description`, `image_location`');
+$clients = siteRows('tbl_cms_clients', '`position`, `id`', '`id`, `name`, `company_name`, `logo_location`');
 $testimonials = siteRows('tbl_cms_testimonials', '`position`, `id`', '`id`, `rating`, `testimonial`, `client_name`, `client_company`');
 $news = $db->select('SELECT `id`, `slug`, `title`, `news_date` FROM `tbl_cms_news` WHERE `is_active` = 1 ORDER BY `news_date` DESC LIMIT 3');
 $notices = $db->select('SELECT `id`, `title`, `notice_date`, `file_location` FROM `tbl_cms_notices` WHERE `is_active` = 1 ORDER BY `notice_date` DESC LIMIT 4');
@@ -92,7 +93,7 @@ require __DIR__ . '/website/includes/header.php';
                 <div class="row align-items-center" data-reveal-group>
                     <div class="col-lg-6 mb-4 mb-lg-0 reveal">
                         <span class="badge eyebrow-badge mb-3">About Us</span>
-                        <h2 class="mb-4" style="display: inline-block;"><?= e($a['title']) ?></h2>
+                        <h2 class="mb-4"><?= e($a['title']) ?></h2>
                         <p style="color: var(--text-secondary); font-size: 1.0625rem; line-height: 1.8;" class="mb-4"><?= nl2br(e($a['description'])) ?></p>
                         <div class="d-flex flex-wrap">
                             <a href="<?= siteUrl('about') ?>" class="btn btn-primary btn-lg mr-3">
@@ -142,6 +143,47 @@ require __DIR__ . '/website/includes/header.php';
                     </div>
                 <?php endforeach; ?>
             </div>
+        </div>
+    </section>
+<?php endif; ?>
+
+<?php if ($clients): ?>
+    <section class="client-strip" aria-labelledby="clients-heading">
+        <div class="container">
+            <div class="text-center mb-4 section-intro">
+                <span class="badge eyebrow-badge mb-3">Our clients</span>
+                <h2 id="clients-heading">Trusted by</h2>
+            </div>
+        </div>
+        <?php
+        // Repeat the list so the marquee track is wide enough to loop seamlessly.
+        $loopClients = $clients;
+        while (count($loopClients) < 8) {
+            $loopClients = array_merge($loopClients, $clients);
+        }
+        ?>
+        <div class="client-marquee">
+            <div class="client-marquee-track">
+                <?php foreach ([false, true] as $isCopy): ?>
+                    <ul class="client-marquee-list"<?= $isCopy ? ' aria-hidden="true"' : '' ?>>
+                        <?php foreach ($loopClients as $li => $c): ?>
+                            <?php $dup = $isCopy || $li >= count($clients); ?>
+                            <li<?= $dup ? ' class="is-dup"' : '' ?>>
+                                <a href="<?= siteUrl('clients') ?>#client-<?= (int) $c['id'] ?>" class="client-logo"<?= $dup ? ' tabindex="-1"' : '' ?> title="<?= e($c['name'] . ($c['company_name'] ? ' — ' . $c['company_name'] : '')) ?>">
+                                    <?php if ($c['logo_location']): ?>
+                                        <img src="<?= e(siteUrl('user_uploads/' . $c['logo_location'])) ?>" alt="<?= $dup ? '' : e($c['name']) ?>" loading="lazy">
+                                    <?php else: ?>
+                                        <span class="client-logo-text"><?= e($c['name']) ?></span>
+                                    <?php endif; ?>
+                                </a>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="<?= siteUrl('clients') ?>" class="btn btn-sm btn-link" style="color: var(--accent); text-decoration: none;">View all clients <i class="fas fa-arrow-right ml-1"></i></a>
         </div>
     </section>
 <?php endif; ?>

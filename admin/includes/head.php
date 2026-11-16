@@ -126,6 +126,7 @@ $orgName   = office_display_name();
     <link rel="stylesheet" href="./assets/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
     <link rel="stylesheet" href="./assets/plugins/toastr/toastr.min.css">
     <link href="theme2/assets/plugins/summernote/summernote-bs4.min.css" rel="stylesheet">
+    <link href="./assets/plugins/cropperjs/cropper.min.css" rel="stylesheet">
 
     <!-- Nepali Datepicker (B.S. UI; v3.7 NepaliFunctions for conversion) -->
     <link rel="stylesheet" href="theme2/assets/css/nepali.datepicker.v3.7.min.css">
@@ -177,5 +178,8 @@ $orgName   = office_display_name();
 
 </head>
 
-<body class="hold-transition sidebar-mini layout-fixed cms-admin cms-staff-app">
+<?php
+$bodyCollapse = in_array(($permissionModule ?? '') . '.' . ($page ?? ''), $collapsedSidebarPages ?? [], true) ? ' sidebar-collapse' : '';
+?>
+<body class="hold-transition sidebar-mini layout-fixed cms-admin cms-staff-app<?= $bodyCollapse ?>">
     <div class="wrapper">

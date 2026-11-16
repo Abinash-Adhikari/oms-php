@@ -128,22 +128,14 @@ if ($logoUrl === '' && !empty($profile['logo_extension'])) {
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header"><h3 class="card-title">Logo</h3></div>
-                <div class="card-body text-center">
-                    <?php if ($logoUrl): ?>
-                        <img src="<?= e($logoUrl) ?>" alt="Office logo" class="img-fluid mb-3" style="max-height:120px">
-                    <?php else: ?>
-                        <p class="text-muted">No logo uploaded.</p>
-                    <?php endif; ?>
-                    <div class="file-upload-widget text-left" data-preview="true" data-title="false">
-                        <div class="file-upload-preview"></div>
-                        <div class="form-group mb-0 mt-2">
-                            <label class="btn btn-outline-primary btn-block mb-0" style="cursor:pointer">
-                                <i class="fas fa-cloud-upload-alt mr-1"></i>Choose logo (jpg/png)
-                                <input type="file" class="file-upload-input d-none" name="logo" accept=".jpg,.jpeg,.png">
-                            </label>
-                            <small class="text-muted d-block mt-1" style="font-size:.72rem">Max 10 MB · JPG, JPEG, PNG</small>
-                        </div>
-                    </div>
+                <div class="card-body">
+                    <?= image_field_html('logo', [
+                        'current' => $logoUrl,
+                        'max'     => 1024,
+                        'types'   => ['jpg', 'jpeg', 'png'], // logo also renders in PDFs (no WebP/GIF)
+                        'hint'    => 'PNG with transparent background works best · JPG/PNG, max 10 MB',
+                        'empty'   => 'Drop your logo here or click to browse',
+                    ]) ?>
                 </div>
             </div>
         </div>

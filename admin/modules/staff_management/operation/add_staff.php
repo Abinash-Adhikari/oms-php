@@ -3,6 +3,8 @@
  * SB-Tech — staff create/update/terminate (US-STF-01, US-STF-03).
  * Included by admin/operation.php (CSRF + permission already verified).
  * Every change records a staff-history event (AC-STF-03.1).
+ * Optional profile photo: $_FILES['photo'] (store_image_upload, max 800px,
+ * old file deleted on replace) or remove_photo=1 to clear it.
  */
 $db = Database::instance();
 $back = pageUrl('staff_management', 'add_staff');
@@ -64,6 +66,28 @@ $profileData = [
     'emergency_contact_mobile' => trim((string) ($_POST['emergency_contact_mobile'] ?? '')),
     'emergency_contact_relation' => trim((string) ($_POST['emergency_contact_relation'] ?? '')),
 ];
+
+// Profile photo (image editor field → validated, stored, re-encoded). If
+// the save fails after this point, the shutdown hook removes the new file
+// so a rejected form never leaves an orphan upload behind.
+$newPhoto = null;
+$photoCommitted = false;
+if (!empty($_FILES['photo']['name'])) {
+    $img = store_image_upload($_FILES['photo'], 'staff', 800);
+    if (!$img['ok']) {
+        setFlash('error', 'Photo: ' . $img['message']);
+        redirect($back);
+    }
+    $newPhoto = $img['path'];
+    $loginData['photo'] = $newPhoto;
+    register_shutdown_function(static function () use (&$photoCommitted, $newPhoto): void {
+        if (!$photoCommitted || !empty($_SESSION['flash']['error'])) {
+            @unlink(dirname(__DIR__, 4) . '/user_uploads/' . $newPhoto);
+        }
+    });
+} elseif (!empty($_POST['remove_photo'])) {
+    $loginData['photo'] = null;
+}
 
 try {
     if ($id > 0) {
@@ -146,6 +170,15 @@ try {
 
         $loginData['updated_by'] = Auth::id();
         $db->update('tbl_users_login', $loginData, '`id` = ?', [$id]);
+        $photoCommitted = true;
+
+        // Replaced or removed photo: delete the previous file.
+        if (array_key_exists('photo', $loginData) && !empty($old['photo']) && $old['photo'] !== $loginData['photo']) {
+            $oldPhoto = dirname(__DIR__, 4) . '/user_uploads/' . ltrim((string) $old['photo'], '/');
+            if (is_file($oldPhoto)) {
+                @unlink($oldPhoto);
+            }
+        }
 
         // Audit log (X-08).
         $auditNew = array_diff_key($loginData, array_flip(['password', 'salt']));
@@ -186,6 +219,7 @@ try {
         }
 
         $newId = $db->insert('tbl_users_login', $loginData);
+        $photoCommitted = true;
 
         $profileData['user_id'] = $newId;
         $profileData['added_by'] = Auth::id();

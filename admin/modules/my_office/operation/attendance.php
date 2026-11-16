@@ -15,7 +15,8 @@ $canSeeAll = Auth::isSuperAdmin() || Auth::hasSpecial('view_all_attendance');
 $action = (string) ($_POST['action'] ?? '');
 $today = date('Y-m-d');
 
-$back = 'show_page.php?module=staff_management&page=hr_care&tab=attendance';
+// Callers (e.g. dashboard/operation/home.php) may set $attendanceBack.
+$back = $attendanceBack ?? 'show_page.php?module=staff_management&page=hr_care&tab=attendance';
 
 /** Resolve the attendance target: self, or a proxy-selected colleague. */
 function attendanceTarget(Database $db, int $me, bool $canSeeAll, array $post): array

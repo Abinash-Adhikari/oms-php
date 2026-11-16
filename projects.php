@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/website/includes/site.php';
-$projects = siteRows('tbl_cms_projects', '`position`, `id` DESC', '`id`, `slug`, `title`, `client_name`, `category`, `short_description`, `description`, `technologies`, `project_url`, `image_location`');
+$projects = siteRows('tbl_cms_projects', '`position`, `id` DESC', '`id`, `slug`, `title`, `category`, `short_description`, `description`, `technologies`, `project_url`, `image_location`');
 $detail = null;
 if (isset($_GET['slug']) && $_GET['slug'] !== '') {
     $slug = preg_replace('/[^a-z0-9-]/', '', strtolower($_GET['slug']));
@@ -35,7 +35,12 @@ require __DIR__ . '/website/includes/header.php';
         <?php if ($detail): ?>
             <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="<?= siteUrl('projects') ?>">Projects</a></li><li class="breadcrumb-item active"><?= e($detail['title']) ?></li></ol></nav>
             <h1><?= e($detail['title']) ?></h1>
-            <?php if ($detail['client_name']): ?><p>Client: <?= e($detail['client_name']) ?></p><?php endif; ?>
+            <?php $detailClients = siteProjectClients((int) $detail['id']); ?>
+            <?php if ($detailClients): ?>
+                <p><?= count($detailClients) > 1 ? 'Clients' : 'Client' ?>:
+                    <?php foreach ($detailClients as $ci => $dc): ?><?= $ci > 0 ? ', ' : '' ?><?php if ($dc['id'] !== null): ?><a href="<?= siteUrl('clients') ?>#client-<?= (int) $dc['id'] ?>" style="color: inherit; text-decoration: underline;"><?= e($dc['name']) ?></a><?php else: ?><?= e($dc['name']) ?><?php endif; ?><?php endforeach; ?>
+                </p>
+            <?php endif; ?>
         <?php else: ?>
             <h1>Our projects</h1>
             <p>A portfolio of work we're proud of</p>

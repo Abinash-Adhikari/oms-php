@@ -90,6 +90,7 @@
 <script src="./assets/plugins/sweetalert2/sweetalert2.min.js"></script>
 <script src="./assets/plugins/toastr/toastr.min.js"></script>
 <script src="./assets/plugins/summernote/summernote-bs4.min.js"></script>
+<script src="./assets/plugins/cropperjs/cropper.min.js"></script>
 <script src="theme2/assets/plugins/tinymce/tinymce.min.js"></script>
 
 <!-- Date/Time Pickers -->
@@ -633,6 +634,7 @@ function getNepaliDateInput(input) {
 
 <!-- SB-Tech module helpers (kept from the original codegenexis shell) -->
 <script src="<?= assetUrl('assets/js/admin.js') ?>"></script>
+<script src="<?= assetUrl('assets/js/image-field.js') ?>"></script>
 <script src="<?= assetUrl('assets/js/file-upload-preview.js') ?>"></script>
 <script src="<?= assetUrl('assets/js/file-preview.js') ?>"></script>
 <script src="<?= assetUrl('assets/js/file-gallery.js') ?>"></script>

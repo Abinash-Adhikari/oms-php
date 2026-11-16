@@ -22,7 +22,7 @@ MAIN      Dashboard
 OFFICE    My Office (HR Care: Profile · Tasks · Meetings · Speak Up · Attendance · Leaves ·
           Expense Claims) · Office Calendar · Office Spaces
 STAFF     Staffs · Daily Tasks · Leave Management · Module Permission · Staff History · Terminated Staffs
-SALES     Leads · Clients
+SALES     Leads · Clients · Client Projects · Sales Documents · Products  (flat items; one `sales` module)
 FINANCE   Posting (Vouchers) · Ledger · Account Reports · Expense Claims · Fiscal Years · Bank Reconciliation
 OFFICE    Office Setup (Profile · Departments · Designations · Holidays · Bank Details · Meeting Halls · Documents)
 COMMS     Email/SMS · Templates · Logs

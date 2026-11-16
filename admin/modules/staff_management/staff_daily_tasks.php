@@ -3,6 +3,8 @@
  * SB-Tech — Staff Management / Daily Tasks.
  * Staff log their day's tasks (one entry per staff per date). Admins can
  * view/edit any staff; staff add/edit their own entry for the selected date.
+ * "Tasks done" is Summernote rich text (sanitized via sanitizeRichHtml on save,
+ * rendered with renderRichText so legacy plain-text entries keep line breaks).
  */
 $db = Database::instance();
 $me = (int) Auth::id();
@@ -78,7 +80,7 @@ $drawerOpen = ($edit !== null);
                     <tr>
                         <td><?= $i + 1 ?></td>
                         <td><?= e($r['staff_name']) ?></td>
-                        <td><?= nl2br(e($r['tasks'])) ?></td>
+                        <td><?= renderRichText($r['tasks']) ?></td>
                         <td class="text-right">
                             <?php if ($seeAll || (int) $r['staff_id'] === $me): ?>
                                 <button type="button" class="btn btn-xs btn-outline-primary" onclick="openDrawer(<?= (int) $r['id'] ?>)"><i class="fas fa-edit"></i></button>
@@ -130,7 +132,8 @@ $drawerOpen = ($edit !== null);
             </div>
             <div class="form-group">
                 <label>Tasks done *</label>
-                <textarea name="tasks" class="form-control" id="taskText" rows="6" required placeholder="What did you work on today?"><?= e(old('tasks', $edit ? $edit['tasks'] : '')) ?></textarea>
+                <?php // Rich text (Summernote, initialised globally for .summernote); sanitized on save. ?>
+                <textarea name="tasks" class="form-control summernote" id="taskText" rows="6" placeholder="What did you work on today?"><?= e(old('tasks', $edit ? $edit['tasks'] : '')) ?></textarea>
             </div>
         </form>
     </div>

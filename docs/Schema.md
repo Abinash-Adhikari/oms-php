@@ -19,7 +19,7 @@
 | **Money** | `DECIMAL(18,4)` everywhere. Currency in a separate `CHAR(3)` column. |
 | **FKs** | `ON DELETE RESTRICT` for fiscal/calendar links (must not orphan); `ON DELETE SET NULL` for actor/user links (history must survive). |
 
-**118 tables** total, grouped into 13 domains below. Arrows (→) denote FK
+**120 tables** total, grouped into 13 domains below. Arrows (→) denote FK
 references.
 
 ---
@@ -55,6 +55,7 @@ tbl_audit_log            — every significant action (immutable)
 | `designation_id` | INT → `tbl_office_designation` | |
 | `status` | ENUM('Active','Block','Terminated') | default 'Active' |
 | `checkin`, `checkout` | TIME | daily work window |
+| `photo` | VARCHAR(255) NULL | profile photo path under `user_uploads/` (e.g. `staff/…jpg`), set from the Employees form image editor via `store_image_upload()`; NULL → initials avatar. Migration `alter-table-users_login-add-photo`. |
 
 ### 2.2 Office Setup (configuration / reference data)
 
@@ -361,6 +362,8 @@ tbl_cms_hero              ← hero banners
 tbl_cms_abouts            ← about-section blocks
 tbl_cms_services          ← service cards
 tbl_cms_projects          → tbl_cms_services (optional)
+tbl_cms_clients           ← website showcase clients (logo carousel, /clients)
+tbl_cms_project_clients   → tbl_cms_projects, tbl_cms_clients (portfolio clients)
 tbl_cms_testimonials      ← testimonial carousel
 tbl_cms_news              ← blog/news posts
 tbl_cms_notices           ← public notices (PDF links)
@@ -376,6 +379,24 @@ tbl_cms_home              ← deprecated (home is now composite query)
 
 **`tbl_cms_setup`** (singleton, id=1) — the source for `website/includes/
 site.php`'s `siteSetup()`. Drives every public page.
+`logo` and `favicon` (VARCHAR 255, nullable) hold paths under `user_uploads/`
+(stored in `webcms/setup/`), uploaded from Website CMS → Setup and rendered by
+`website/includes/header.php` / `footer.php`.
+
+**`tbl_cms_clients`** — public showcase clients (name, company, logo,
+description, website, `position`, `is_active`), managed in Website CMS →
+Clients. Rendered in the home-page logo carousel and on `/clients`. Kept apart
+from Sales `tbl_clients` on purpose so office/prospect data never reaches the
+public site.
+
+**`tbl_cms_project_clients`** — zero, one or many clients per portfolio item
+(`tbl_cms_projects`; replaces the old single `client_name` column). Each row is
+a website client (`cms_client_id` → `tbl_cms_clients`, FK `ON DELETE SET NULL`)
+or a free-text name (`cms_client_id` NULL). `client_name` always stores a name
+snapshot, so a deleted client still shows; display uses
+`COALESCE(tbl_cms_clients.name, client_name)`. Rows cascade-delete with the
+item. Links are edited from either side: the Portfolio "Clients" picker or the
+Clients "Link portfolio items" action.
 
 **`tbl_cms_hero`** has `is_active` + `position` — `siteRows()` orders by
 `position, id` with `WHERE is_active = 1`. This is the only filtered query path
@@ -623,7 +644,7 @@ Intentional secondary indexes, derived from `EXPLAIN`-worthy query paths:
 | `tbl_leads` | `idx_lead_stage(stage)`, `idx_lead_assigned(assigned_to)`, `idx_lead_source(client_id)`, `idx_lead_won(won_client_id)`, `idx_lead_project(project_id)` | sales funnel |
 | `tbl_client_contacts` | `idx_bsc_source(client_id)`, `idx_bsc_primary(client_id, is_primary)` | primary-contact mirror |
 | `tbl_inv_stock_movements` | `idx_invm_item_date(item_id, created_at)` | stock history |
-| `tbl_cms_news`, `tbl_cms_notices` | `idx_active_position(is_active, position)` | `siteRows()` public query |
+| `tbl_cms_news`, `tbl_cms_notices` | `idx_cms_news_active(is_active)`, `idx_cms_notices_active(is_active)` | `siteRows()` public query |
 | `tbl_notifications` | `idx_notif_receiver(receiver, viewed)` | notification client |
 
 The `add-index-cms-active-columns` migration backfills indexes on every CMS

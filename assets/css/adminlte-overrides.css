@@ -625,6 +625,14 @@ html:not([data-mode]) .main-sidebar .nav-sidebar > .nav-item > .nav-link.active 
     line-height: 1.4;
 }
 
+/* Flat module items (e.g. Sales pages) need the same flex row as treeview
+   children so the badge pushes to the right edge instead of hugging the label. */
+.main-sidebar .cms-nav-flat > .nav-link p {
+    display: inline-flex;
+    align-items: center;
+    width: calc(100% - 2.2rem);
+}
+
 /* "No matching menu items" empty state for the sidebar search */
 .main-sidebar .cms-sidebar-no-results {
     padding: .75rem 1rem;

@@ -9,6 +9,7 @@ $nav = [
     'about'    => siteUrl('about'),
     'services' => siteUrl('services'),
     'projects' => siteUrl('projects'),
+    'clients'  => siteUrl('clients'),
     'team'     => siteUrl('team'),
     'news'     => siteUrl('news'),
     'notices'  => siteUrl('notices'),

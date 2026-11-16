@@ -164,6 +164,7 @@ $subNavBars = [
         'cms_home'     => 'Home',
         'services'     => 'Services',
         'projects'     => 'Portfolio',
+        'cms_clients'  => 'Clients',
         'news'         => 'News',
         'notices'      => 'Notices',
         'careers'      => 'Careers',
@@ -276,6 +277,7 @@ $subIcons = [
     'cms_home'              => 'nav-icon fas fa-home',
     'services'              => 'nav-icon fas fa-concierge-bell',
     'projects'              => 'nav-icon fas fa-project-diagram',
+    'cms_clients'           => 'nav-icon fas fa-handshake',
     'team'                  => 'nav-icon fas fa-user-friends',
     'news'                  => 'nav-icon far fa-newspaper',
     'notices'               => 'nav-icon fas fa-bullhorn',
@@ -316,7 +318,7 @@ $pages = [
     'my_office'        => ['office_calendar', 'office_spaces', 'notices', 'documents', 'warnings', 'expense_claims', 'payslips'],
     'staff_management' => ['add_staff', 'permissions', 'staff_daily_tasks', 'leave_management', 'staff_history', 'terminated_staffs', 'hr_care'],
     'payroll'          => ['runs', 'salary_setup', 'funds', 'components', 'tax_slabs', 'advances', 'remittance', 'accounting'],
-    'webcms'           => ['cms_home', 'services', 'projects', 'news', 'notices', 'careers', 'team', 'contact', 'webcms_setup'],
+    'webcms'           => ['cms_home', 'services', 'projects', 'cms_clients', 'news', 'notices', 'careers', 'team', 'contact', 'webcms_setup'],
     'leads'            => ['leads', 'client_projects', 'projects'],
     'clients'          => ['clients'],
     'sales'            => ['leads', 'clients', 'client_projects', 'documents', 'products'],
@@ -388,6 +390,20 @@ $routeCanonical = [
 
 /** Modules rendered directly as a page (no submodule shell). */
 $singlePageModules = ['dashboard'];
+
+/**
+ * Modules whose submodules render as top-level sidebar items (no collapsible
+ * parent) under the module's section header. Presentation only: the module
+ * key, URLs (?module=sales&page=leads) and permission grants are unchanged.
+ */
+$flatNavModules = ['sales'];
+
+/**
+ * Pages ('module.page') that open with the sidebar collapsed to icons
+ * (AdminLTE `sidebar-collapse` on <body>) to give wide layouts more room.
+ * The hamburger toggle still expands it.
+ */
+$collapsedSidebarPages = ['staff_management.detail'];
 
 /**
  * Sidebar section labels (ALL CAPS). SALES follows the customer lifecycle

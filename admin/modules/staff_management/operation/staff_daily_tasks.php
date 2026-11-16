@@ -1,7 +1,7 @@
 <?php
 /**
  * SB-Tech — Staff Management / Daily Tasks operations.
- *   save   — upsert one entry per staff + date
+ *   save   — upsert one entry per staff + date (tasks = sanitized rich HTML)
  *   delete — own entry (or any entry for admins)
  */
 $db = Database::instance();
@@ -15,7 +15,12 @@ try {
         $id = (int) ($_POST['id'] ?? 0);
         $staffId = (int) ($_POST['staff_id'] ?? 0);
         $date = trim((string) ($_POST['date'] ?? ''));
-        $tasks = trim((string) ($_POST['tasks'] ?? ''));
+        // Summernote HTML: strip unsafe markup; an editor holding only
+        // "<p><br></p>" counts as empty.
+        $tasks = sanitizeRichHtml((string) ($_POST['tasks'] ?? ''));
+        if (trim(html_entity_decode(strip_tags($tasks), ENT_QUOTES | ENT_HTML5), " \t\n\r\0\x0B\u{00A0}") === '') {
+            $tasks = '';
+        }
 
         if (!$seeAll) {
             $staffId = $me; // staff always log for themselves
