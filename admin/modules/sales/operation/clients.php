@@ -3,6 +3,7 @@
  * SB-Tech — Clients operations.
  *   save_client / delete_client
  *   save_contact / delete_contact / set_primary_contact
+ *   save_payment / delete_payment  (ClientPaymentService; may post a receipt voucher)
  * The first contact on a client becomes its primary; deleting (or un-priming)
  * the primary promotes the next contact and mirrors it onto the client row.
  */
@@ -71,8 +72,40 @@ try {
         redirect($clientDetail . '&id=' . $id);
     }
 
+    if ($action === 'save_payment') {
+        $clientId = (int) ($_POST['client_id'] ?? 0);
+        $payments = new ClientPaymentService($db);
+        try {
+            $payments->record($_POST, $me);
+        } catch (RuntimeException $e) {
+            setFlash('error', $e->getMessage());
+            redirect($clientDetail . '&id=' . $clientId . '#client-payments');
+        }
+        setFlash('success', !empty($_POST['post_to_accounts'])
+            ? 'Payment recorded. A pending receipt voucher was sent to Accounts for approval.'
+            : 'Payment recorded.');
+        redirect($clientDetail . '&id=' . $clientId . '#client-payments');
+    }
+
+    if ($action === 'delete_payment') {
+        $clientId = (int) ($_POST['client_id'] ?? 0);
+        $payments = new ClientPaymentService($db);
+        try {
+            $clientId = $payments->delete((int) ($_POST['id'] ?? 0), $me);
+        } catch (RuntimeException $e) {
+            setFlash('error', $e->getMessage());
+            redirect($clientDetail . '&id=' . $clientId . '#client-payments');
+        }
+        setFlash('success', 'Payment deleted.');
+        redirect($clientDetail . '&id=' . $clientId . '#client-payments');
+    }
+
     if ($action === 'delete_client') {
         $id = (int) ($_POST['id'] ?? 0);
+        if ($db->selectOne('SELECT `id` FROM `tbl_client_payments` WHERE `client_id` = ? LIMIT 1', [$id])) {
+            setFlash('error', 'This client has recorded payments, so it cannot be deleted. Delete the payments first if they were entered by mistake.');
+            redirect($clientDetail . '&id=' . $id);
+        }
         $db->delete('tbl_clients', '`id` = ?', [$id]);
         setFlash('success', 'Client deleted.');
         redirect($back);

@@ -57,14 +57,17 @@ return [
         'sidebar_section' => 'FINANCE',
         'sidebar_parent' => 'accounts',
         'module_key'    => 'accounts',
-        'statuses'      => ['Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'],
+        // Paid / Partially Paid are set automatically from tbl_client_payments
+        // (ClientPaymentService::syncInvoiceStatus); they can still be picked by hand.
+        'statuses'      => ['Draft', 'Sent', 'Partially Paid', 'Paid', 'Overdue', 'Cancelled'],
         'default_status'=> 'Draft',
         'status_badges' => [
-            'Draft'     => 'secondary',
-            'Sent'      => 'info',
-            'Paid'      => 'success',
-            'Overdue'   => 'danger',
-            'Cancelled' => 'warning',
+            'Draft'          => 'secondary',
+            'Sent'           => 'info',
+            'Partially Paid' => 'primary',
+            'Paid'           => 'success',
+            'Overdue'        => 'danger',
+            'Cancelled'      => 'warning',
         ],
         'required_fields' => ['client_name', 'subject', 'document_number', 'document_date', 'due_date'],
         'optional_fields' => ['quotation_id', 'contract_id'],

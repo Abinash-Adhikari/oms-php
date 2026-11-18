@@ -41,6 +41,33 @@ $quotations = $db->select(
      WHERE d.client_id = ? AND d.document_type = 'quotation' ORDER BY d.added_on DESC",
     [(int) $edit['id']]
 );
+// Payments & balance (ClientPaymentService; maths in functions/sales.php).
+$paymentService = new ClientPaymentService($db);
+$clientInvoices = $paymentService->invoicesFor((int) $edit['id']);
+$clientPayments = $paymentService->paymentsFor((int) $edit['id']);
+$statementRows = client_statement($clientInvoices, $clientPayments);
+$invoicedTotal = 0.0;
+foreach ($clientInvoices as $_inv) {
+    if (!in_array($_inv['status'], CLIENT_BILLABLE_INVOICE_EXCLUDED, true)) {
+        $invoicedTotal += (float) $_inv['total'];
+    }
+}
+$receivedTotal = round(array_sum(array_map(static fn ($p) => (float) $p['amount'], $clientPayments)), 2);
+$outstandingTotal = round($invoicedTotal - $receivedTotal, 2);
+$overdueTotal = client_overdue_amount($clientInvoices, date('Y-m-d'));
+$balanceStatus = client_balance_status($invoicedTotal, $outstandingTotal, $overdueTotal);
+// Invoices that can still take a payment (issued, not cancelled, money left).
+$payableInvoices = array_values(array_filter(
+    $clientInvoices,
+    static fn ($i) => !in_array($i['status'], ['Cancelled'], true) && (float) $i['total'] - (float) $i['paid'] > 0.01
+));
+$accountTree = $canManage ? accountingTerminalOptions() : [];
+$defaultDeposit = accountingTerminalByTitle('Bank Accounts');
+// Invoices are not posted to the ledger, so the receipt credits income by
+// default; pick Accounts Receivable only if a sales voucher already booked it.
+$defaultCredit = accountingTerminalByTitle('Software Development Income');
+$openPaymentDrawer = $canManage && !empty($_GET['pay']);
+
 $leadIdsForActivity = [];
 foreach ($sourceLeads as $_l) {
     $leadIdsForActivity[] = (int) $_l['id'];
@@ -188,6 +215,9 @@ if ($edit['lead_id']) {
                         <button type="submit" class="btn btn-sm btn-danger-ghost btn-icon-only confirm-submit" data-confirm="Delete client <?= e($edit['name']) ?> and all related data?" aria-label="Delete client"><i class="fas fa-trash" aria-hidden="true"></i></button>
                     </form>
                 <?php endif; ?>
+                <?php if ($canManage): ?>
+                    <button type="button" class="btn btn-sm btn-ghost" onclick="openPaymentDrawer()"><i class="fas fa-hand-holding-usd mr-1" aria-hidden="true"></i>Record Payment</button>
+                <?php endif; ?>
                 <a href="<?= pageUrl('sales', 'documents') ?>&type=quotation&add=1&client_id=<?= (int) $edit['id'] ?>" class="btn btn-sm btn-ghost"><i class="fas fa-file-invoice mr-1" aria-hidden="true"></i>New Quotation</a>
                 <a href="<?= pageUrl('sales', 'client_projects') ?>&source=<?= (int) $edit['id'] ?>" class="btn btn-sm btn-ghost"><i class="fas fa-folder-open mr-1" aria-hidden="true"></i>Client Projects</a>
             </div>
@@ -217,7 +247,14 @@ if ($edit['lead_id']) {
                 <p class="tms-kpi-value">NRs. <?= e(formatMoney($totalValue)) ?></p>
             </div>
         </a>
-        <a href="#client-leads" class="tms-kpi-card bg-warning">
+        <a href="#client-payments" class="tms-kpi-card bg-<?= $balanceStatus === 'Overdue' ? 'danger' : ($balanceStatus === 'Due' ? 'warning' : 'success') ?>">
+            <div class="tms-kpi-icon"><i class="fas fa-hand-holding-usd" aria-hidden="true"></i></div>
+            <div class="tms-kpi-meta">
+                <p class="tms-kpi-label"><?= $outstandingTotal < -0.01 ? 'Advance Held' : 'Outstanding' ?></p>
+                <p class="tms-kpi-value">NRs. <?= e(formatMoney(abs($outstandingTotal))) ?><small class="tms-kpi-sub"><?= $overdueTotal > 0.01 ? e(formatMoney($overdueTotal)) . ' overdue' : 'Received ' . e(formatMoney($receivedTotal)) ?></small></p>
+            </div>
+        </a>
+        <a href="#client-leads" class="tms-kpi-card bg-secondary">
             <div class="tms-kpi-icon"><i class="fas fa-link" aria-hidden="true"></i></div>
             <div class="tms-kpi-meta">
                 <p class="tms-kpi-label">Linked Leads</p>
@@ -270,6 +307,171 @@ if ($edit['lead_id']) {
                             <p class="mb-0 small mt-1"><?= nl2br(e($edit['notes'])) ?></p>
                         </div>
                     <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Payments & balance -->
+            <?php $invoiceSoft = ['Draft' => 'muted', 'Sent' => 'info', 'Partially Paid' => 'warning', 'Paid' => 'success', 'Overdue' => 'danger', 'Cancelled' => 'muted']; ?>
+            <div class="card card-outline mb-3" id="client-payments">
+                <div class="card-header">
+                    <h3 class="card-title"><span class="tms-chip tms-chip--success"><i class="fas fa-hand-holding-usd" aria-hidden="true"></i></span>Payments &amp; Balance</h3>
+                    <div class="card-tools">
+                        <?php if ($canManage): ?>
+                            <button type="button" class="btn btn-outline-success btn-sm" onclick="openPaymentDrawer()"><i class="fas fa-plus mr-1"></i>Record Payment</button>
+                        <?php endif; ?>
+                        <a href="<?= pageUrl('sales', 'documents') ?>&type=invoice&add=1&client_id=<?= (int) $edit['id'] ?>" class="btn btn-outline-primary btn-sm"><i class="fas fa-receipt mr-1"></i>New Invoice</a>
+                    </div>
+                </div>
+                <div class="card-body pb-0">
+                    <div class="d-flex flex-wrap small mb-2" style="gap:1.5rem">
+                        <span>Invoiced <strong>NPR <?= e(formatMoney($invoicedTotal)) ?></strong></span>
+                        <span>Received <strong class="text-success">NPR <?= e(formatMoney($receivedTotal)) ?></strong></span>
+                        <span><?= $outstandingTotal < -0.01 ? 'Advance held' : 'Outstanding' ?> <strong class="text-warning">NPR <?= e(formatMoney(abs($outstandingTotal))) ?></strong></span>
+                        <?php if ($overdueTotal > 0.01): ?><span>Overdue <strong class="text-danger">NPR <?= e(formatMoney($overdueTotal)) ?></strong></span><?php endif; ?>
+                    </div>
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#cp-invoices" role="tab">Invoices <span class="badge badge-light border"><?= count($clientInvoices) ?></span></a></li>
+                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#cp-payments" role="tab">Payments <span class="badge badge-light border"><?= count($clientPayments) ?></span></a></li>
+                        <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#cp-statement" role="tab">Statement</a></li>
+                    </ul>
+                </div>
+                <div class="card-body p-0">
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="cp-invoices" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table cl-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Invoice</th>
+                                            <th>Date / Due</th>
+                                            <th class="text-right">Total</th>
+                                            <th class="text-right">Paid</th>
+                                            <th class="text-right">Left to pay</th>
+                                            <th>Status</th>
+                                            <th class="text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($clientInvoices as $inv): ?>
+                                            <?php $left = round((float) $inv['total'] - (float) $inv['paid'], 2);
+                                            $isLate = $left > 0.01 && $inv['due_date'] && $inv['due_date'] < date('Y-m-d') && !in_array($inv['status'], CLIENT_BILLABLE_INVOICE_EXCLUDED, true); ?>
+                                            <tr>
+                                                <td><span class="cl-cell-main"><?= e($inv['document_number']) ?></span>
+                                                    <?php if ($inv['subject']): ?><br><span class="cl-cell-sub"><?= e(mb_strimwidth($inv['subject'], 0, 44, '…')) ?></span><?php endif; ?></td>
+                                                <td><?= e($inv['document_date']) ?><br><span class="cl-cell-sub <?= $isLate ? 'text-danger' : '' ?>">Due <?= e($inv['due_date'] ?: '—') ?></span></td>
+                                                <td class="text-right"><span class="cl-money"><?= e(formatMoney($inv['total'])) ?></span></td>
+                                                <td class="text-right"><?= (float) $inv['paid'] > 0 ? e(formatMoney($inv['paid'])) : '—' ?></td>
+                                                <td class="text-right font-weight-bold <?= $isLate ? 'text-danger' : '' ?>"><?= $left > 0.01 ? e(formatMoney($left)) : '—' ?></td>
+                                                <td><span class="badge-soft badge-soft--<?= $invoiceSoft[$inv['status']] ?? 'muted' ?>"><?= e($inv['status']) ?></span></td>
+                                                <td class="text-right text-nowrap">
+                                                    <?php if ($canManage && $left > 0.01 && $inv['status'] !== 'Cancelled'): ?>
+                                                        <button type="button" class="btn btn-xs btn-outline-success" title="Record payment" aria-label="Record payment for <?= e($inv['document_number']) ?>" onclick="openPaymentDrawer(<?= (int) $inv['id'] ?>)"><i class="fas fa-hand-holding-usd" aria-hidden="true"></i></button>
+                                                    <?php endif; ?>
+                                                    <a href="<?= pageUrl('sales', 'documents') ?>&type=invoice&id=<?= (int) $inv['id'] ?>" class="btn btn-xs btn-outline-primary" title="View" aria-label="View invoice <?= e($inv['document_number']) ?>"><i class="fas fa-eye" aria-hidden="true"></i></a>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                        <?php if (!$clientInvoices): ?><tr>
+                                                <td colspan="7">
+                                                    <div class="tms-empty-state"><i class="fas fa-receipt" aria-hidden="true"></i>
+                                                        <p>No invoices for this client yet. Payments recorded without an invoice count as advances.</p>
+                                                    </div>
+                                                </td>
+                                            </tr><?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="cp-payments" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table cl-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th class="text-right">Amount</th>
+                                            <th>Method / Ref</th>
+                                            <th>For</th>
+                                            <th>Accounts</th>
+                                            <th class="text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php $voucherSoft = ['Pending' => 'warning', 'Approved' => 'success', 'Rejected' => 'danger']; ?>
+                                        <?php foreach ($clientPayments as $p): ?>
+                                            <tr>
+                                                <td><?= e($p['payment_date']) ?><?php if ($p['added_by_name']): ?><br><span class="cl-cell-sub"><?= e($p['added_by_name']) ?></span><?php endif; ?></td>
+                                                <td class="text-right"><span class="cl-money text-success"><?= e(formatMoney($p['amount'])) ?></span></td>
+                                                <td><?= e($p['method']) ?><?php if ($p['reference_no']): ?><br><span class="cl-cell-sub"><?= e($p['reference_no']) ?></span><?php endif; ?>
+                                                    <?php if ($p['notes']): ?><br><span class="cl-cell-sub" title="<?= e($p['notes']) ?>"><?= e(mb_strimwidth($p['notes'], 0, 40, '…')) ?></span><?php endif; ?></td>
+                                                <td><?= $p['document_number'] ? e($p['document_number']) : '<span class="badge-soft badge-soft--info">Advance</span>' ?></td>
+                                                <td>
+                                                    <?php if ($p['voucher_no']): ?>
+                                                        <span class="badge-soft badge-soft--<?= $voucherSoft[$p['voucher_status']] ?? 'muted' ?>"><?= e($p['voucher_no']) ?> · <?= e($p['voucher_status']) ?></span>
+                                                    <?php elseif ($p['receipt_voucher_id']): ?>
+                                                        <span class="badge-soft badge-soft--muted" title="The receipt voucher was deleted in Accounts">Voucher removed</span>
+                                                    <?php else: ?>
+                                                        <span class="cl-cell-sub">Not posted</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td class="text-right">
+                                                    <?php if ($canManage && ($p['voucher_status'] ?? 'Pending') !== 'Approved'): ?>
+                                                        <form action="operation.php?module=sales&page=clients" method="post" class="d-inline">
+                                                            <?= csrfField() ?>
+                                                            <input type="hidden" name="action" value="delete_payment">
+                                                            <input type="hidden" name="id" value="<?= (int) $p['id'] ?>">
+                                                            <input type="hidden" name="client_id" value="<?= (int) $edit['id'] ?>">
+                                                            <button type="submit" class="btn btn-xs btn-outline-danger confirm-submit" aria-label="Delete payment of <?= e(formatMoney($p['amount'])) ?>" data-confirm="Delete this payment of NPR <?= e(formatMoney($p['amount'])) ?>?<?= $p['voucher_no'] ? ' Its pending receipt voucher ' . e($p['voucher_no']) . ' is deleted too.' : '' ?>"><i class="fas fa-trash" aria-hidden="true"></i></button>
+                                                        </form>
+                                                    <?php endif; ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                        <?php if (!$clientPayments): ?><tr>
+                                                <td colspan="6">
+                                                    <div class="tms-empty-state"><i class="fas fa-hand-holding-usd" aria-hidden="true"></i>
+                                                        <p>No payments recorded yet.</p>
+                                                    </div>
+                                                </td>
+                                            </tr><?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="cp-statement" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table cl-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Entry</th>
+                                            <th class="text-right">Charge</th>
+                                            <th class="text-right">Payment</th>
+                                            <th class="text-right">Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($statementRows as $s): ?>
+                                            <tr>
+                                                <td><?= e($s['date']) ?></td>
+                                                <td><span class="cl-cell-main"><?= e($s['kind']) ?><?= $s['ref'] !== '' ? ' · ' . e($s['ref']) : '' ?></span>
+                                                    <?php if ($s['detail'] !== ''): ?><br><span class="cl-cell-sub"><?= e($s['detail']) ?></span><?php endif; ?></td>
+                                                <td class="text-right"><?= $s['charge'] > 0 ? e(formatMoney($s['charge'])) : '' ?></td>
+                                                <td class="text-right text-success"><?= $s['payment'] > 0 ? e(formatMoney($s['payment'])) : '' ?></td>
+                                                <td class="text-right font-weight-bold"><?= e(formatMoney(abs($s['balance']))) ?><?= $s['balance'] < -0.01 ? ' <span class="cl-cell-sub">adv.</span>' : '' ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                        <?php if (!$statementRows): ?><tr>
+                                                <td colspan="5">
+                                                    <div class="tms-empty-state"><i class="fas fa-file-alt" aria-hidden="true"></i>
+                                                        <p>Nothing to show yet. Issued invoices (not Draft) and payments appear here.</p>
+                                                    </div>
+                                                </td>
+                                            </tr><?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -752,6 +954,108 @@ if ($edit['lead_id']) {
     </div>
 <?php endif; ?>
 
+<!-- ═══ Record Payment Drawer ═══ -->
+<?php if ($canManage): ?>
+    <?php $payOld = static fn (string $k, $default = '') => old_scoped('save_payment:' . (int) $edit['id'], $k, $default); ?>
+    <div class="cms-drawer" id="paymentDrawer">
+        <div class="cms-drawer-header">
+            <h3><i class="fas fa-hand-holding-usd"></i><span>Record Payment</span></h3>
+            <button type="button" class="cms-drawer-close" onclick="closeAllDrawers()" aria-label="Close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="cms-drawer-body">
+            <form action="operation.php?module=sales&page=clients" method="post" id="paymentForm">
+                <?= csrfField() ?>
+                <input type="hidden" name="action" value="save_payment">
+                <input type="hidden" name="_scope" value="save_payment:<?= (int) $edit['id'] ?>">
+                <input type="hidden" name="client_id" value="<?= (int) $edit['id'] ?>">
+                <div class="form-group">
+                    <label for="payInvoice">Paying for</label>
+                    <select name="document_id" id="payInvoice" class="form-control" onchange="fillPaymentAmount()">
+                        <option value="0" data-left="">Advance / on account (no invoice)</option>
+                        <?php foreach ($payableInvoices as $inv): ?>
+                            <?php $left = round((float) $inv['total'] - (float) $inv['paid'], 2); ?>
+                            <option value="<?= (int) $inv['id'] ?>" data-left="<?= e(number_format($left, 2, '.', '')) ?>" <?= (int) $payOld('document_id', 0) === (int) $inv['id'] ? 'selected' : '' ?>>
+                                <?= e($inv['document_number']) ?> — NPR <?= e(formatMoney($left)) ?> left<?= $inv['due_date'] ? ' · due ' . e($inv['due_date']) : '' ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small class="form-text text-muted">Picking an invoice marks it Partially Paid or Paid automatically.</small>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-group">
+                        <label for="payDate">Date *</label>
+                        <input type="date" name="payment_date" id="payDate" class="form-control" required max="<?= e(date('Y-m-d')) ?>" value="<?= e($payOld('payment_date', date('Y-m-d'))) ?>">
+                    </div>
+                    <div class="col-6 form-group">
+                        <label for="payAmount">Amount (NPR) *</label>
+                        <input type="number" name="amount" id="payAmount" class="form-control" required step="0.01" min="0.01" value="<?= e($payOld('amount')) ?>">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-group">
+                        <label for="payMethod">Method *</label>
+                        <select name="method" id="payMethod" class="form-control">
+                            <?php foreach (client_payment_methods() as $m): ?>
+                                <option value="<?= e($m) ?>" <?= $payOld('method', 'Bank Transfer') === $m ? 'selected' : '' ?>><?= e($m === 'Wallet' ? 'Wallet (eSewa / Khalti)' : $m) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-6 form-group">
+                        <label for="payRef">Reference</label>
+                        <input type="text" name="reference_no" id="payRef" class="form-control" maxlength="128" placeholder="Cheque / txn no." value="<?= e($payOld('reference_no')) ?>">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="payNotes">Notes</label>
+                    <textarea name="notes" id="payNotes" class="form-control" rows="2" maxlength="1024"><?= e($payOld('notes')) ?></textarea>
+                </div>
+
+                <hr class="my-3">
+                <div class="custom-control custom-checkbox mb-2">
+                    <input type="checkbox" class="custom-control-input" name="post_to_accounts" id="payPost" value="1" <?= old_checkbox('save_payment:' . (int) $edit['id'], 'post_to_accounts', true) ? 'checked' : '' ?> onchange="togglePaymentAccounts()">
+                    <label class="custom-control-label" for="payPost">Post to Accounts <span class="text-muted">(pending receipt voucher)</span></label>
+                </div>
+                <div id="payAccounts">
+                    <div class="form-group">
+                        <label for="payDeposit">Received into (debit)</label>
+                        <select name="deposit_terminal_id" id="payDeposit" class="form-control">
+                            <?php $depSel = (int) $payOld('deposit_terminal_id', $defaultDeposit['id'] ?? 0); ?>
+                            <?php foreach ($accountTree as $group => $subs): ?>
+                                <?php foreach ($subs as $sub => $terms): ?>
+                                    <optgroup label="<?= e($group . ' › ' . $sub) ?>">
+                                        <?php foreach ($terms as $t): ?>
+                                            <option value="<?= (int) $t['id'] ?>" <?= $depSel === (int) $t['id'] ? 'selected' : '' ?>><?= e($t['title']) ?></option>
+                                        <?php endforeach; ?>
+                                    </optgroup>
+                                <?php endforeach; ?>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="payCredit">Credit account</label>
+                        <select name="credit_terminal_id" id="payCredit" class="form-control">
+                            <?php $crSel = (int) $payOld('credit_terminal_id', $defaultCredit['id'] ?? 0); ?>
+                            <?php foreach ($accountTree as $group => $subs): ?>
+                                <?php foreach ($subs as $sub => $terms): ?>
+                                    <optgroup label="<?= e($group . ' › ' . $sub) ?>">
+                                        <?php foreach ($terms as $t): ?>
+                                            <option value="<?= (int) $t['id'] ?>" <?= $crSel === (int) $t['id'] ? 'selected' : '' ?>><?= e($t['title']) ?></option>
+                                        <?php endforeach; ?>
+                                    </optgroup>
+                                <?php endforeach; ?>
+                            <?php endforeach; ?>
+                        </select>
+                        <small class="form-text text-muted">Usually the income account (e.g. Maintenance &amp; Support Income for AMC). Use Accounts Receivable only if the invoice was already booked as a sales voucher.</small>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="cms-drawer-footer">
+            <button type="submit" form="paymentForm" class="btn btn-success btn-block"><i class="fas fa-save mr-1"></i>Save Payment</button>
+        </div>
+    </div>
+<?php endif; ?>
+
 <!-- Drawer Backdrop -->
 <div class="cms-drawer-backdrop" id="drawerBackdrop" onclick="closeAllDrawers()"></div>
 
@@ -931,6 +1235,31 @@ if ($edit['lead_id']) {
         document.getElementById('cpDetailSubmitText').textContent = p ? 'Update Client Project' : 'Add Client Project';
     }
 
+    /* ═══ Record Payment Drawer ═══ */
+    function fillPaymentAmount() {
+        var sel = document.getElementById('payInvoice');
+        var left = sel.options[sel.selectedIndex].getAttribute('data-left');
+        var amount = document.getElementById('payAmount');
+        amount.value = left || '';
+        amount.max = left || '';
+    }
+
+    function togglePaymentAccounts() {
+        document.getElementById('payAccounts').style.display = document.getElementById('payPost').checked ? '' : 'none';
+    }
+
+    function openPaymentDrawer(invoiceId) {
+        closeAllDrawers();
+        document.getElementById('drawerBackdrop').classList.add('active');
+        document.getElementById('paymentDrawer').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        if (invoiceId !== undefined) {
+            document.getElementById('payInvoice').value = String(invoiceId);
+            fillPaymentAmount();
+        }
+        togglePaymentAccounts();
+    }
+
     /* ═══ Shared Drawer Controls ═══ */
     function closeAllDrawers() {
         document.querySelectorAll('.cms-drawer').forEach(function(d) {
@@ -944,4 +1273,9 @@ if ($edit['lead_id']) {
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeAllDrawers();
     });
+
+    <?php if ($openPaymentDrawer || old_scoped('save_payment:' . (int) $edit['id'], 'amount', '') !== ''): ?>
+    // Opened from the client list (?pay=1) or re-opened after a failed save.
+    document.addEventListener('DOMContentLoaded', function() { openPaymentDrawer(); });
+    <?php endif; ?>
 </script>

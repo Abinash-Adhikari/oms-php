@@ -88,6 +88,7 @@ require_once $appRoot . '/classes/RateLimiter.php';
 require_once $appRoot . '/classes/DocumentEngine.php';
 require_once $appRoot . '/classes/PdfGenerator.php';
 require_once $appRoot . '/classes/DocumentWord.php';
+require_once $appRoot . '/classes/ClientPaymentService.php';
 
 // --- Shared helpers ---
 require_once $appRoot . '/functions/helpers.php';

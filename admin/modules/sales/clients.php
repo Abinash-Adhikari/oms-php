@@ -27,17 +27,50 @@ if ($keyword !== '') {
     $kw = '%' . $db->escapeLike($keyword) . '%';
     array_push($params, $kw, $kw, $kw, $kw, $kw);
 }
+// Money: invoiced = issued invoices (not Draft/Cancelled); received = every
+// payment incl. advances; overdue = unpaid part of invoices past due date.
 $sources = $db->select(
-    'SELECT c.*,
+    "SELECT c.*,
             (SELECT COUNT(*) FROM `tbl_client_contacts` t WHERE t.client_id = c.id) AS contact_count,
             (SELECT COUNT(*) FROM `tbl_client_projects` p WHERE p.client_id = c.id AND p.is_won = 1) AS project_count,
             (SELECT COUNT(*) FROM `tbl_client_projects` p WHERE p.client_id = c.id AND p.is_won = 0) AS trial_count,
-            (SELECT COUNT(*) FROM `tbl_leads` lc WHERE lc.client_id = c.id) AS lead_count
+            (SELECT COUNT(*) FROM `tbl_leads` lc WHERE lc.client_id = c.id) AS lead_count,
+            (SELECT COALESCE(SUM(d.total), 0) FROM `tbl_documents` d
+              WHERE d.client_id = c.id AND d.document_type = 'invoice' AND d.status NOT IN ('Draft', 'Cancelled')) AS invoiced,
+            (SELECT COALESCE(SUM(cp.amount), 0) FROM `tbl_client_payments` cp WHERE cp.client_id = c.id) AS received,
+            (SELECT MAX(cp.payment_date) FROM `tbl_client_payments` cp WHERE cp.client_id = c.id) AS last_payment_date,
+            (SELECT COALESCE(SUM(GREATEST(d.total - COALESCE((SELECT SUM(cp2.amount) FROM `tbl_client_payments` cp2 WHERE cp2.document_id = d.id), 0), 0)), 0)
+               FROM `tbl_documents` d
+              WHERE d.client_id = c.id AND d.document_type = 'invoice' AND d.status NOT IN ('Draft', 'Cancelled')
+                AND d.due_date IS NOT NULL AND d.due_date < CURDATE()) AS overdue_amount
      FROM `tbl_clients` c
-     WHERE ' . implode(' AND ', $where) . '
+     WHERE " . implode(' AND ', $where) . '
      ORDER BY c.name',
     $params
 );
+
+$balanceFilter = (string) ($_GET['balance'] ?? '');
+$totals = ['invoiced' => 0.0, 'received' => 0.0, 'outstanding' => 0.0, 'overdue' => 0.0];
+foreach ($sources as $k => $c) {
+    $outstanding = round((float) $c['invoiced'] - (float) $c['received'], 2);
+    $sources[$k]['outstanding'] = $outstanding;
+    $sources[$k]['balance_status'] = client_balance_status((float) $c['invoiced'], $outstanding, (float) $c['overdue_amount']);
+}
+if (in_array($balanceFilter, ['Overdue', 'Due', 'Advance', 'Settled'], true)) {
+    $sources = array_values(array_filter(
+        $sources,
+        static fn ($c) => $balanceFilter === 'Due'
+            ? in_array($c['balance_status'], ['Due', 'Overdue'], true)
+            : $c['balance_status'] === $balanceFilter
+    ));
+}
+foreach ($sources as $c) {
+    $totals['invoiced'] += (float) $c['invoiced'];
+    $totals['received'] += (float) $c['received'];
+    $totals['outstanding'] += max((float) $c['outstanding'], 0);
+    $totals['overdue'] += (float) $c['overdue_amount'];
+}
+$balanceSoft = ['Overdue' => 'danger', 'Due' => 'warning', 'Advance' => 'info', 'Settled' => 'success', 'No invoices' => 'light'];
 
 // Snapshot for client-side drawer prefill.
 $sourcesJson = [];
@@ -80,12 +113,24 @@ foreach ($sources as $c) {
                         <option value="<?= $lc ?>" <?= $lifecycleFilter === $lc ? 'selected' : '' ?>><?= $lc ?>s</option>
                     <?php endforeach; ?>
                 </select>
+                <select name="balance" class="form-control form-control-sm mr-1" onchange="this.form.submit()" aria-label="Balance">
+                    <option value="">Any balance</option>
+                    <?php foreach (['Due' => 'Has money due', 'Overdue' => 'Overdue', 'Settled' => 'Settled', 'Advance' => 'Paid in advance'] as $bv => $bl): ?>
+                        <option value="<?= $bv ?>" <?= $balanceFilter === $bv ? 'selected' : '' ?>><?= $bl ?></option>
+                    <?php endforeach; ?>
+                </select>
                 <input type="text" name="keyword" class="form-control form-control-sm mr-1" placeholder="Search" value="<?= e($keyword) ?>">
                 <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="fas fa-search"></i></button>
             </form>
         </div>
     </div>
     <div class="card-body p-0">
+        <div class="d-flex flex-wrap border-bottom px-3 py-2 small" style="gap:1.5rem">
+            <span>Invoiced <strong>NPR <?= e(formatMoney($totals['invoiced'])) ?></strong></span>
+            <span>Received <strong class="text-success">NPR <?= e(formatMoney($totals['received'])) ?></strong></span>
+            <span>Outstanding <strong class="text-warning">NPR <?= e(formatMoney($totals['outstanding'])) ?></strong></span>
+            <span>Overdue <strong class="text-danger">NPR <?= e(formatMoney($totals['overdue'])) ?></strong></span>
+        </div>
         <div class="table-responsive">
             <table class="table table-sm table-striped table-hover mb-0">
                 <thead>
@@ -94,10 +139,10 @@ foreach ($sources as $c) {
                         <th>Name</th>
                         <th>Primary Contact</th>
                         <th>Email / Phone</th>
-                        <th>PAN</th>
-                        <th class="text-center">Contacts</th>
+                        <th class="text-right">Invoiced</th>
+                        <th class="text-right">Received</th>
+                        <th class="text-right">Outstanding</th>
                         <th class="text-center">Won Projects</th>
-                        <th class="text-center">Leads</th>
                         <th class="text-right">Actions</th>
                     </tr>
                 </thead>
@@ -113,14 +158,22 @@ foreach ($sources as $c) {
                             </td>
                             <td><?= e($c['contact_person'] ?: '—') ?></td>
                             <td><?= e($c['email'] ?: '—') ?><br><small><?= e($c['phone'] ?: '—') ?></small></td>
-                            <td><?= e($c['pan_num'] ?: '—') ?></td>
-                            <td class="text-center"><span class="badge badge-<?= (int) $c['contact_count'] > 0 ? 'info' : 'light' ?> border"><?= (int) $c['contact_count'] ?></span></td>
+                            <td class="text-right text-nowrap"><?= (float) $c['invoiced'] > 0 ? e(formatMoney($c['invoiced'])) : '—' ?></td>
+                            <td class="text-right text-nowrap"><?= (float) $c['received'] > 0 ? e(formatMoney($c['received'])) : '—' ?>
+                                <?php if ($c['last_payment_date']): ?><br><small class="text-muted" title="Last payment">Last <?= e(date('M j, Y', strtotime($c['last_payment_date']))) ?></small><?php endif; ?></td>
+                            <td class="text-right text-nowrap">
+                                <?php if ($c['balance_status'] !== 'No invoices' || (float) $c['received'] > 0): ?>
+                                    <span class="font-weight-bold"><?= e(formatMoney(abs((float) $c['outstanding']))) ?></span>
+                                <?php endif; ?>
+                                <br><span class="badge badge-<?= $balanceSoft[$c['balance_status']] ?> border"><?= e($c['balance_status']) ?></span>
+                                <?php if ((float) $c['overdue_amount'] > 0.01): ?><br><small class="text-danger"><?= e(formatMoney($c['overdue_amount'])) ?> overdue</small><?php endif; ?>
+                            </td>
                             <td class="text-center"><span class="badge badge-<?= (int) $c['project_count'] > 0 ? 'success' : 'light' ?> border"><?= (int) $c['project_count'] ?></span>
                                 <?php if ((int) $c['trial_count']): ?><br><small class="text-info"><?= (int) $c['trial_count'] ?> demo/trial</small><?php endif; ?></td>
-                            <td class="text-center"><span class="badge badge-light border"><?= (int) $c['lead_count'] ?></span></td>
                             <td class="text-right">
                                 <a href="<?= pageUrl('sales', 'client_detail') ?>&id=<?= (int) $c['id'] ?>" class="btn btn-xs btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
                                 <?php if ($canManage): ?>
+                                    <a href="<?= pageUrl('sales', 'client_detail') ?>&id=<?= (int) $c['id'] ?>&pay=1#client-payments" class="btn btn-xs btn-outline-success" title="Record payment" aria-label="Record payment from <?= e($c['name']) ?>"><i class="fas fa-hand-holding-usd"></i></a>
                                     <button type="button" class="btn btn-xs btn-outline-secondary" title="Edit" onclick="openSourceDrawer(<?= (int) $c['id'] ?>)"><i class="fas fa-edit"></i></button>
                                     <form action="operation.php?module=sales&page=clients" method="post" class="d-inline">
                                         <?= csrfField() ?>

@@ -241,6 +241,15 @@ Give SB-Tech one internal system to run the office: staff & HR operations (atten
 - AC-LE-06.1: Won requires a client record (name, contact, address, PAN optional); creating the client is one step from the lead.
 - AC-LE-06.2: Client visible in a clients list; optional project record (title, value, start/end, status) in a later phase.
 
+**US-LE-07** — As a sales or finance user, I want to record client payments and see what each client owes so that no money is left uncollected.
+- AC-LE-07.1: A payment records client, date (not in the future), amount > 0, method (Cash / Bank Transfer / Cheque / Wallet / Card / Other), reference and notes, optionally against one of the client's invoices; without an invoice it is an advance.
+- AC-LE-07.2: A payment against an invoice cannot exceed the amount left on it (tolerance 0.01) and cannot target a Cancelled invoice.
+- AC-LE-07.3: The invoice status follows its payments: fully paid → Paid, part paid → Partially Paid, all payments removed → Sent or Overdue (by due date).
+- AC-LE-07.4: "Post to Accounts" (default on) creates an Auto / Pending receipt voucher (Dr chosen cash/bank, Cr chosen income/receivable account); deleting the payment deletes that voucher only while it is Pending or Rejected.
+- AC-LE-07.5: Clients list shows Invoiced, Received, Outstanding (issued invoices − all payments), overdue amount, last payment date, a balance badge (Overdue / Due / Settled / Advance / No invoices), page totals and a balance filter.
+- AC-LE-07.6: Client detail shows invoices with paid / left-to-pay, payment history with voucher status, and a dated statement with running balance.
+- AC-LE-07.7: A client with payments cannot be deleted.
+
 ### 4.11 Finance (FIN)
 
 **US-FIN-01** — As a finance user, I want to manage fiscal years so that books are periodized.

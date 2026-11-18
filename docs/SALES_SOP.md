@@ -10,6 +10,7 @@ screen owns each step.
 | **Lead** | An enquiry we are trying to win | Sales → Leads | `tbl_leads` |
 | **Client** | The organisation or person we deal with | Sales → Clients | `tbl_clients` |
 | **Client Project** | One product delivered to one client (URL, package, period) | Sales → Client Projects | `tbl_client_projects` |
+| **Payment** | Money received from a client, against an invoice or as an advance | Client detail → Payments & Balance | `tbl_client_payments` |
 | **Sales Document** | Quotation, invoice, contract… | Sales → Sales Documents | `tbl_documents` |
 | **Product** | Something we sell (ERP, POS, Website…) | Sales → Products | `tbl_projects` |
 | **Portfolio** | Work shown on the public website (marketing only) | Website CMS → Portfolio | `tbl_cms_projects` |
@@ -48,6 +49,32 @@ MARKETING
 7. **After the sale.** Renewals and status (Active / On Hold / Completed) are
    managed on the Client Project; invoices in Sales Documents. The Client
    detail page shows everything for that client in one place.
+8. **Get paid.** When money arrives, open the client and click **Record
+   Payment** (or the green hand icon on the Clients list). Pick the invoice
+   it pays, or "Advance / on account" when there is no invoice yet.
+   - The invoice turns **Partially Paid** or **Paid** on its own. Deleting a
+     payment turns it back to Sent / Overdue.
+   - You cannot pay more than is left on an invoice; record the extra as a
+     separate advance.
+   - Leave **Post to Accounts** ticked to send a pending receipt voucher
+     (Dr the bank/cash account, Cr the income account you pick) to
+     Accounts → Posting for approval. Untick it only when no fiscal year is
+     open yet.
+   - A payment whose voucher is already approved can't be deleted here (a
+     rejected voucher is removed along with the payment); an
+     accountant must un-approve or reverse the voucher first.
+
+## Tracking money owed
+
+- **Outstanding** = issued invoices (anything except Draft / Cancelled) −
+  every payment, advances included. A negative balance is an advance held.
+- **Overdue** = the unpaid part of invoices whose due date has passed.
+- The Clients list shows Invoiced / Received / Outstanding per client, a
+  status badge (Overdue · Due · Settled · Advance · No invoices), totals for
+  the current filter, and a **Balance** filter ("Has money due", "Overdue", …).
+- The client's **Statement** tab lists invoices and payments by date with a
+  running balance.
+- A client with recorded payments cannot be deleted.
 
 ## Notes
 

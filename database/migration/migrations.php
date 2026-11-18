@@ -267,5 +267,9 @@ $files = [
 
     'alter-table-users_login-add-photo',
 
+    // --- Sales: client payments (invoice settlement + advances, posts receipt vouchers) ---
+    'create-table-client_payments',
+    'seed-table-client_payments-backfill-paid-invoices',
+
     // Append new migration filenames below only (do not insert in the middle).
 ];

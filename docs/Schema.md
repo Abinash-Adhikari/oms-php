@@ -19,7 +19,7 @@
 | **Money** | `DECIMAL(18,4)` everywhere. Currency in a separate `CHAR(3)` column. |
 | **FKs** | `ON DELETE RESTRICT` for fiscal/calendar links (must not orphan); `ON DELETE SET NULL` for actor/user links (history must survive). |
 
-**120 tables** total, grouped into 13 domains below. Arrows (→) denote FK
+**121 tables** total, grouped into 13 domains below. Arrows (→) denote FK
 references.
 
 ---
@@ -215,8 +215,26 @@ tbl_quotation_files    → tbl_quotations (ON DELETE CASCADE)            [LEGACY
 tbl_documents          ← unified document engine header (all doc types)
 tbl_document_items     → tbl_documents (shared line items)
 tbl_document_files     → tbl_documents (shared attachments)
-tbl_sales_vouchers     → tbl_fiscal_years, tbl_clients (client_id)
+tbl_sales_vouchers     → tbl_fiscal_years
+tbl_client_payments    → tbl_clients (RESTRICT), tbl_documents (invoice, SET NULL)
 ```
+
+**`tbl_client_payments`** — money received from a client (Sales → Client →
+Record Payment). `client_id` → `tbl_clients` (`ON DELETE RESTRICT`: a client
+with payments cannot be deleted), optional `document_id` → `tbl_documents`
+(the invoice paid, `ON DELETE SET NULL`; NULL = advance / on-account payment).
+`payment_date`, `amount DECIMAL(18,4)`, `method`
+ENUM('Cash','Bank Transfer','Cheque','Wallet','Card','Other'), `reference_no`,
+`notes`. When posted to Accounts, `receipt_voucher_id` points at an Auto /
+Pending `tbl_receipt_vouchers` row (Dr `deposit_terminal_id`, Cr
+`credit_terminal_id`); no FK, since an accountant may delete that voucher.
+Recording or deleting a payment re-derives the invoice status (`Paid` /
+`Partially Paid` / back to `Sent` or `Overdue`). A client's **outstanding**
+= issued invoices (not Draft / Cancelled) − all payments; see
+`ClientPaymentService` and the pure helpers in `functions/sales.php`.
+`seed-table-client_payments-backfill-paid-invoices` gave every invoice that
+was already marked Paid (with a client) one non-posted payment, method
+`Other`, notes `Backfilled: …`, so old paid invoices don't show as owed.
 
 **`tbl_quotations` / `tbl_quotation_items` / `tbl_quotation_files`** —
 **legacy, read-only.** The old quotation screen was retired; every row was
@@ -567,7 +585,8 @@ tbl_users_login (1)
 tbl_clients (1)                                ← won deals / prospects
    ├─< tbl_client_contacts (people, one primary)
    ├─< tbl_leads (client_id / won_client_id)
-   └─< tbl_client_projects (won deployments)
+   ├─< tbl_client_projects (won deployments)
+   └─< tbl_client_payments (payments; optional → tbl_documents invoice)
 
 tbl_projects (1)                               ← project catalog
    ├─< tbl_leads (project_id — lead pursuing a catalog item)
@@ -643,6 +662,7 @@ Intentional secondary indexes, derived from `EXPLAIN`-worthy query paths:
 | `tbl_staff_leave_applications` | `idx_sla_staff_date(staff_id, from_date)` | leave balance |
 | `tbl_leads` | `idx_lead_stage(stage)`, `idx_lead_assigned(assigned_to)`, `idx_lead_source(client_id)`, `idx_lead_won(won_client_id)`, `idx_lead_project(project_id)` | sales funnel |
 | `tbl_client_contacts` | `idx_bsc_source(client_id)`, `idx_bsc_primary(client_id, is_primary)` | primary-contact mirror |
+| `tbl_client_payments` | `idx_cpay_client_date(client_id, payment_date)`, `idx_cpay_document(document_id)` | client balance + per-invoice paid sums |
 | `tbl_inv_stock_movements` | `idx_invm_item_date(item_id, created_at)` | stock history |
 | `tbl_cms_news`, `tbl_cms_notices` | `idx_cms_news_active(is_active)`, `idx_cms_notices_active(is_active)` | `siteRows()` public query |
 | `tbl_notifications` | `idx_notif_receiver(receiver, viewed)` | notification client |
