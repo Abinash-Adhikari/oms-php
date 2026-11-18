@@ -249,6 +249,7 @@ Give SB-Tech one internal system to run the office: staff & HR operations (atten
 - AC-LE-07.5: Clients list shows Invoiced, Received, Outstanding (issued invoices − all payments), overdue amount, last payment date, a balance badge (Overdue / Due / Settled / Advance / No invoices), page totals and a balance filter.
 - AC-LE-07.6: Client detail shows invoices with paid / left-to-pay, payment history with voucher status, and a dated statement with running balance.
 - AC-LE-07.7: A client with payments cannot be deleted.
+- AC-LE-07.8: Recording or deleting a payment needs `manage_leads` **and** `manage_office` (the invoice-editing permission), because it changes invoice status.
 
 ### 4.11 Finance (FIN)
 

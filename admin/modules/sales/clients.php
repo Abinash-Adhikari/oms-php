@@ -7,6 +7,7 @@
  */
 $db = Database::instance();
 $canManage = Auth::isSuperAdmin() || Auth::hasSpecial('manage_leads');
+$canPay = $canManage && (Auth::isSuperAdmin() || Auth::hasSpecial('manage_office'));
 
 $keyword = trim((string) ($_GET['keyword'] ?? ''));
 $typeFilter = (string) ($_GET['type'] ?? '');
@@ -172,8 +173,10 @@ foreach ($sources as $c) {
                                 <?php if ((int) $c['trial_count']): ?><br><small class="text-info"><?= (int) $c['trial_count'] ?> demo/trial</small><?php endif; ?></td>
                             <td class="text-right">
                                 <a href="<?= pageUrl('sales', 'client_detail') ?>&id=<?= (int) $c['id'] ?>" class="btn btn-xs btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
-                                <?php if ($canManage): ?>
+                                <?php if ($canPay): ?>
                                     <a href="<?= pageUrl('sales', 'client_detail') ?>&id=<?= (int) $c['id'] ?>&pay=1#client-payments" class="btn btn-xs btn-outline-success" title="Record payment" aria-label="Record payment from <?= e($c['name']) ?>"><i class="fas fa-hand-holding-usd"></i></a>
+                                <?php endif; ?>
+                                <?php if ($canManage): ?>
                                     <button type="button" class="btn btn-xs btn-outline-secondary" title="Edit" onclick="openSourceDrawer(<?= (int) $c['id'] ?>)"><i class="fas fa-edit"></i></button>
                                     <form action="operation.php?module=sales&page=clients" method="post" class="d-inline">
                                         <?= csrfField() ?>

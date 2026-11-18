@@ -7,6 +7,9 @@
  */
 $db = Database::instance();
 $canManage = Auth::isSuperAdmin() || Auth::hasSpecial('manage_leads');
+// Payments change invoice status, so they need the invoice permission too
+// (manage_office, as in sales/documents.php) — not just manage_leads.
+$canPay = $canManage && (Auth::isSuperAdmin() || Auth::hasSpecial('manage_office'));
 
 $id = (int) ($_GET['id'] ?? 0);
 $edit = $id ? $db->selectOne('SELECT * FROM `tbl_clients` WHERE `id` = ?', [$id]) : null;
@@ -61,12 +64,12 @@ $payableInvoices = array_values(array_filter(
     $clientInvoices,
     static fn ($i) => !in_array($i['status'], ['Cancelled'], true) && (float) $i['total'] - (float) $i['paid'] > 0.01
 ));
-$accountTree = $canManage ? accountingTerminalOptions() : [];
+$accountTree = $canPay ? accountingTerminalOptions() : [];
 $defaultDeposit = accountingTerminalByTitle('Bank Accounts');
 // Invoices are not posted to the ledger, so the receipt credits income by
 // default; pick Accounts Receivable only if a sales voucher already booked it.
 $defaultCredit = accountingTerminalByTitle('Software Development Income');
-$openPaymentDrawer = $canManage && !empty($_GET['pay']);
+$openPaymentDrawer = $canPay && !empty($_GET['pay']);
 
 $leadIdsForActivity = [];
 foreach ($sourceLeads as $_l) {
@@ -215,7 +218,7 @@ if ($edit['lead_id']) {
                         <button type="submit" class="btn btn-sm btn-danger-ghost btn-icon-only confirm-submit" data-confirm="Delete client <?= e($edit['name']) ?> and all related data?" aria-label="Delete client"><i class="fas fa-trash" aria-hidden="true"></i></button>
                     </form>
                 <?php endif; ?>
-                <?php if ($canManage): ?>
+                <?php if ($canPay): ?>
                     <button type="button" class="btn btn-sm btn-ghost" onclick="openPaymentDrawer()"><i class="fas fa-hand-holding-usd mr-1" aria-hidden="true"></i>Record Payment</button>
                 <?php endif; ?>
                 <a href="<?= pageUrl('sales', 'documents') ?>&type=quotation&add=1&client_id=<?= (int) $edit['id'] ?>" class="btn btn-sm btn-ghost"><i class="fas fa-file-invoice mr-1" aria-hidden="true"></i>New Quotation</a>
@@ -316,7 +319,7 @@ if ($edit['lead_id']) {
                 <div class="card-header">
                     <h3 class="card-title"><span class="tms-chip tms-chip--success"><i class="fas fa-hand-holding-usd" aria-hidden="true"></i></span>Payments &amp; Balance</h3>
                     <div class="card-tools">
-                        <?php if ($canManage): ?>
+                        <?php if ($canPay): ?>
                             <button type="button" class="btn btn-outline-success btn-sm" onclick="openPaymentDrawer()"><i class="fas fa-plus mr-1"></i>Record Payment</button>
                         <?php endif; ?>
                         <a href="<?= pageUrl('sales', 'documents') ?>&type=invoice&add=1&client_id=<?= (int) $edit['id'] ?>" class="btn btn-outline-primary btn-sm"><i class="fas fa-receipt mr-1"></i>New Invoice</a>
@@ -364,7 +367,7 @@ if ($edit['lead_id']) {
                                                 <td class="text-right font-weight-bold <?= $isLate ? 'text-danger' : '' ?>"><?= $left > 0.01 ? e(formatMoney($left)) : '—' ?></td>
                                                 <td><span class="badge-soft badge-soft--<?= $invoiceSoft[$inv['status']] ?? 'muted' ?>"><?= e($inv['status']) ?></span></td>
                                                 <td class="text-right text-nowrap">
-                                                    <?php if ($canManage && $left > 0.01 && $inv['status'] !== 'Cancelled'): ?>
+                                                    <?php if ($canPay && $left > 0.01 && $inv['status'] !== 'Cancelled'): ?>
                                                         <button type="button" class="btn btn-xs btn-outline-success" title="Record payment" aria-label="Record payment for <?= e($inv['document_number']) ?>" onclick="openPaymentDrawer(<?= (int) $inv['id'] ?>)"><i class="fas fa-hand-holding-usd" aria-hidden="true"></i></button>
                                                     <?php endif; ?>
                                                     <a href="<?= pageUrl('sales', 'documents') ?>&type=invoice&id=<?= (int) $inv['id'] ?>" class="btn btn-xs btn-outline-primary" title="View" aria-label="View invoice <?= e($inv['document_number']) ?>"><i class="fas fa-eye" aria-hidden="true"></i></a>
@@ -414,7 +417,7 @@ if ($edit['lead_id']) {
                                                     <?php endif; ?>
                                                 </td>
                                                 <td class="text-right">
-                                                    <?php if ($canManage && ($p['voucher_status'] ?? 'Pending') !== 'Approved'): ?>
+                                                    <?php if ($canPay && ($p['voucher_status'] ?? 'Pending') !== 'Approved'): ?>
                                                         <form action="operation.php?module=sales&page=clients" method="post" class="d-inline">
                                                             <?= csrfField() ?>
                                                             <input type="hidden" name="action" value="delete_payment">
@@ -955,7 +958,7 @@ if ($edit['lead_id']) {
 <?php endif; ?>
 
 <!-- ═══ Record Payment Drawer ═══ -->
-<?php if ($canManage): ?>
+<?php if ($canPay): ?>
     <?php $payOld = static fn (string $k, $default = '') => old_scoped('save_payment:' . (int) $edit['id'], $k, $default); ?>
     <div class="cms-drawer" id="paymentDrawer">
         <div class="cms-drawer-header">
@@ -1274,7 +1277,7 @@ if ($edit['lead_id']) {
         if (e.key === 'Escape') closeAllDrawers();
     });
 
-    <?php if ($openPaymentDrawer || old_scoped('save_payment:' . (int) $edit['id'], 'amount', '') !== ''): ?>
+    <?php if ($canPay && ($openPaymentDrawer || old_scoped('save_payment:' . (int) $edit['id'], 'amount', '') !== '')): ?>
     // Opened from the client list (?pay=1) or re-opened after a failed save.
     document.addEventListener('DOMContentLoaded', function() { openPaymentDrawer(); });
     <?php endif; ?>

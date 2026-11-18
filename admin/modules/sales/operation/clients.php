@@ -14,6 +14,13 @@ if (!(Auth::isSuperAdmin() || Auth::hasSpecial('manage_leads'))) {
     die('Access denied: you need the manage_leads permission.');
 }
 $action = (string) ($_POST['action'] ?? '');
+// Payments re-derive invoice status (Paid / Partially Paid), which otherwise
+// needs manage_office in Sales Documents — require it here too.
+if (in_array($action, ['save_payment', 'delete_payment'], true)
+    && !(Auth::isSuperAdmin() || Auth::hasSpecial('manage_office'))) {
+    http_response_code(403);
+    die('Access denied: recording or deleting payments needs the manage_office permission.');
+}
 $back = pageUrl('sales', 'clients');
 $clientDetail = pageUrl('sales', 'client_detail');
 

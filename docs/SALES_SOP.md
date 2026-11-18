@@ -50,7 +50,9 @@ MARKETING
    managed on the Client Project; invoices in Sales Documents. The Client
    detail page shows everything for that client in one place.
 8. **Get paid.** When money arrives, open the client and click **Record
-   Payment** (or the green hand icon on the Clients list). Pick the invoice
+   Payment** (or the green hand icon on the Clients list). This needs the
+   `manage_office` permission as well as `manage_leads`, since a payment
+   changes the invoice's status. Pick the invoice
    it pays, or "Advance / on account" when there is no invoice yet.
    - The invoice turns **Partially Paid** or **Paid** on its own. Deleting a
      payment turns it back to Sent / Overdue.
